@@ -1,0 +1,35 @@
+version: '3.5'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: flatlist
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo mongo:27017/test --quiet
+      interval: 10s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+    ports:
+      - "127.0.0.1:37017:27017"
+  user-service:
+    build:
+      context: ./user
+      dockerfile: Dockerfile
+    depends_on:
+      - mongodb
+    restart: always
+    env_file:
+      - user/.env
+    environment:
+      PORT: 80
+      MONGODB_USER: root
+      MONGODB_PASSWORD: password
+      MONGODB_URI: mongodb://root:password@mongodb
+      MONGODB_NAME: flatlist
+      MONGODB_TIMEOUT: 30
+    ports: 
+      - "127:0.0.1:8080:80"

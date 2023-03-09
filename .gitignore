@@ -1,0 +1,4 @@
+**/bin
+**/*.env
+**/*.envrc
+**/.env.mongo
