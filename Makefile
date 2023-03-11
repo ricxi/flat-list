@@ -11,8 +11,9 @@ run/dev/user:
 
 # test service layer of user service
 .PHONY: test/user/service
-	@echo "TEST: user service"
-	cd ./user && go test -v mock_test.go service_test.go
+test/user/service:
+	@echo "TEST: user service layer"
+	cd ./user && go test -v mocks_test.go service_test.go
 
 # start a mongo container for the user service
 .PHONY: run/dev/mongo
