@@ -18,17 +18,19 @@ type Service interface {
 }
 
 type service struct {
-	repository Repository
+	repository      Repository
+	passwordService PasswordService
 }
 
-func NewService(repository Repository) Service {
+func NewService(repository Repository, passwordService PasswordService) Service {
 	return &service{
-		repository: repository,
+		repository:      repository,
+		passwordService: passwordService,
 	}
 }
 
 func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
-	hashedPassword, err := generateHashedPassword(u.Password)
+	hashedPassword, err := s.passwordService.GenerateHash(u.Password)
 	if err != nil {
 		log.Println(err)
 		return "", err
@@ -61,10 +63,11 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 		return nil, err
 	}
 
-	if err := compareHashAndPassword(uInfo.HashedPassword, u.Password); err != nil {
+	if err := s.passwordService.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return nil, ErrInvalidPassword
 		}
+
 		log.Println(err)
 		return nil, err
 	}
@@ -93,16 +96,4 @@ func generateJWT(claims jwt.MapClaims) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secretKey))
-}
-
-func generateHashedPassword(password string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hashedPassword), nil
-}
-
-func compareHashAndPassword(hashedPassword, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
