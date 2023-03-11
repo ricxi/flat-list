@@ -5,52 +5,55 @@ import (
 	"testing"
 
 	"github.com/ricxi/flat-list/user"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestRegisterUser(t *testing.T) {
 	testCases := []struct {
 		name              string
-		mockRepo          Repository
 		uRegistrationInfo user.UserRegistrationInfo
 		expectedUserID    string
+		inputRepoUserID   string
+		inputRepoErr      error
 		expectedError     error
 	}{
 		{
 			// hard code the id for determinism?
 			name: "RegisterSuccess",
-			mockRepo: Repository{
-				UserID: "5ef7fdd91c19e3222b41b839",
-				Err:    nil,
-			},
 			uRegistrationInfo: user.UserRegistrationInfo{
 				FirstName: "Michael",
 				LastName:  "Scott",
 				Email:     "michaelscott@dundermifflin.com",
 				Password:  "1234",
 			},
-			expectedUserID: "5ef7fdd91c19e3222b41b839",
-			expectedError:  nil,
+			inputRepoUserID: "5ef7fdd91c19e3222b41b839",
+			inputRepoErr:    nil,
+			expectedUserID:  "5ef7fdd91c19e3222b41b839",
+			expectedError:   nil,
 		},
 		{
 			// unit tests might not be the best for this?
 			name: "RegisterFailDuplicateUser",
-			mockRepo: Repository{
-				UserID: "5ef7fdd91c19e3222b41b839",
-				Err:    user.ErrDuplicateUser,
-			},
 			uRegistrationInfo: user.UserRegistrationInfo{
 				FirstName: "Michael",
 				LastName:  "Scott",
 				Email:     "michaelscott@dundermifflin.com",
 				Password:  "1234",
 			},
-			expectedUserID: "",
-			expectedError:  user.ErrDuplicateUser,
+			inputRepoUserID: "5ef7fdd91c19e3222b41b839",
+			inputRepoErr:    user.ErrDuplicateUser,
+			expectedUserID:  "",
+			expectedError:   user.ErrDuplicateUser,
 		},
 	}
 
 	for _, tc := range testCases {
-		service := user.NewService(&tc.mockRepo, &mockPasswordService{})
+		mockRepo := mockRepository{
+			userID: tc.inputRepoUserID,
+			err:    tc.inputRepoErr,
+		}
+		service := user.NewService(&mockRepo, &mockPasswordService{})
+
 		userID, err := service.RegisterUser(context.Background(), &tc.uRegistrationInfo)
 		t.Run(tc.name, func(t *testing.T) {
 			if err != tc.expectedError {
@@ -64,20 +67,33 @@ func TestRegisterUser(t *testing.T) {
 	}
 }
 
+// Does not test JWT features yet
 func TestLoginUser(t *testing.T) {
 	testCases := []struct {
-		name             string
-		expectedUserInfo user.UserInfo
-		uLoginInfo       user.UserLoginInfo
-		expectedErr      error
+		name              string
+		uLoginInfo        *user.UserLoginInfo
+		inputRepoUserInfo *user.UserInfo
+		inputRepoErr      error
+		inputPasswordErr  error
+		expectedUserInfo  *user.UserInfo
+		expectedErr       error
 	}{
 		{
 			name: "LoginUserSuccess",
-			uLoginInfo: user.UserLoginInfo{
+			uLoginInfo: &user.UserLoginInfo{
 				Email:    "michaelscott@dundermifflin.com",
 				Password: "1234",
 			},
-			expectedUserInfo: user.UserInfo{
+			inputRepoUserInfo: &user.UserInfo{
+				ID:        "5ef7fdd91c19e3222b41b839",
+				FirstName: "Michael",
+				LastName:  "Scott",
+				Email:     "michaelscott@dundermifflin.com",
+				Token:     "",
+			},
+			inputRepoErr:     nil,
+			inputPasswordErr: nil,
+			expectedUserInfo: &user.UserInfo{
 				ID:        "5ef7fdd91c19e3222b41b839",
 				FirstName: "Michael",
 				LastName:  "Scott",
@@ -86,25 +102,72 @@ func TestLoginUser(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name: "LoginUserFailedInvalidEmail",
+			uLoginInfo: &user.UserLoginInfo{
+				Email:    "michaelscott@dundermifflin.com",
+				Password: "1234",
+			},
+			inputRepoUserInfo: nil,
+			inputRepoErr:      user.ErrUserNotFound,
+			inputPasswordErr:  nil,
+			expectedUserInfo:  nil,
+			expectedErr:       user.ErrInvalidEmail,
+		},
+		{
+			name: "LoginUserFailedWrongPassword",
+			uLoginInfo: &user.UserLoginInfo{
+				Email:    "michaelscott@dundermifflin.com",
+				Password: "1234",
+			},
+			inputRepoUserInfo: &user.UserInfo{
+				ID:             "5ef7fdd91c19e3222b41b839",
+				FirstName:      "Michael",
+				LastName:       "Scott",
+				Email:          "michaelscott@dundermifflin.com",
+				HashedPassword: "doesntmatterwhatiputhere",
+			},
+			inputRepoErr:     nil,
+			inputPasswordErr: bcrypt.ErrMismatchedHashAndPassword,
+			expectedUserInfo: nil,
+			expectedErr:      user.ErrInvalidPassword,
+		},
 	}
 
 	// setup environment variables
 	t.Setenv("JWT_SECRET_KEY", "testsecrets")
 
 	for _, tc := range testCases {
-		mockRepo := Repository{
-			user: &tc.expectedUserInfo,
-			Err:  nil,
+		mockRepo := &mockRepository{
+			user: tc.inputRepoUserInfo,
+			err:  tc.inputRepoErr,
 		}
-		service := user.NewService(&mockRepo, &mockPasswordService{err: nil})
+		service := user.NewService(mockRepo, &mockPasswordService{err: tc.inputPasswordErr})
 
-		uInfo, err := service.LoginUser(context.Background(), &tc.uLoginInfo)
-		if err != nil {
-			t.Errorf("did not expect an error, but got one: %v", err)
-		}
+		uInfo, err := service.LoginUser(context.Background(), tc.uLoginInfo)
+		t.Run(tc.name, func(t *testing.T) {
+			if nil == err {
+				if uInfo.ID != tc.expectedUserInfo.ID {
+					t.Errorf("expected %s, but got %s", uInfo.ID, tc.expectedUserInfo.ID)
+				}
+				if uInfo.FirstName != tc.expectedUserInfo.FirstName {
+					t.Errorf("expected %s, but got %s", uInfo.FirstName, tc.expectedUserInfo.FirstName)
+				}
+				if uInfo.LastName != tc.expectedUserInfo.LastName {
+					t.Errorf("expected %s, but got %s", uInfo.LastName, tc.expectedUserInfo.LastName)
+				}
 
-		if uInfo.ID != tc.expectedUserInfo.ID {
-			t.Errorf("expected %s, but got %s", uInfo.ID, tc.expectedUserInfo.ID)
-		}
+				if uInfo.Email != tc.expectedUserInfo.Email {
+					t.Errorf("expected %s, but got %s", uInfo.Email, tc.expectedUserInfo.Email)
+				}
+			} else {
+				if tc.expectedErr != err {
+					t.Errorf("expected error %q, but got error %q", tc.expectedErr.Error(), err.Error())
+				}
+				if nil != uInfo {
+					t.Errorf("did not expect user info, but got %v", uInfo)
+				}
+			}
+		})
 	}
 }

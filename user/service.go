@@ -71,6 +71,7 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 		log.Println(err)
 		return nil, err
 	}
+
 	uInfo.Password = ""
 	uInfo.HashedPassword = ""
 
