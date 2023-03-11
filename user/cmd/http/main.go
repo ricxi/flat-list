@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/ricxi/flat-list/user"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
@@ -18,7 +19,8 @@ func main() {
 	}
 
 	mongoRepository := user.NewMongoRepository(client, cfg.mongoDBName, cfg.mongoTimeout)
-	service := user.NewService(mongoRepository)
+	passwordService := user.NewPasswordService(bcrypt.MinCost)
+	service := user.NewService(mongoRepository, passwordService)
 	vService := &user.ValidationService{Service: service}
 
 	handler := user.NewHandler(vService)
