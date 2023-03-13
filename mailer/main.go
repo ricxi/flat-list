@@ -21,6 +21,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/v1/send", handleSendEmail(emailService))
+	mux.HandleFunc("/v1/mailer/activate", handleSendEmail(emailService))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// if r.Method != http.MethodPut {
 		// 	w.WriteHeader(http.StatusMethodNotAllowed)

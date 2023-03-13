@@ -1,9 +1,14 @@
 package user
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/base32"
+	"encoding/json"
 	"errors"
 	"log"
+	"net/http"
 	"os"
 
 	"time"
@@ -50,6 +55,35 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 		return "", err
 	}
 
+	activationToken, err := generateActivationToken()
+	if err != nil {
+		return "", err
+	}
+
+	activationInfo := struct {
+		From            string `json:"from"`
+		To              string `json:"to"`
+		FirstName       string `json:"firstName"`
+		ActivationToken string `json:"activationToken"`
+	}{
+		From:            "the.team@flatlist.com",
+		To:              u.Email,
+		FirstName:       u.FirstName,
+		ActivationToken: activationToken,
+	}
+
+	reqBody := new(bytes.Buffer)
+	if err := json.NewEncoder(reqBody).Encode(&activationInfo); err != nil {
+		return "", err
+	}
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/v1/mailer/activate", reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	c := http.Client{}
+
+	c.Do(req)
 	return userID, nil
 }
 
@@ -97,4 +131,16 @@ func generateJWT(claims jwt.MapClaims) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secretKey))
+}
+
+func generateActivationToken() (string, error) {
+	tokenBytes := make([]byte, 16)
+
+	if _, err := rand.Read(tokenBytes); err != nil {
+		return "", err
+	}
+
+	token := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(tokenBytes)
+
+	return token, nil
 }
