@@ -7,12 +7,14 @@ import (
 )
 
 // Subject line for user activation emails
-const ACTIVATION_EMAIL_SUBJECT string = "Please activate your account"
+const (
+	ACTIVATION_EMAIL_SUBJECT  string = "Please activate your account"
+	ACTIVATION_HTML_TMPL_NAME string = "./useractivation.html"
+)
 
 // EmailService for sending emails
 type EmailService struct {
-	tmplFilename string
-	mailer       *Mailer
+	mailer *Mailer
 }
 
 // SendActivationEmail validates that all the data is provided to send
@@ -31,7 +33,7 @@ func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 		data.FirstName = "new user"
 	}
 
-	t, err := template.ParseFiles(s.tmplFilename)
+	t, err := template.ParseFiles(ACTIVATION_HTML_TMPL_NAME)
 	if err != nil {
 		return err
 	}
@@ -42,6 +44,7 @@ func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 	}
 
 	data.Subject = ACTIVATION_EMAIL_SUBJECT
+
 	data.ActivationLink = "http://localhost:5000/" + string(activationToken)
 
 	htmlEmailBody := new(bytes.Buffer)
