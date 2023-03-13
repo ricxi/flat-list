@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/bin/bash
 
 # curl -X POST -H "Content-Type: application/json" -d @register.json http://localhost:8080/v1/user/register
 # curl -X POST -H "Content-Type: application/json" -d @login.json http://localhost:8080/v1/user/login
@@ -13,6 +13,7 @@ post_request() {
    endpoint="$2"
 
    curl -X POST \
+     -v \
       -H "Content-Type: application/json" \
       -d "$data" \
      "$endpoint" 

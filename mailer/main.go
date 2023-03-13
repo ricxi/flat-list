@@ -20,8 +20,10 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/v1/send", handleSendEmail(emailService))
+	// sends activation email
 	mux.HandleFunc("/v1/mailer/activate", handleSendEmail(emailService))
+
+	// receives activation email call
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// if r.Method != http.MethodPut {
 		// 	w.WriteHeader(http.StatusMethodNotAllowed)

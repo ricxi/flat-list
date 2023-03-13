@@ -60,30 +60,12 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 		return "", err
 	}
 
-	activationInfo := struct {
-		From            string `json:"from"`
-		To              string `json:"to"`
-		FirstName       string `json:"firstName"`
-		ActivationToken string `json:"activationToken"`
-	}{
-		From:            "the.team@flatlist.com",
-		To:              u.Email,
-		FirstName:       u.FirstName,
-		ActivationToken: activationToken,
-	}
+	go func() {
+		if err := sendActivationEmailRequest(u.Email, u.FirstName, activationToken); err != nil {
+			log.Println(err)
+		}
+	}()
 
-	reqBody := new(bytes.Buffer)
-	if err := json.NewEncoder(reqBody).Encode(&activationInfo); err != nil {
-		return "", err
-	}
-	req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/v1/mailer/activate", reqBody)
-	if err != nil {
-		return "", err
-	}
-
-	c := http.Client{}
-
-	c.Do(req)
 	return userID, nil
 }
 
@@ -143,4 +125,38 @@ func generateActivationToken() (string, error) {
 	token := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(tokenBytes)
 
 	return token, nil
+}
+
+func sendActivationEmailRequest(email, firstName, activationToken string) error {
+	activationInfo := struct {
+		From            string `json:"from"`
+		To              string `json:"to"`
+		FirstName       string `json:"firstName"`
+		ActivationToken string `json:"activationToken"`
+	}{
+		From:            "the.team@flatlist.com",
+		To:              email,
+		FirstName:       firstName,
+		ActivationToken: activationToken,
+	}
+
+	reqBody := new(bytes.Buffer)
+	if err := json.NewEncoder(reqBody).Encode(&activationInfo); err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/v1/mailer/activate", reqBody)
+	if err != nil {
+		return err
+	}
+
+	c := http.Client{}
+
+	_, err = c.Do(req)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
 }
