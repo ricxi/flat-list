@@ -42,7 +42,7 @@ func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 	}
 
 	data.Subject = ACTIVATION_EMAIL_SUBJECT
-	data.Token = activationToken
+	data.ActivationLink = "http://localhost:5000/" + string(activationToken)
 
 	htmlEmailBody := new(bytes.Buffer)
 	if err := t.Execute(htmlEmailBody, data); err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -21,6 +22,10 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/v1/send", handleSendEmail(emailService))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL.Path)
+		fmt.Fprint(w, r.URL.Path)
+	})
 
 	srv := &http.Server{
 		Handler: mux,
