@@ -14,7 +14,7 @@ func generateActivationToken() (ActivationToken, error) {
 		return "", err
 	}
 
-	token := base32.StdEncoding.EncodeToString(tokenBytes)
+	token := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(tokenBytes)
 
 	return ActivationToken(token), nil
 }
