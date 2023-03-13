@@ -16,8 +16,8 @@ func NewMailer(username, password, host string, port int) *Mailer {
 	}
 }
 
-// Send is a wrapper for SendMultiple that sends an email
-// to a specific email address.
+// Send is a wrapper for SendMultiple.
+// It sends an email to a single email address.
 func (m *Mailer) Send(from, to, subject, body string) error {
 	return m.SendMultiple(from, subject, body, to)
 }

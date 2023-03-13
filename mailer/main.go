@@ -13,7 +13,7 @@ func main() {
 
 	m := NewMailer(conf.username, conf.password, conf.host, conf.port)
 
-	emailService := &Service{
+	emailService := &EmailService{
 		tmplFilename: "./useractivation.html",
 		mailer:       m,
 	}

@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func handleSendEmail(s *Service) http.HandlerFunc {
+func handleSendEmail(es *EmailService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var data UserActivationData
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
@@ -13,7 +13,7 @@ func handleSendEmail(s *Service) http.HandlerFunc {
 			return
 		}
 
-		if err := s.GenerateAndSendActivationEmail(data); err != nil {
+		if err := es.SendActivationEmail(data); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

@@ -6,20 +6,19 @@ import (
 	"html/template"
 )
 
-type UserActivationData struct {
-	From      string `json:"from"`
-	To        string `json:"to"`
-	Subject   string `json:"subject"`
-	FirstName string `json:"firstName"`
-}
+// Subject line for user activation emails
+const ACTIVATION_EMAIL_SUBJECT string = "Please activate your account"
 
-type Service struct {
+// EmailService for sending emails
+type EmailService struct {
 	tmplFilename string
 	mailer       *Mailer
 }
 
-// Returns an error and does not send email if anything is missing
-func (s *Service) GenerateAndSendActivationEmail(data UserActivationData) error {
+// SendActivationEmail validates that all the data is provided to send
+// an activation email, generates an html template for the email, and
+// calls the mailer to send the email
+func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 	if data.From == "" {
 		return fmt.Errorf("field cannot be empty: from ")
 	}
@@ -32,17 +31,23 @@ func (s *Service) GenerateAndSendActivationEmail(data UserActivationData) error 
 		data.FirstName = "new user"
 	}
 
-	data.Subject = "Please activate your account"
-
 	t, err := template.ParseFiles(s.tmplFilename)
 	if err != nil {
 		return err
 	}
 
-	emailBody := new(bytes.Buffer)
-	if err := t.Execute(emailBody, data); err != nil {
+	activationToken, err := generateActivationToken()
+	if err != nil {
 		return err
 	}
 
-	return s.mailer.Send(data.From, data.To, data.Subject, emailBody.String())
+	data.Subject = ACTIVATION_EMAIL_SUBJECT
+	data.Token = activationToken
+
+	htmlEmailBody := new(bytes.Buffer)
+	if err := t.Execute(htmlEmailBody, data); err != nil {
+		return err
+	}
+
+	return s.mailer.Send(data.From, data.To, data.Subject, htmlEmailBody.String())
 }
