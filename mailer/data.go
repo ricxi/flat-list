@@ -1,4 +1,4 @@
-package main
+package mailer
 
 // UserActivationData stores information needed
 // to send an email a new user with instructions

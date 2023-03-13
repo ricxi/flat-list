@@ -1,4 +1,4 @@
-package main
+package mailer
 
 import (
 	"bytes"
@@ -15,6 +15,12 @@ const (
 // EmailService for sending emails
 type EmailService struct {
 	mailer *Mailer
+}
+
+func NewEmailService(mailer *Mailer) *EmailService {
+	return &EmailService{
+		mailer: mailer,
+	}
 }
 
 // SendActivationEmail validates that all the data is provided to send

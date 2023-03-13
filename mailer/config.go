@@ -1,29 +1,35 @@
-package main
+package mailer
 
 import (
-  "os"
-  "strconv"
+	"os"
+	"strconv"
 )
 
 type config struct {
-	host     string
-	port     int
-	username string
-	password string
+	Host     string
+	Port     int
+	Username string
+	Password string
+	HttpPort string
+	GrpcPort string
 }
 
-func setupConfig() (*config, error) {
-  conf := config{}
+func SetupConfig() (*config, error) {
+	conf := config{}
 
-  conf.host = os.Getenv("HOST")
-  portStr := os.Getenv("PORT")
-  port, err := strconv.Atoi(portStr)
-  if err != nil {
-    return nil, err
-  }
-  conf.port = port
-  conf.username = os.Getenv("USERNAME")
-  conf.password = os.Getenv("PASSWORD")
+	conf.Host = os.Getenv("HOST")
 
-  return &conf, nil
+	portStr := os.Getenv("PORT")
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return nil, err
+	}
+	conf.Port = port
+
+	conf.Username = os.Getenv("USERNAME")
+	conf.Password = os.Getenv("PASSWORD")
+	conf.HttpPort = os.Getenv("HTTP_PORT")
+	conf.GrpcPort = os.Getenv("GRPC_PORT")
+
+	return &conf, nil
 }
