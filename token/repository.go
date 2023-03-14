@@ -22,6 +22,19 @@ type Repository struct {
 	DB *sql.DB
 }
 
+func Connect(connStr string) (*sql.DB, error) {
+	db, err := sql.Open("pgx", connStr)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
 // InsertToken inserts a new activation token for a given user based on their id
 func (r *Repository) InsertToken(ctx context.Context, info *ActivationTokenInfo) error {
 	query := "INSERT INTO activation_tokens (token, user_id) VALUES ($1, $2)"

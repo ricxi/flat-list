@@ -12,6 +12,6 @@ message Response {
     string activation_token = 1;
 }
 
-service ActivationTokenService {
-    rpc GenerateForUser(Request) returns (Response);
+service TokenService {
+    rpc CreateTokenForUser(Request) returns (Response);
 }

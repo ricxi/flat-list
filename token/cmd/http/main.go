@@ -1,10 +1,10 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/julienschmidt/httprouter"
@@ -12,25 +12,21 @@ import (
 )
 
 func main() {
-	connStr := os.Getenv("DATABASE_URL")
-	if connStr == "" {
-		log.Fatalln("db connection env cannot be empty")
-	}
-
 	httpPort := os.Getenv("HTTP_PORT")
 	if httpPort == "" {
 		log.Fatalln("http port env cannot be empty")
 	}
 
-	db, err := sql.Open("pgx", connStr)
+	conf, err := token.GetConf()
 	if err != nil {
-		log.Fatalln("unable to connect to postgres", err)
+		log.Fatalln("problem loading configuation: ", err)
+	}
+
+	db, err := token.Connect(conf.DatabaseURL)
+	if err != nil {
+		log.Fatalln("problem connecting to postgres: ", err)
 	}
 	defer db.Close()
-
-	if err := db.Ping(); err != nil {
-		log.Fatalln("unable to ping postgres", err)
-	}
 
 	repo := token.Repository{
 		DB: db,
@@ -42,8 +38,10 @@ func main() {
 	r.GET("/v1/token/:userID", token.HandleGetTokens(&repo))
 
 	srv := &http.Server{
-		Handler: r,
-		Addr:    ":" + httpPort,
+		Handler:      r,
+		Addr:         ":" + httpPort,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
 	}
 
 	log.Println("starting token service on port", srv.Addr)

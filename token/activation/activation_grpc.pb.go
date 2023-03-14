@@ -18,87 +18,86 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// ActivationTokenServiceClient is the client API for ActivationTokenService service.
+// TokenServiceClient is the client API for TokenService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ActivationTokenServiceClient interface {
-	GenerateForUser(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+type TokenServiceClient interface {
+	CreateTokenForUser(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
 }
 
-type activationTokenServiceClient struct {
+type tokenServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewActivationTokenServiceClient(cc grpc.ClientConnInterface) ActivationTokenServiceClient {
-	return &activationTokenServiceClient{cc}
+func NewTokenServiceClient(cc grpc.ClientConnInterface) TokenServiceClient {
+	return &tokenServiceClient{cc}
 }
 
-func (c *activationTokenServiceClient) GenerateForUser(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+func (c *tokenServiceClient) CreateTokenForUser(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := c.cc.Invoke(ctx, "/activation.ActivationTokenService/GenerateForUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/activation.TokenService/CreateTokenForUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ActivationTokenServiceServer is the server API for ActivationTokenService service.
-// All implementations must embed UnimplementedActivationTokenServiceServer
+// TokenServiceServer is the server API for TokenService service.
+// All implementations must embed UnimplementedTokenServiceServer
 // for forward compatibility
-type ActivationTokenServiceServer interface {
-	GenerateForUser(context.Context, *Request) (*Response, error)
-	mustEmbedUnimplementedActivationTokenServiceServer()
+type TokenServiceServer interface {
+	CreateTokenForUser(context.Context, *Request) (*Response, error)
+	mustEmbedUnimplementedTokenServiceServer()
 }
 
-// UnimplementedActivationTokenServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedActivationTokenServiceServer struct {
+// UnimplementedTokenServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedTokenServiceServer struct {
 }
 
-func (UnimplementedActivationTokenServiceServer) GenerateForUser(context.Context, *Request) (*Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GenerateForUser not implemented")
+func (UnimplementedTokenServiceServer) CreateTokenForUser(context.Context, *Request) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateTokenForUser not implemented")
 }
-func (UnimplementedActivationTokenServiceServer) mustEmbedUnimplementedActivationTokenServiceServer() {
-}
+func (UnimplementedTokenServiceServer) mustEmbedUnimplementedTokenServiceServer() {}
 
-// UnsafeActivationTokenServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ActivationTokenServiceServer will
+// UnsafeTokenServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to TokenServiceServer will
 // result in compilation errors.
-type UnsafeActivationTokenServiceServer interface {
-	mustEmbedUnimplementedActivationTokenServiceServer()
+type UnsafeTokenServiceServer interface {
+	mustEmbedUnimplementedTokenServiceServer()
 }
 
-func RegisterActivationTokenServiceServer(s grpc.ServiceRegistrar, srv ActivationTokenServiceServer) {
-	s.RegisterService(&ActivationTokenService_ServiceDesc, srv)
+func RegisterTokenServiceServer(s grpc.ServiceRegistrar, srv TokenServiceServer) {
+	s.RegisterService(&TokenService_ServiceDesc, srv)
 }
 
-func _ActivationTokenService_GenerateForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TokenService_CreateTokenForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ActivationTokenServiceServer).GenerateForUser(ctx, in)
+		return srv.(TokenServiceServer).CreateTokenForUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/activation.ActivationTokenService/GenerateForUser",
+		FullMethod: "/activation.TokenService/CreateTokenForUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ActivationTokenServiceServer).GenerateForUser(ctx, req.(*Request))
+		return srv.(TokenServiceServer).CreateTokenForUser(ctx, req.(*Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// ActivationTokenService_ServiceDesc is the grpc.ServiceDesc for ActivationTokenService service.
+// TokenService_ServiceDesc is the grpc.ServiceDesc for TokenService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var ActivationTokenService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "activation.ActivationTokenService",
-	HandlerType: (*ActivationTokenServiceServer)(nil),
+var TokenService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "activation.TokenService",
+	HandlerType: (*TokenServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GenerateForUser",
-			Handler:    _ActivationTokenService_GenerateForUser_Handler,
+			MethodName: "CreateTokenForUser",
+			Handler:    _TokenService_CreateTokenForUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
