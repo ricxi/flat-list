@@ -1,9 +1,14 @@
 package user
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/base32"
+	"encoding/json"
 	"errors"
 	"log"
+	"net/http"
 	"os"
 
 	"time"
@@ -49,6 +54,17 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 		log.Println(err)
 		return "", err
 	}
+
+	activationToken, err := generateActivationToken()
+	if err != nil {
+		return "", err
+	}
+
+	go func() {
+		if err := sendActivationEmailRequest(u.Email, u.FirstName, activationToken); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	return userID, nil
 }
@@ -97,4 +113,54 @@ func generateJWT(claims jwt.MapClaims) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secretKey))
+}
+
+// generate an activation token that is used
+// to validate a newly registered user's account
+func generateActivationToken() (string, error) {
+	tokenBytes := make([]byte, 16)
+
+	if _, err := rand.Read(tokenBytes); err != nil {
+		return "", err
+	}
+
+	token := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(tokenBytes)
+
+	return token, nil
+}
+
+// sendActivationEmailRequest calls the mailer api to send an email
+// to a newly registered user
+func sendActivationEmailRequest(email, firstName, activationToken string) error {
+	activationInfo := struct {
+		From            string `json:"from"`
+		To              string `json:"to"`
+		FirstName       string `json:"firstName"`
+		ActivationToken string `json:"activationToken"`
+	}{
+		From:            "the.team@flatlist.com",
+		To:              email,
+		FirstName:       firstName,
+		ActivationToken: activationToken,
+	}
+
+	reqBody := new(bytes.Buffer)
+	if err := json.NewEncoder(reqBody).Encode(&activationInfo); err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/v1/mailer/activate", reqBody)
+	if err != nil {
+		return err
+	}
+
+	c := http.Client{}
+
+	_, err = c.Do(req)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
 }
