@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = "github.com/ricxi/flat-list/activation";
+
+package activation;
+
+message Request {
+    string user_id = 1;
+}
+
+message Response {
+    string activation_token = 1;
+}
+
+service ActivationTokenService {
+    rpc GenerateForUser(Request) returns (Response);
+}

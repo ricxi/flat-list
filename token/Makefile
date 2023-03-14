@@ -3,7 +3,7 @@ export
 
 .PHONY: run/dev/token
 run/dev/token:
-	go run .
+	go run ./cmd/http
 
 .PHONY: run/dev/psql/token
 run/dev/psql/token:

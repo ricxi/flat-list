@@ -8,10 +8,20 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/julienschmidt/httprouter"
+	"githug.com/ricxi/flat-list/token"
 )
 
 func main() {
 	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		log.Fatalln("db connection env cannot be empty")
+	}
+
+	httpPort := os.Getenv("HTTP_PORT")
+	if httpPort == "" {
+		log.Fatalln("http port env cannot be empty")
+	}
+
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
 		log.Fatalln("unable to connect to postgres", err)
@@ -22,15 +32,14 @@ func main() {
 		log.Fatalln("unable to ping postgres", err)
 	}
 
-	repo := repository{
-		db: db,
+	repo := token.Repository{
+		DB: db,
 	}
 
 	r := httprouter.New()
-	r.POST("/v1/token/activation/:userID", handlerCreateToken(&repo))
-	r.GET("/v1/token/:userID", handleGetTokens(&repo))
 
-	httpPort := os.Getenv("HTTP_PORT")
+	r.POST("/v1/token/activation/:userID", token.HandlerCreateToken(&repo))
+	r.GET("/v1/token/:userID", token.HandleGetTokens(&repo))
 
 	srv := &http.Server{
 		Handler: r,

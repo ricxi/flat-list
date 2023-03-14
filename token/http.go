@@ -1,4 +1,4 @@
-package main
+package token
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 )
 
 // create a token for a given user
-func handlerCreateToken(repo *repository) httprouter.Handle {
+func HandlerCreateToken(repo *Repository) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		activationToken, err := generateActivationToken()
 		if err != nil {
@@ -33,7 +33,7 @@ func handlerCreateToken(repo *repository) httprouter.Handle {
 
 // Return all the activation tokens that are listed under
 // the same user id
-func handleGetTokens(repo *repository) httprouter.Handle {
+func HandleGetTokens(repo *Repository) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		userID := ps.ByName("userID")
 
