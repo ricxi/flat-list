@@ -115,6 +115,8 @@ func generateJWT(claims jwt.MapClaims) (string, error) {
 	return token.SignedString([]byte(secretKey))
 }
 
+// generate an activation token that is used
+// to validate a newly registered user's account
 func generateActivationToken() (string, error) {
 	tokenBytes := make([]byte, 16)
 
@@ -127,6 +129,8 @@ func generateActivationToken() (string, error) {
 	return token, nil
 }
 
+// sendActivationEmailRequest calls the mailer api to send an email
+// to a newly registered user
 func sendActivationEmailRequest(email, firstName, activationToken string) error {
 	activationInfo := struct {
 		From            string `json:"from"`

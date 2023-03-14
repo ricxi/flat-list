@@ -18,4 +18,3 @@ message Response {
 service mailerService {
     rpc SendEmail(Request) returns (Response);
 }
-
