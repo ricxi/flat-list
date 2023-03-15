@@ -1,23 +1,17 @@
 package user
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base32"
-	"encoding/json"
 	"errors"
 	"log"
-	"net/http"
 	"os"
 
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/ricxi/flat-list/mailer/activate"
 	"golang.org/x/crypto/bcrypt"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Service interface {
@@ -28,12 +22,14 @@ type Service interface {
 type service struct {
 	repository      Repository
 	passwordService PasswordService
+	client          Client
 }
 
 func NewService(repository Repository, passwordService PasswordService) Service {
 	return &service{
 		repository:      repository,
 		passwordService: passwordService,
+		client:          grpcClient{},
 	}
 }
 
@@ -64,13 +60,9 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 	}
 
 	go func() {
-		err := sendActivationEmailGRPC(u.Email, u.FirstName, activationToken)
-		if err != nil {
+		if err := s.client.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
 			log.Println(err)
 		}
-		// if err := sendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
-		// 	log.Println(err)
-		// }
 	}()
 
 	return userID, nil
@@ -134,59 +126,4 @@ func generateActivationToken() (string, error) {
 	token := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(tokenBytes)
 
 	return token, nil
-}
-
-// sendActivationEmail calls the mailer api to send an email
-// to a newly registered user
-func sendActivationEmail(email, firstName, activationToken string) error {
-	activationInfo := struct {
-		From            string `json:"from"`
-		To              string `json:"to"`
-		FirstName       string `json:"firstName"`
-		ActivationToken string `json:"activationToken"`
-	}{
-		From:            "the.team@flatlist.com",
-		To:              email,
-		FirstName:       firstName,
-		ActivationToken: activationToken,
-	}
-
-	reqBody := new(bytes.Buffer)
-	if err := json.NewEncoder(reqBody).Encode(&activationInfo); err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/v1/mailer/activate", reqBody)
-	if err != nil {
-		return err
-	}
-
-	c := http.Client{}
-
-	_, err = c.Do(req)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	return nil
-}
-
-func sendActivationEmailGRPC(email, name, activationToken string) error {
-	cc, err := grpc.Dial(":5001", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return err
-	}
-
-	c := activate.NewMailerServiceClient(cc)
-	if _, err := c.SendEmail(context.Background(), &activate.Request{
-		From:            "the.team@flat-list.com",
-		To:              email,
-		FirstName:       name,
-		ActivationToken: activationToken,
-	}); err != nil {
-		return err
-	}
-
-	return nil
 }

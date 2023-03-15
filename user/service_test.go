@@ -1,3 +1,6 @@
+// ! nil pointers might occur because
+// ! there are a few depedencies that have
+// ! not been mocked yet
 package user_test
 
 import (
