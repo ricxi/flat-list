@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option go_package = "github.com/ricxi/flat-list/mailer/pb";
+
+package pb;
+
+message Request {
+    string from  = 1;
+    string to = 2;
+    string name = 3;
+    string activationToken = 4;
+}
+
+message Response {
+    string status = 1;
+}
+
+service Mailer {
+    rpc SendActivationEmail(Request) returns (Response);
+}

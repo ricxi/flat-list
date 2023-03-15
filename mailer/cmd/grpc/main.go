@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/ricxi/flat-list/mailer"
-	"github.com/ricxi/flat-list/mailer/activate"
+	"github.com/ricxi/flat-list/mailer/pb"
 	"google.golang.org/grpc"
 )
 
@@ -17,7 +17,7 @@ func main() {
 
 	m := mailer.NewMailer(conf.Username, conf.Password, conf.Host, conf.Port)
 	es := mailer.NewEmailService(m)
-	srv := mailer.GRPCServer{EmailService: es}
+	srv := mailer.GrpcServer{EmailService: es}
 
 	lis, err := net.Listen("tcp", ":"+conf.GrpcPort)
 	if err != nil {
@@ -25,7 +25,7 @@ func main() {
 	}
 	grpcServer := grpc.NewServer()
 
-	activate.RegisterMailerServiceServer(grpcServer, &srv)
+	pb.RegisterMailerServer(grpcServer, &srv)
 
 	log.Println("starting grpc server on port", lis.Addr())
 
