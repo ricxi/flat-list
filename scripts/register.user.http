@@ -1,0 +1,17 @@
+post http://localhost:9000/v1/user/register
+Content-Type: application/json
+
+{
+    "firstName": "Michael",
+    "lastName": "Scott",
+    "email": "michaelscott@dundermifflin.com",
+    "password": "1234"
+}
+
+post http://localhost:9000/v1/user/login
+Content-Type: application/json
+
+{
+    "email": "michaelscott@dundermifflin.com",
+    "password": "1234"
+}

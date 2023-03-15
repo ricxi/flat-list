@@ -11,10 +11,10 @@ type UserInfo struct {
 	LastName       string     `json:"lastName"`
 	Email          string     `json:"email"`
 	Password       string     `json:"-"`
-	HashedPassword string     `json:"-"`
+	HashedPassword string     `json:"j"`
 	Activated      bool       `json:"-"`
-	CreatedAt      *time.Time `json:"createdAt"`
-	UpdatedAt      *time.Time `json:"updatedAt"`
+	CreatedAt      *time.Time `json:"-"`
+	UpdatedAt      *time.Time `json:"-"`
 	Token          string     `json:"token"`
 }
 
@@ -25,7 +25,7 @@ type UserRegistrationInfo struct {
 	LastName       string     `json:"lastName"`
 	Email          string     `json:"email"`
 	Password       string     `json:"password"`
-	HashedPassword string     `json:"hashedPassword"`
+	HashedPassword string     `json:"-"`
 	Activated      bool       `json:"activated"`
 	CreatedAt      *time.Time `json:"createdAt"`
 	UpdatedAt      *time.Time `json:"updatedAt"`
