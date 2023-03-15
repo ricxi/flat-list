@@ -25,7 +25,7 @@ func NewEmailService(mailer *Mailer) *EmailService {
 
 // SendActivationEmail validates that all the data is provided to send
 // an activation email, generates an html template for the email, and
-// calls the mailer to send the email
+// calls the Mailer to send the email.
 func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 	if data.From == "" {
 		return fmt.Errorf("field cannot be empty: from ")
