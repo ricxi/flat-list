@@ -9,8 +9,8 @@ import (
 const (
 	// Subject line for the user activation email
 	ACTIVATION_EMAIL_SUBJECT string = "Please activate your account"
-	// Name of the HTML template for generating the body of the user activation email
-	ACTIVATION_HTML_TMPL_NAME string = "./useractivation.html"
+	// Path to the HTML template used to generate the body of the user activation email
+	ACTIVATION_HTML_TMPL string = "./templates/useractivation.html"
 )
 
 type EmailService struct {
@@ -39,14 +39,15 @@ func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 		data.Name = "user"
 	}
 
-	t, err := template.ParseFiles(ACTIVATION_HTML_TMPL_NAME)
+	t, err := template.ParseFiles(ACTIVATION_HTML_TMPL)
 	if err != nil {
 		return err
 	}
 
+	// this should be an environment variable
 	activationLink := "http://localhost:5000/" + data.ActivationToken
 
-	emailTemplateData := struct {
+	tmplData := struct {
 		Name           string
 		ActivationLink string
 	}{
@@ -54,12 +55,12 @@ func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 		ActivationLink: activationLink,
 	}
 
-	htmlEmailBody := new(bytes.Buffer)
-	if err := t.Execute(htmlEmailBody, emailTemplateData); err != nil {
+	htmlBody := new(bytes.Buffer)
+	if err := t.Execute(htmlBody, tmplData); err != nil {
 		return err
 	}
 
 	subject := ACTIVATION_EMAIL_SUBJECT
 
-	return s.mailer.Send(data.From, data.To, subject, htmlEmailBody.String())
+	return s.mailer.Send(data.From, data.To, subject, htmlBody.String())
 }
