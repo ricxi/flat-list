@@ -26,7 +26,7 @@ func main() {
 		DB: db,
 	}
 
-	lis, err := net.Listen("tcp", ":"+GrpcPort)
+	lis, err := net.Listen("tcp", ":"+config.GrpcPort)
 	if err != nil {
 		log.Fatalln("fail to listen on tcp", err)
 	}
