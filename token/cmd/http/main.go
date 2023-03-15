@@ -22,12 +22,9 @@ func main() {
 	}
 	defer db.Close()
 
-	repo := token.Repository{
-		DB: db,
-	}
+	repo := token.NewRepository(db)
 
 	r := httprouter.New()
-
 	r.POST("/v1/token/activation/:userID", token.HandlerCreateToken(&repo))
 	r.GET("/v1/token/:userID", token.HandleGetTokens(&repo))
 

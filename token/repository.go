@@ -11,7 +11,11 @@ type ActivationTokenInfo struct {
 }
 
 type Repository struct {
-	DB *sql.DB
+	db *sql.DB
+}
+
+func NewRepository(db *sql.DB) Repository {
+	return Repository{db: db}
 }
 
 func Connect(connStr string) (*sql.DB, error) {
@@ -31,7 +35,7 @@ func Connect(connStr string) (*sql.DB, error) {
 func (r *Repository) InsertToken(ctx context.Context, info *ActivationTokenInfo) error {
 	query := "INSERT INTO activation_tokens (token, user_id) VALUES ($1, $2)"
 
-	_, err := r.DB.ExecContext(ctx, query, info.Token, info.UserID)
+	_, err := r.db.ExecContext(ctx, query, info.Token, info.UserID)
 	return err
 
 }
@@ -40,7 +44,7 @@ func (r *Repository) InsertToken(ctx context.Context, info *ActivationTokenInfo)
 func (r *Repository) GetTokens(ctx context.Context, userID string) ([]string, error) {
 	query := "SELECT token FROM activation_tokens WHERE activation_tokens.user_id = $1"
 
-	rows, err := r.DB.QueryContext(ctx, query, userID)
+	rows, err := r.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}

@@ -22,9 +22,7 @@ func main() {
 	}
 	defer db.Close()
 
-	repo := token.Repository{
-		DB: db,
-	}
+	repo := token.NewRepository(db)
 
 	lis, err := net.Listen("tcp", ":"+config.GrpcPort)
 	if err != nil {
