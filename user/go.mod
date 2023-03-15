@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/golang-jwt/jwt/v4 v4.5.0
-	github.com/ricxi/flat-list/mailer v0.0.0-20230315145408-50d443b7be60
+	github.com/ricxi/flat-list/mailer v0.0.0-20230315205350-06d5f9fd2d74
 	go.mongodb.org/mongo-driver v1.11.2
 	golang.org/x/crypto v0.7.0
 	google.golang.org/grpc v1.53.0
@@ -27,4 +27,6 @@ require (
 	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4 // indirect
 	google.golang.org/protobuf v1.29.1 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 )

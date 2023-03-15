@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/ricxi/flat-list/user"
@@ -13,10 +14,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	client, err := newMongoClient(cfg.mongoURI, cfg.mongoTimeout)
+	client, err := user.NewMongoClient(cfg.mongoURI, cfg.mongoTimeout)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer client.Disconnect(context.Background())
 
 	mongoRepository := user.NewMongoRepository(client, cfg.mongoDBName, cfg.mongoTimeout)
 	passwordService := user.NewPasswordService(bcrypt.MinCost)
