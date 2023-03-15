@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ricxi/flat-list/mailer/activate"
+	"github.com/ricxi/flat-list/mailer/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -41,11 +41,11 @@ func (g grpcClient) SendActivationEmail(email, name, activationToken string) err
 		return err
 	}
 
-	c := activate.NewMailerServiceClient(cc)
-	if _, err := c.SendEmail(context.Background(), &activate.Request{
+	c := pb.NewMailerClient(cc)
+	if _, err := c.SendActivationEmail(context.Background(), &pb.Request{
 		From:            "the.team@flat-list.com",
 		To:              email,
-		FirstName:       name,
+		Name:            name,
 		ActivationToken: activationToken,
 	}); err != nil {
 		return err
@@ -74,6 +74,7 @@ func (h httpClient) SendActivationEmail(email, firstName, activationToken string
 		return err
 	}
 
+	// this url should also be an environment variable or something
 	req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/v1/mailer/activate", reqBody)
 	if err != nil {
 		return err

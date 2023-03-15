@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type Repository interface {
@@ -24,6 +25,23 @@ type mongoRepository struct {
 	database string
 	coll     string
 	timeout  time.Duration
+}
+
+func NewMongoClient(uri string, timeout int) (*mongo.Client, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	defer cancel()
+
+	clientOptions := options.Client().ApplyURI(uri)
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := client.Ping(ctx, readpref.Primary()); err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 // Create a new user repository with the mongo client and database name
