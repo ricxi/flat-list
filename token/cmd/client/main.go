@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"githug.com/ricxi/flat-list/token/activation"
+	"githug.com/ricxi/flat-list/token/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -17,10 +17,10 @@ func main() {
 	}
 	defer cc.Close()
 
-	c := activation.NewTokenServiceClient(cc)
+	c := pb.NewTokenClient(cc)
 
-	req := activation.Request{UserId: "fakeittillyoumakeit"}
-	res, err := c.CreateTokenForUser(context.Background(), &req)
+	req := pb.Request{UserId: "fakeuserid"}
+	res, err := c.CreateActivationToken(context.Background(), &req)
 	if err != nil {
 		log.Println(err)
 	}

@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -12,34 +11,26 @@ import (
 )
 
 func main() {
-	httpPort := os.Getenv("HTTP_PORT")
-	if httpPort == "" {
-		log.Fatalln("http port env cannot be empty")
-	}
-
-	conf, err := token.GetConf()
+	config, err := token.LoadConfig()
 	if err != nil {
 		log.Fatalln("problem loading configuation: ", err)
 	}
 
-	db, err := token.Connect(conf.DatabaseURL)
+	db, err := token.Connect(config.DatabaseURL)
 	if err != nil {
 		log.Fatalln("problem connecting to postgres: ", err)
 	}
 	defer db.Close()
 
-	repo := token.Repository{
-		DB: db,
-	}
+	repo := token.NewRepository(db)
 
 	r := httprouter.New()
-
 	r.POST("/v1/token/activation/:userID", token.HandlerCreateToken(&repo))
 	r.GET("/v1/token/:userID", token.HandleGetTokens(&repo))
 
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         ":" + httpPort,
+		Addr:         ":" + config.HttpPort,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}

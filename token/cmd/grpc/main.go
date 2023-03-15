@@ -3,44 +3,36 @@ package main
 import (
 	"log"
 	"net"
-	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"githug.com/ricxi/flat-list/token"
-	"githug.com/ricxi/flat-list/token/activation"
+	"githug.com/ricxi/flat-list/token/pb"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	GrpcPort := os.Getenv("GRPC_PORT")
-	if GrpcPort == "" {
-		log.Fatalln("missing grpc env")
-	}
-
-	conf, err := token.GetConf()
+	config, err := token.LoadConfig()
 	if err != nil {
 		log.Fatalln("problem loading configuation: ", err)
 	}
 
-	db, err := token.Connect(conf.DatabaseURL)
+	db, err := token.Connect(config.DatabaseURL)
 	if err != nil {
 		log.Fatalln("problem connecting to postgres: ", err)
 	}
 	defer db.Close()
 
-	repo := token.Repository{
-		DB: db,
-	}
+	repo := token.NewRepository(db)
 
-	lis, err := net.Listen("tcp", ":"+GrpcPort)
+	lis, err := net.Listen("tcp", ":"+config.GrpcPort)
 	if err != nil {
 		log.Fatalln("fail to listen on tcp", err)
 	}
 
 	grpcServer := grpc.NewServer()
-	srv := token.Server{R: &repo}
+	srv := token.Server{Repository: repo}
 
-	activation.RegisterTokenServiceServer(grpcServer, &srv)
+	pb.RegisterTokenServer(grpcServer, srv)
 
 	log.Println("starting grpc token server on ", lis.Addr())
 

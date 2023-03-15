@@ -3,29 +3,29 @@ package mailer
 import (
 	"context"
 
-	"github.com/ricxi/flat-list/mailer/activate"
+	"github.com/ricxi/flat-list/mailer/pb"
 )
 
-type GRPCServer struct {
-	activate.UnimplementedMailerServiceServer
+type GrpcServer struct {
+	pb.UnimplementedMailerServer
 	EmailService *EmailService
 }
 
-// SendEmail is a grpc implementation that can be called to send an activation
-// email to a user
-func (s *GRPCServer) SendEmail(ctx context.Context, r *activate.Request) (*activate.Response, error) {
+// SendActivationEmail is a grpc implementation that can be called by other
+// services to send an activation email to a user
+func (gs GrpcServer) SendActivationEmail(ctx context.Context, r *pb.Request) (*pb.Response, error) {
 	data := UserActivationData{
 		From:            r.From,
 		To:              r.To,
-		FirstName:       r.FirstName,
+		Name:            r.Name,
 		ActivationToken: r.ActivationToken,
 	}
 
-	if err := s.EmailService.SendActivationEmail(data); err != nil {
+	if err := gs.EmailService.SendActivationEmail(data); err != nil {
 		return nil, err
 	}
 
-	return &activate.Response{
+	return &pb.Response{
 		Status: "success",
 	}, nil
 }

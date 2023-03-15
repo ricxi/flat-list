@@ -3,27 +3,27 @@ package token
 import (
 	"context"
 
-	"githug.com/ricxi/flat-list/token/activation"
+	"githug.com/ricxi/flat-list/token/pb"
 )
 
 type Server struct {
-	activation.UnimplementedTokenServiceServer
-	R *Repository
+	pb.UnimplementedTokenServer
+	Repository
 }
 
-func (s *Server) CreateTokenForUser(ctx context.Context, req *activation.Request) (*activation.Response, error) {
+func (s Server) CreateActivationToken(ctx context.Context, req *pb.Request) (*pb.Response, error) {
 	activationToken, err := generateActivationToken()
 	if err != nil {
 		return nil, err
 	}
-	if err := s.R.InsertToken(ctx, &ActivationTokenInfo{
+	if err := s.InsertToken(ctx, &ActivationTokenInfo{
 		Token:  activationToken,
 		UserID: req.UserId,
 	}); err != nil {
 		return nil, err
 	}
 
-	return &activation.Response{
+	return &pb.Response{
 		ActivationToken: activationToken,
 	}, nil
 }
