@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net"
-	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"githug.com/ricxi/flat-list/token"
@@ -12,11 +11,6 @@ import (
 )
 
 func main() {
-	GrpcPort := os.Getenv("GRPC_PORT")
-	if GrpcPort == "" {
-		log.Fatalln("missing grpc env")
-	}
-
 	config, err := token.LoadConfig()
 	if err != nil {
 		log.Fatalln("problem loading configuation: ", err)

@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -12,11 +11,6 @@ import (
 )
 
 func main() {
-	httpPort := os.Getenv("HTTP_PORT")
-	if httpPort == "" {
-		log.Fatalln("http port env cannot be empty")
-	}
-
 	config, err := token.LoadConfig()
 	if err != nil {
 		log.Fatalln("problem loading configuation: ", err)
@@ -39,7 +33,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         ":" + httpPort,
+		Addr:         ":" + config.HttpPort,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}
