@@ -14,7 +14,10 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/ricxi/flat-list/mailer/activate"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Service interface {
@@ -61,9 +64,13 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 	}
 
 	go func() {
-		if err := sendActivationEmailRequest(u.Email, u.FirstName, activationToken); err != nil {
+		err := sendActivationEmailGRPC(u.Email, u.FirstName, activationToken)
+		if err != nil {
 			log.Println(err)
 		}
+		// if err := sendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
+		// 	log.Println(err)
+		// }
 	}()
 
 	return userID, nil
@@ -129,9 +136,9 @@ func generateActivationToken() (string, error) {
 	return token, nil
 }
 
-// sendActivationEmailRequest calls the mailer api to send an email
+// sendActivationEmail calls the mailer api to send an email
 // to a newly registered user
-func sendActivationEmailRequest(email, firstName, activationToken string) error {
+func sendActivationEmail(email, firstName, activationToken string) error {
 	activationInfo := struct {
 		From            string `json:"from"`
 		To              string `json:"to"`
@@ -159,6 +166,25 @@ func sendActivationEmailRequest(email, firstName, activationToken string) error 
 	_, err = c.Do(req)
 	if err != nil {
 		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func sendActivationEmailGRPC(email, name, activationToken string) error {
+	cc, err := grpc.Dial(":5001", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+
+	c := activate.NewMailerServiceClient(cc)
+	if _, err := c.SendEmail(context.Background(), &activate.Request{
+		From:            "the.team@flat-list.com",
+		To:              email,
+		FirstName:       name,
+		ActivationToken: activationToken,
+	}); err != nil {
 		return err
 	}
 
