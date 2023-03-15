@@ -25,7 +25,7 @@ func main() {
 	}
 	grpcServer := grpc.NewServer()
 
-	pb.RegisterMailerServer(grpcServer, &srv)
+	pb.RegisterMailerServer(grpcServer, srv)
 
 	log.Println("starting grpc server on port", lis.Addr())
 

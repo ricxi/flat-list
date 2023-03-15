@@ -6,13 +6,13 @@ import (
 	"html/template"
 )
 
-// Subject line for user activation emails
 const (
-	ACTIVATION_EMAIL_SUBJECT  string = "Please activate your account"
+	// Subject line for the user activation email
+	ACTIVATION_EMAIL_SUBJECT string = "Please activate your account"
+	// Name of the HTML template for generating the body of the user activation email
 	ACTIVATION_HTML_TMPL_NAME string = "./useractivation.html"
 )
 
-// EmailService for sending emails
 type EmailService struct {
 	mailer *Mailer
 }
@@ -35,8 +35,8 @@ func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 		return fmt.Errorf("field cannot be empty: to ")
 	}
 
-	if data.FirstName == "" {
-		data.FirstName = "user"
+	if data.Name == "" {
+		data.Name = "user"
 	}
 
 	t, err := template.ParseFiles(ACTIVATION_HTML_TMPL_NAME)
@@ -47,10 +47,10 @@ func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 	activationLink := "http://localhost:5000/" + data.ActivationToken
 
 	emailTemplateData := struct {
-		FirstName      string `json:"firstName"`
-		ActivationLink string `json:"activationLink"`
+		Name           string
+		ActivationLink string
 	}{
-		FirstName:      data.FirstName,
+		Name:           data.Name,
 		ActivationLink: activationLink,
 	}
 
@@ -60,5 +60,6 @@ func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 	}
 
 	subject := ACTIVATION_EMAIL_SUBJECT
+
 	return s.mailer.Send(data.From, data.To, subject, htmlEmailBody.String())
 }

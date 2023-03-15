@@ -17,7 +17,7 @@ func (gs GrpcServer) SendActivationEmail(ctx context.Context, r *pb.Request) (*p
 	data := UserActivationData{
 		From:            r.From,
 		To:              r.To,
-		FirstName:       r.Name,
+		Name:            r.Name,
 		ActivationToken: r.ActivationToken,
 	}
 
