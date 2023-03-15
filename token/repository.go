@@ -10,14 +10,6 @@ type ActivationTokenInfo struct {
 	Token  string `json:"token"`
 }
 
-// ensure that repository implements the Repository interface
-// var _ Repository = new(repository)
-
-// type Repository interface {
-// 	InsertToken(ctx context.Context, info *ActivationTokenInfo) error
-// 	GetTokens(ctx context.Context, userID string) ([]string, error)
-// }
-
 type Repository struct {
 	DB *sql.DB
 }
@@ -44,7 +36,7 @@ func (r *Repository) InsertToken(ctx context.Context, info *ActivationTokenInfo)
 
 }
 
-// GetTokens returns a string of tokens that share teh same user id
+// GetTokens returns a string of tokens that share the same user id
 func (r *Repository) GetTokens(ctx context.Context, userID string) ([]string, error) {
 	query := "SELECT token FROM activation_tokens WHERE activation_tokens.user_id = $1"
 

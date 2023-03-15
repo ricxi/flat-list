@@ -17,12 +17,12 @@ func main() {
 		log.Fatalln("http port env cannot be empty")
 	}
 
-	conf, err := token.GetConf()
+	config, err := token.LoadConfig()
 	if err != nil {
 		log.Fatalln("problem loading configuation: ", err)
 	}
 
-	db, err := token.Connect(conf.DatabaseURL)
+	db, err := token.Connect(config.DatabaseURL)
 	if err != nil {
 		log.Fatalln("problem connecting to postgres: ", err)
 	}

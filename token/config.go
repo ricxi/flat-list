@@ -5,15 +5,15 @@ import (
 	"os"
 )
 
-type Conf struct {
+type config struct {
 	DatabaseURL string
 }
 
-func GetConf() (*Conf, error) {
+func LoadConfig() (*config, error) {
 	connStr := os.Getenv("DATABASE_URL")
 	if connStr == "" {
 		return nil, errors.New("db connection env cannot be empty")
 	}
 
-	return &Conf{DatabaseURL: connStr}, nil
+	return &config{DatabaseURL: connStr}, nil
 }
