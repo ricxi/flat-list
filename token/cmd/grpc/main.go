@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"githug.com/ricxi/flat-list/token"
-	"githug.com/ricxi/flat-list/token/activation"
+	"githug.com/ricxi/flat-list/token/pb"
 	"google.golang.org/grpc"
 )
 
@@ -32,9 +32,9 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	srv := token.Server{R: &repo}
+	srv := token.Server{Repository: repo}
 
-	activation.RegisterTokenServiceServer(grpcServer, &srv)
+	pb.RegisterTokenServer(grpcServer, srv)
 
 	log.Println("starting grpc token server on ", lis.Addr())
 
