@@ -15,11 +15,11 @@ func main() {
 
 	m := mailer.NewMailer(conf.Username, conf.Password, conf.Host, conf.Port)
 
-	es := mailer.NewMailerService(m)
+	mailerService := mailer.NewMailerService(m)
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/v1/mailer/activate", mailer.HandleSendActivationEmail(es))
+	mux.HandleFunc("/v1/mailer/activate", mailer.HandleSendActivationEmail(mailerService))
 
 	srv := &http.Server{
 		Handler: mux,
