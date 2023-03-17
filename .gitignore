@@ -1,4 +1,5 @@
 **/bin
 **/*.env
 **/*.envrc
-**/.env.mongo
+**/.vscode
+*.code-workspace
