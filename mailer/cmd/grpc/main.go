@@ -15,14 +15,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	m := mailer.NewMailer(conf.Username, conf.Password, conf.Host, conf.Port)
-	es := mailer.NewEmailService(m)
-	srv := mailer.GrpcServer{EmailService: es}
-
 	lis, err := net.Listen("tcp", ":"+conf.GrpcPort)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	m := mailer.NewMailer(conf.Username, conf.Password, conf.Host, conf.Port)
+	mailerService := mailer.NewMailerService(m)
+	srv := mailer.NewGrpcServer(mailerService)
+
 	grpcServer := grpc.NewServer()
 
 	pb.RegisterMailerServer(grpcServer, srv)

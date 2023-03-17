@@ -19,7 +19,7 @@ test/user/service:
 .PHONY: run/dev/mongo
 run/dev/mongo:
 	@echo "DEV: running local mongo container..."
-	cd scripts && ./mongo.sh
+	cd dev_scripts && ./start_mongo.sh
 
 .PHONY: build/user
 build/user:
