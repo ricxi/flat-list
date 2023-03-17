@@ -12,7 +12,7 @@ type lambdaHandler func(events.APIGatewayProxyRequest) (events.APIGatewayProxyRe
 // It can be accessed through an AWS API Gateway
 func SendActivationEmail(mailerService *MailerService) lambdaHandler {
 	return func(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-		var data UserActivationData
+		var data EmailActivationData
 
 		if err := json.Unmarshal([]byte(request.Body), &data); err != nil {
 			return events.APIGatewayProxyResponse{}, err

@@ -23,5 +23,5 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	lambda.StartWithOptions(mailer.SendActivationEmail(mailerService), lambda.WithContextctx))
+	lambda.StartWithOptions(mailer.SendActivationEmail(mailerService), lambda.WithContext(ctx))
 }

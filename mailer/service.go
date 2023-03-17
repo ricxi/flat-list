@@ -30,7 +30,7 @@ func NewMailerService(mailer *Mailer) *MailerService {
 // SendActivationEmail validates email data, then generates all the
 // necessary templates and inputs necessary, before sending an
 // activation email to a user.
-func (s *MailerService) SendActivationEmail(data UserActivationData) error {
+func (s *MailerService) SendActivationEmail(data EmailActivationData) error {
 	if data.From == "" {
 		return fmt.Errorf("field cannot be empty: from ")
 	}
@@ -43,21 +43,21 @@ func (s *MailerService) SendActivationEmail(data UserActivationData) error {
 		data.Name = "user"
 	}
 
+	if data.ActivationHyperlink == "" {
+		return fmt.Errorf("field cannot be empty: hyperlink ")
+	}
+
 	t, err := template.ParseFiles(ACTIVATION_HTML_TMPL)
 	if err != nil {
 		return err
 	}
 
-	// This url should be an environment variable
-	// Should the mailer service even be responsible for this
-	activationLink := "http://localhost:5000/" + data.ActivationToken
-
 	tmplData := struct {
-		Name           string
-		ActivationLink string
+		Name                string
+		ActivationHyperlink string
 	}{
-		Name:           data.Name,
-		ActivationLink: activationLink,
+		Name:                data.Name,
+		ActivationHyperlink: data.ActivationHyperlink,
 	}
 
 	htmlBody := new(bytes.Buffer)

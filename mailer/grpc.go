@@ -20,11 +20,11 @@ func NewGrpcServer(mailerService *MailerService) GrpcServer {
 // SendActivationEmail is a grpc implementation that can be called by other
 // services to send an activation email to a user.
 func (gs GrpcServer) SendActivationEmail(ctx context.Context, r *pb.Request) (*pb.Response, error) {
-	data := UserActivationData{
-		From:            r.From,
-		To:              r.To,
-		Name:            r.Name,
-		ActivationToken: r.ActivationToken,
+	data := EmailActivationData{
+		From:                r.From,
+		To:                  r.To,
+		Name:                r.Name,
+		ActivationHyperlink: r.ActivationHyperlink,
 	}
 
 	if err := gs.mailerService.SendActivationEmail(data); err != nil {
