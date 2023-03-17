@@ -21,11 +21,29 @@ func main() {
 	defer client.Disconnect(context.Background())
 
 	mongoRepository := user.NewMongoRepository(client, cfg.mongoDBName, cfg.mongoTimeout)
-	passwordService := user.NewPasswordService(bcrypt.MinCost)
-	service := user.NewService(mongoRepository, passwordService)
-	vService := &user.ValidationService{Service: service}
+	service, err := buildService(mongoRepository)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	handler := user.NewHandler(vService)
+	handler := user.NewHandler(service)
 	server := user.NewServer(handler, cfg.port)
 	server.Run()
+}
+
+// build the service with its peripheral dependencies
+func buildService(repository user.Repository) (user.Service, error) {
+	passwordManager := user.NewPasswordManager(bcrypt.MinCost)
+	validator := user.NewValidator()
+	grpcClient, err := user.NewMailerClient("grpc", "5001")
+	if err != nil {
+		return nil, err
+	}
+
+	return user.NewService(
+		repository,
+		grpcClient,
+		passwordManager,
+		validator,
+	), nil
 }

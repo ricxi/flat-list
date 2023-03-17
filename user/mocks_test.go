@@ -6,6 +6,8 @@ import (
 	"github.com/ricxi/flat-list/user"
 )
 
+var _ user.Repository = &mockRepository{}
+
 // Repository mock
 type mockRepository struct {
 	userID string
@@ -21,16 +23,40 @@ func (m *mockRepository) GetUserByEmail(ctx context.Context, email string) (*use
 	return m.user, m.err
 }
 
-type mockPasswordService struct {
+// PasswordManager mock
+type mockPasswordManager struct {
 	password string
 	err      error
 }
 
-// GenerateHash creates a hash for a given password
-func (m *mockPasswordService) GenerateHash(password string) (string, error) {
+func (m *mockPasswordManager) GenerateHash(password string) (string, error) {
 	return m.password, m.err
 }
 
-func (m *mockPasswordService) CompareHashWith(hashedPassword, password string) error {
+func (m *mockPasswordManager) CompareHashWith(hashedPassword, password string) error {
+	return m.err
+}
+
+// Client mock form mailer client
+type mockMailerClient struct {
+	err error
+}
+
+func (m *mockMailerClient) SendActivationEmail(email, name, activationToken string) error {
+	return m.err
+}
+
+var _ user.Validator = mockValidator{}
+
+// Validator mock
+type mockValidator struct {
+	err error
+}
+
+func (m mockValidator) ValidateRegistration(u *user.UserRegistrationInfo) error {
+	return m.err
+}
+
+func (m mockValidator) ValidateLogin(u *user.UserLoginInfo) error {
 	return m.err
 }

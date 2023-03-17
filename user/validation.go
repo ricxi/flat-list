@@ -1,35 +1,41 @@
 package user
 
 import (
-	"context"
 	"fmt"
 )
 
-type ValidationService struct {
-	Service Service
+type Validator interface {
+	ValidateRegistration(u *UserRegistrationInfo) error
+	ValidateLogin(u *UserLoginInfo) error
 }
 
-func (vs *ValidationService) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
+func NewValidator() Validator {
+	return validator{}
+}
+
+type validator struct{}
+
+func (v validator) ValidateRegistration(u *UserRegistrationInfo) error {
 
 	if u.Email == "" {
-		return "", fmt.Errorf("%w: email", ErrMissingField)
+		return fmt.Errorf("%w: email", ErrMissingField)
 	}
 
 	if u.Password == "" {
-		return "", fmt.Errorf("%w: password", ErrMissingField)
+		return fmt.Errorf("%w: password", ErrMissingField)
 	}
 
-	return vs.Service.RegisterUser(ctx, u)
+	return nil
 }
 
-func (vs *ValidationService) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, error) {
+func (v validator) ValidateLogin(u *UserLoginInfo) error {
 	if u.Email == "" {
-		return nil, fmt.Errorf("%w: email", ErrMissingField)
+		return fmt.Errorf("%w: email", ErrMissingField)
 	}
 
 	if u.Password == "" {
-		return nil, fmt.Errorf("%w: password", ErrMissingField)
+		return fmt.Errorf("%w: password", ErrMissingField)
 	}
 
-	return vs.Service.LoginUser(ctx, u)
+	return nil
 }
