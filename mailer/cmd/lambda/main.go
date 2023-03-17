@@ -18,10 +18,10 @@ func main() {
 	}
 
 	m := mailer.NewMailer(conf.Username, conf.Password, conf.Host, conf.Port)
-	es := mailer.NewEmailService(m)
+	mailerService := mailer.NewMailerService(m)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	lambda.StartWithOptions(mailer.SendActivationEmail(es), lambda.WithContext(ctx))
+	lambda.StartWithOptions(mailer.SendActivationEmail(mailerService), lambda.WithContext(ctx))
 }

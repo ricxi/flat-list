@@ -8,20 +8,26 @@ import (
 
 type GrpcServer struct {
 	pb.UnimplementedMailerServer
-	EmailService *EmailService
+	mailerService *MailerService
+}
+
+func NewGrpcServer(mailerService *MailerService) GrpcServer {
+	return GrpcServer{
+		mailerService: mailerService,
+	}
 }
 
 // SendActivationEmail is a grpc implementation that can be called by other
-// services to send an activation email to a user
+// services to send an activation email to a user.
 func (gs GrpcServer) SendActivationEmail(ctx context.Context, r *pb.Request) (*pb.Response, error) {
-	data := UserActivationData{
-		From:            r.From,
-		To:              r.To,
-		Name:            r.Name,
-		ActivationToken: r.ActivationToken,
+	data := EmailActivationData{
+		From:                r.From,
+		To:                  r.To,
+		Name:                r.Name,
+		ActivationHyperlink: r.ActivationHyperlink,
 	}
 
-	if err := gs.EmailService.SendActivationEmail(data); err != nil {
+	if err := gs.mailerService.SendActivationEmail(data); err != nil {
 		return nil, err
 	}
 

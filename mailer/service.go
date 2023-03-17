@@ -13,20 +13,24 @@ const (
 	ACTIVATION_HTML_TMPL string = "./templates/useractivation.html"
 )
 
-type EmailService struct {
+// MailerService defines methods that receive email data inputs,
+// and prepares and validates those inputs before calling
+// methods from the Mailer type to send that data out in an email.
+// It can be implemented by any infrastructure to send emails.
+type MailerService struct {
 	mailer *Mailer
 }
 
-func NewEmailService(mailer *Mailer) *EmailService {
-	return &EmailService{
+func NewMailerService(mailer *Mailer) *MailerService {
+	return &MailerService{
 		mailer: mailer,
 	}
 }
 
-// SendActivationEmail validates that all the data is provided to send
-// an activation email, generates an html template for the email, and
-// calls the Mailer to send the email.
-func (s *EmailService) SendActivationEmail(data UserActivationData) error {
+// SendActivationEmail validates email data, then generates all the
+// necessary templates and inputs necessary, before sending an
+// activation email to a user.
+func (s *MailerService) SendActivationEmail(data EmailActivationData) error {
 	if data.From == "" {
 		return fmt.Errorf("field cannot be empty: from ")
 	}
@@ -39,20 +43,21 @@ func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 		data.Name = "user"
 	}
 
+	if data.ActivationHyperlink == "" {
+		return fmt.Errorf("field cannot be empty: hyperlink ")
+	}
+
 	t, err := template.ParseFiles(ACTIVATION_HTML_TMPL)
 	if err != nil {
 		return err
 	}
 
-	// this should be an environment variable
-	activationLink := "http://localhost:5000/" + data.ActivationToken
-
 	tmplData := struct {
-		Name           string
-		ActivationLink string
+		Name                string
+		ActivationHyperlink string
 	}{
-		Name:           data.Name,
-		ActivationLink: activationLink,
+		Name:                data.Name,
+		ActivationHyperlink: data.ActivationHyperlink,
 	}
 
 	htmlBody := new(bytes.Buffer)
@@ -60,7 +65,5 @@ func (s *EmailService) SendActivationEmail(data UserActivationData) error {
 		return err
 	}
 
-	subject := ACTIVATION_EMAIL_SUBJECT
-
-	return s.mailer.Send(data.From, data.To, subject, htmlBody.String())
+	return s.mailer.Send(data.From, data.To, ACTIVATION_EMAIL_SUBJECT, htmlBody.String())
 }

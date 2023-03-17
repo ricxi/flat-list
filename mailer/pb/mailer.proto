@@ -8,7 +8,7 @@ message Request {
     string from  = 1;
     string to = 2;
     string name = 3;
-    string activationToken = 4;
+    string activation_hyperlink = 4;
 }
 
 message Response {
