@@ -11,7 +11,7 @@ type lambdaHandler func(events.APIGatewayProxyRequest) (events.APIGatewayProxyRe
 
 // HandleSendActivationEmail is a lambda function that sends an email to a user.
 // It can be accessed through AWS API Gateway
-func HandleSendActivationEmail(es *EmailService) lambdaHandler {
+func SendActivationEmail(es *EmailService) lambdaHandler {
 	return func(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 		var data UserActivationData
 
