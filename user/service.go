@@ -41,6 +41,9 @@ func NewService(
 }
 
 func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
+	if err := s.v.ValidateRegistration(u); err != nil {
+		return "", err
+	}
 
 	hashedPassword, err := s.passwordManager.GenerateHash(u.Password)
 	if err != nil {

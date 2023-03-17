@@ -4,9 +4,18 @@ import (
 	"fmt"
 )
 
-type Validator struct{}
+type Validator interface {
+	ValidateRegistration(u *UserRegistrationInfo) error
+	ValidateLogin(u *UserLoginInfo) error
+}
 
-func (v *Validator) ValidateRegistration(u *UserRegistrationInfo) error {
+func NewValidator() Validator {
+	return validator{}
+}
+
+type validator struct{}
+
+func (v validator) ValidateRegistration(u *UserRegistrationInfo) error {
 
 	if u.Email == "" {
 		return fmt.Errorf("%w: email", ErrMissingField)
@@ -19,7 +28,7 @@ func (v *Validator) ValidateRegistration(u *UserRegistrationInfo) error {
 	return nil
 }
 
-func (v *Validator) ValidateLogin(u *UserLoginInfo) error {
+func (v validator) ValidateLogin(u *UserLoginInfo) error {
 	if u.Email == "" {
 		return fmt.Errorf("%w: email", ErrMissingField)
 	}
