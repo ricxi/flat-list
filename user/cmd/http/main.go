@@ -25,9 +25,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	vService := &user.ValidationService{Service: service}
 
-	handler := user.NewHandler(vService)
+	handler := user.NewHandler(service)
 	server := user.NewServer(handler, cfg.port)
 	server.Run()
 }

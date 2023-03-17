@@ -21,19 +21,27 @@ type Service interface {
 
 type service struct {
 	repository      Repository
-	passwordManager PasswordManager
 	client          Client
+	passwordManager PasswordManager
+	v               Validator
 }
 
-func NewService(repository Repository, passwordManager PasswordManager, client Client) Service {
+func NewService(
+	repository Repository,
+	client Client,
+	passwordManager PasswordManager,
+	validator Validator,
+) Service {
 	return &service{
 		repository:      repository,
-		passwordManager: passwordManager,
 		client:          client,
+		passwordManager: passwordManager,
+		v:               validator,
 	}
 }
 
 func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
+
 	hashedPassword, err := s.passwordManager.GenerateHash(u.Password)
 	if err != nil {
 		log.Println(err)

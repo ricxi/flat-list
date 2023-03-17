@@ -20,7 +20,7 @@ type Client interface {
 	SendActivationEmail(email, name, activationToken string) error
 }
 
-// NewMailerClient creates a new mailer client
+// NewMailerClient can be called to create a grpc or http mailer client
 func NewMailerClient(clientType, port string) (Client, error) {
 	if clientType == "http" {
 		return httpClient{}, nil
@@ -61,10 +61,12 @@ func (g grpcClient) SendActivationEmail(email, name, activationToken string) err
 	return nil
 }
 
-type httpClient struct{}
+type httpClient struct {
+	port string
+}
 
 func (h httpClient) SendActivationEmail(email, name, activationToken string) error {
-	activationHyperlink := "http://localhost/9001" + activationToken
+	activationHyperlink := "http://localhost/9001/" + activationToken
 	data := mailer.EmailActivationData{
 		From:                "the.team@flat-list.com",
 		To:                  email,
@@ -77,8 +79,8 @@ func (h httpClient) SendActivationEmail(email, name, activationToken string) err
 		return err
 	}
 
-	// this url should also be an environment variable or something
-	req, err := http.NewRequest(http.MethodPost, "http://localhost:5000/v1/mailer/activate", reqBody)
+	// this is kind of sketch right now, but I'll fix it later
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:"+h.port+"/v1/mailer/activate", reqBody)
 	if err != nil {
 		return err
 	}
