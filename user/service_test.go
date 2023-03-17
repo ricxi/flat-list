@@ -1,6 +1,7 @@
 // ! nil pointers might occur because
 // ! there are a few depedencies that have
 // ! not been mocked yet
+// ! (I need to seriously rewrite these tests)
 package user_test
 
 import (
