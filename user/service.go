@@ -93,6 +93,10 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 		return nil, err
 	}
 
+	if !uInfo.Activated {
+		return nil, ErrUserNotActivated
+	}
+
 	if err := s.passwordManager.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return nil, ErrInvalidPassword
