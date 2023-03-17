@@ -61,8 +61,8 @@ func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 type Response map[string]any
 
-func readFromRequest(w http.ResponseWriter, r *http.Request, res any) {
-	err := json.NewDecoder(r.Body).Decode(res)
+func readFromRequest(w http.ResponseWriter, r *http.Request, dest any) {
+	err := json.NewDecoder(r.Body).Decode(dest)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
