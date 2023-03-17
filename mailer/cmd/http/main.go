@@ -20,7 +20,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// sends activation email
-	mux.HandleFunc("/v1/mailer/activate", mailer.HandleSendEmail(es))
+	mux.HandleFunc("/v1/mailer/activate", mailer.HandleSendActivationEmail(es))
 
 	srv := &http.Server{
 		Handler: mux,
