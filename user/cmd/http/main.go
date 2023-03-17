@@ -35,7 +35,7 @@ func main() {
 func buildService(repository user.Repository) (user.Service, error) {
 	passwordManager := user.NewPasswordManager(bcrypt.MinCost)
 	validator := user.NewValidator()
-	grpcClient, err := user.NewMailerClient("grpc", "5000")
+	grpcClient, err := user.NewMailerClient("grpc", "5001")
 	if err != nil {
 		return nil, err
 	}
