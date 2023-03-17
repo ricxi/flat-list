@@ -55,7 +55,7 @@ func TestRegisterUser(t *testing.T) {
 			userID: tc.inputRepoUserID,
 			err:    tc.inputRepoErr,
 		}
-		service := user.NewService(&mockRepo, &mockPasswordService{})
+		service := user.NewService(&mockRepo, &mockPasswordManager{}, &mockMailerClient{})
 
 		userID, err := service.RegisterUser(context.Background(), &tc.uRegistrationInfo)
 		t.Run(tc.name, func(t *testing.T) {
@@ -141,11 +141,11 @@ func TestLoginUser(t *testing.T) {
 	t.Setenv("JWT_SECRET_KEY", "testsecrets")
 
 	for _, tc := range testCases {
-		mockRepo := &mockRepository{
+		mockRepo := mockRepository{
 			user: tc.inputRepoUserInfo,
 			err:  tc.inputRepoErr,
 		}
-		service := user.NewService(mockRepo, &mockPasswordService{err: tc.inputPasswordErr})
+		service := user.NewService(&mockRepo, &mockPasswordManager{err: tc.inputPasswordErr}, &mockMailerClient{})
 
 		uInfo, err := service.LoginUser(context.Background(), tc.uLoginInfo)
 		t.Run(tc.name, func(t *testing.T) {
