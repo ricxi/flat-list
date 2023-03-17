@@ -21,20 +21,20 @@ type Service interface {
 
 type service struct {
 	repository      Repository
-	passwordService PasswordService
+	passwordManager PasswordManager
 	client          Client
 }
 
-func NewService(repository Repository, passwordService PasswordService, client Client) Service {
+func NewService(repository Repository, passwordManager PasswordManager, client Client) Service {
 	return &service{
 		repository:      repository,
-		passwordService: passwordService,
+		passwordManager: passwordManager,
 		client:          client,
 	}
 }
 
 func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
-	hashedPassword, err := s.passwordService.GenerateHash(u.Password)
+	hashedPassword, err := s.passwordManager.GenerateHash(u.Password)
 	if err != nil {
 		log.Println(err)
 		return "", err
@@ -78,7 +78,7 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 		return nil, err
 	}
 
-	if err := s.passwordService.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
+	if err := s.passwordManager.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return nil, ErrInvalidPassword
 		}
