@@ -25,11 +25,11 @@ type service struct {
 	client          Client
 }
 
-func NewService(repository Repository, passwordService PasswordService) Service {
+func NewService(repository Repository, passwordService PasswordService, client Client) Service {
 	return &service{
 		repository:      repository,
 		passwordService: passwordService,
-		client:          grpcClient{},
+		client:          client,
 	}
 }
 

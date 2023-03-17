@@ -20,25 +20,28 @@ type Client interface {
 	SendActivationEmail(email, name, activationToken string) error
 }
 
-func NewClient(clientType string) (Client, error) {
+// NewMailerClient creates a new mailer client
+func NewMailerClient(clientType, port string) (Client, error) {
 	if clientType == "http" {
 		return httpClient{}, nil
 	}
 
 	if clientType == "grpc" {
-		return grpcClient{}, nil
+		return grpcClient{port: port}, nil
 	}
 
 	return nil, errors.New("unknown client type")
 }
 
-type grpcClient struct{}
+type grpcClient struct {
+	port string
+}
 
 // SendActivationEmail makes a remote procedure call to the mailer service,
 // which sends an account activation email to a newly registered user
 func (g grpcClient) SendActivationEmail(email, name, activationToken string) error {
 	// this port should be an environment variable
-	cc, err := grpc.Dial(":5001", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cc, err := grpc.Dial(":"+g.port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
