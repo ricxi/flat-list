@@ -33,7 +33,7 @@ func main() {
 
 // build the service with its peripheral dependencies
 func buildService(repository user.Repository) (user.Service, error) {
-	passwordService := user.NewPasswordService(bcrypt.MinCost)
+	passwordManager := user.NewPasswordManager(bcrypt.MinCost)
 	validator := user.NewValidator()
 	grpcClient, err := user.NewMailerClient("grpc", "5000")
 	if err != nil {
@@ -43,7 +43,7 @@ func buildService(repository user.Repository) (user.Service, error) {
 	return user.NewService(
 		repository,
 		grpcClient,
-		passwordService,
+		passwordManager,
 		validator,
 	), nil
 }

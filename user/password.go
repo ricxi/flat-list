@@ -11,7 +11,7 @@ type passwordManager struct {
 	cost int
 }
 
-func NewPasswordService(cost int) PasswordManager {
+func NewPasswordManager(cost int) PasswordManager {
 	ps := passwordManager{}
 
 	if cost == 0 {
