@@ -80,6 +80,10 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 }
 
 func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, error) {
+	if err := s.v.ValidateLogin(u); err != nil {
+		return nil, err
+	}
+
 	uInfo, err := s.repository.GetUserByEmail(ctx, u.Email)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
