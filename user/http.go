@@ -2,12 +2,10 @@ package user
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -43,11 +41,7 @@ func (h httpHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// remove this and use the request context
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
-	id, err := h.service.RegisterUser(ctx, &u)
+	id, err := h.service.RegisterUser(r.Context(), &u)
 	if err != nil {
 		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
 		return
