@@ -26,6 +26,7 @@ type service struct {
 	client          Client
 	passwordManager PasswordManager
 	v               Validator
+	tc              *tokenClient
 }
 
 func NewService(
@@ -34,12 +35,20 @@ func NewService(
 	passwordManager PasswordManager,
 	validator Validator,
 ) Service {
-	return &service{
+	s := service{
 		repository:      repository,
 		client:          client,
 		passwordManager: passwordManager,
 		v:               validator,
 	}
+
+	tc, err := NewTokenClient("5003")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	s.tc = tc
+
+	return &s
 }
 
 func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
@@ -67,20 +76,16 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 		return "", err
 	}
 
+	activationToken, err := s.tc.CreateActivationToken(context.Background(), userID)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
 	go func() {
-		cc, err := grpc.Dial(":5003", grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
+		// send an activation email if a token is successfully generated
+		if err := s.client.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
 			log.Println(err)
-		}
-		c := ts.NewTokenClient(cc)
-		res, err := c.CreateActivationToken(context.Background(), &ts.CreateTokenRequest{UserId: userID})
-		if err != nil {
-			log.Println(err)
-		} else {
-			// send an activation email if a token is generated
-			if err := s.client.SendActivationEmail(u.Email, u.FirstName, res.ActivationToken); err != nil {
-				log.Println(err)
-			}
 		}
 	}()
 
