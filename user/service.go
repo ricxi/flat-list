@@ -16,6 +16,7 @@ type Service interface {
 	RegisterUser(ctx context.Context, user *UserRegistrationInfo) (string, error)
 	LoginUser(ctx context.Context, user *UserLoginInfo) (*UserInfo, error)
 	ActivateUser(ctx context.Context, activationToken string) error
+	RestartActivation(ctx context.Context, u *UserLoginInfo) error
 }
 
 type service struct {
