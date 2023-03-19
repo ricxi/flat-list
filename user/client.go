@@ -30,34 +30,41 @@ func NewMailerClient(clientType, port string) (Client, error) {
 	}
 
 	if clientType == "grpc" {
-		return grpcClient{port: port}, nil
+		return newGrpcClient(port)
 	}
 
 	return nil, errors.New("unknown client type")
 }
 
 type grpcClient struct {
-	port string
+	c pb.MailerClient
+}
+
+func newGrpcClient(port string) (grpcClient, error) {
+	cc, err := grpc.Dial(":"+g.port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return grpcClient{}, err
+	}
+
+	c := pb.NewMailerClient(cc)
+
+	return grpcClient{
+		c: c,
+	}, nil
 }
 
 // SendActivationEmail makes a remote procedure call to the mailer service,
 // which sends an account activation email to a newly registered user
 func (g grpcClient) SendActivationEmail(email, name, activationToken string) error {
-	// this port should be an environment variable
-	cc, err := grpc.Dial(":"+g.port, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return err
-	}
-
-	c := pb.NewMailerClient(cc)
-
 	activationHyperlink := ACTIVATION_PAGE_LINK + activationToken
-	if _, err := c.SendActivationEmail(context.Background(), &pb.Request{
+	in := pb.Request{
 		From:                "the.team@flat-list.com",
 		To:                  email,
 		Name:                name,
 		ActivationHyperlink: activationHyperlink,
-	}); err != nil {
+	}
+	// maybe recompile the grpc to return a boolean?
+	if _, err := g.c.SendActivationEmail(context.Background(), &in); err != nil {
 		return err
 	}
 
@@ -70,6 +77,7 @@ type httpClient struct {
 
 func (h httpClient) SendActivationEmail(email, name, activationToken string) error {
 	activationHyperlink := ACTIVATION_PAGE_LINK + activationToken
+
 	data := mailer.EmailActivationData{
 		From:                "the.team@flat-list.com",
 		To:                  email,
