@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+const ACTIVATION_PAGE_LINK string = "http://localhost:5173/activate?token="
+
 // Client is used by Service to make
 // http or grpc calls to other services
 type Client interface {
@@ -48,7 +50,7 @@ func (g grpcClient) SendActivationEmail(email, name, activationToken string) err
 
 	c := pb.NewMailerClient(cc)
 
-	activationHyperlink := "http://localhost/9001" + activationToken
+	activationHyperlink := ACTIVATION_PAGE_LINK + activationToken
 	if _, err := c.SendActivationEmail(context.Background(), &pb.Request{
 		From:                "the.team@flat-list.com",
 		To:                  email,
@@ -66,7 +68,7 @@ type httpClient struct {
 }
 
 func (h httpClient) SendActivationEmail(email, name, activationToken string) error {
-	activationHyperlink := "http://localhost/9001/" + activationToken
+	activationHyperlink := ACTIVATION_PAGE_LINK + activationToken
 	data := mailer.EmailActivationData{
 		From:                "the.team@flat-list.com",
 		To:                  email,
@@ -79,7 +81,7 @@ func (h httpClient) SendActivationEmail(email, name, activationToken string) err
 		return err
 	}
 
-	// this is kind of sketch right now, but I'll fix it later
+	// this is kind of sketchy right now, but I'll fix it later
 	req, err := http.NewRequest(http.MethodPost, "http://localhost:"+h.port+"/v1/mailer/activate", reqBody)
 	if err != nil {
 		return err

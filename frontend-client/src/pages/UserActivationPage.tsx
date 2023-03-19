@@ -5,7 +5,7 @@ function UserActivationPage() {
 
   const handleClick = () => {
     const token = searchParams.get('token');
-    if (token != null) {
+    if (token !== null) {
       alert(token);
     }
   };
