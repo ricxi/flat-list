@@ -3,10 +3,23 @@ import { useSearchParams } from 'react-router-dom';
 function UserActivationPage() {
   const [searchParams] = useSearchParams();
 
-  const handleClick = () => {
+  const handleClick = async () => {
     const token = searchParams.get('token');
-    if (token !== null) {
-      alert(token);
+
+    if (token === null) {
+      alert('missing token');
+    }
+
+    const url = `http://localhost:9001/v1/user/activate/${token}`;
+
+    const res = await fetch(url, {
+      method: 'PUT',
+    });
+
+    if (res.status !== 200) {
+      console.error('problem activatign your account, please try again');
+    } else {
+      console.log('success!');
     }
   };
 

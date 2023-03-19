@@ -3,6 +3,7 @@ package user
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -25,6 +26,7 @@ func NewHandler(service Service) http.Handler {
 		r.Get("/healthcheck", h.handleHealthCheck)
 		r.Post("/register", h.handleRegister)
 		r.Post("/login", h.handleLogin)
+		r.Put("/activate/{token}", h.handleActivate)
 	})
 
 	return r
@@ -64,6 +66,23 @@ func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeToResponse(w, Response{"user": uInfo}, http.StatusOK)
+}
+
+// handleActivate is called to activate a newly registered user's account
+func (h httpHandler) handleActivate(w http.ResponseWriter, r *http.Request) {
+	activationToken := chi.URLParam(r, "token")
+	if activationToken == "" {
+		writeErrorToResponse(w, "missing token paramater", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.service.ActivateUser(r.Context(), activationToken); err != nil {
+		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println("ok", activationToken)
+	writeToResponse(w, Response{"status": "success"}, http.StatusOK)
 }
 
 func readFromRequest(w http.ResponseWriter, r *http.Request, dest any) error {

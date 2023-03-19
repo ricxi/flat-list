@@ -17,6 +17,7 @@ import (
 type Service interface {
 	RegisterUser(ctx context.Context, user *UserRegistrationInfo) (string, error)
 	LoginUser(ctx context.Context, user *UserLoginInfo) (*UserInfo, error)
+	ActivateUser(ctx context.Context, activationToken string) error
 }
 
 type service struct {
@@ -124,6 +125,12 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 }
 
 func (s *service) ActivateUser(ctx context.Context, activationToken string) error {
+
+	// search database for token
+	// compare token
+	// search database for user
+	// set user's activate status to true
+
 	return nil
 }
 
