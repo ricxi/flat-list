@@ -31,3 +31,9 @@ run/dev/mongo:
 run/dev/react/email:
 	@echo "DEV: running react email client"
 	cd frontend-client && npm run dev
+
+# run a postgres container for the token service
+.PHONY: run/dev/tokendb
+run/dev/tokendb:
+	@echo "starting a postgres container instance for token service"
+	cd dev_scripts && ./start_postgres.sh ${PSQL_DSN}

@@ -16,7 +16,7 @@ func (s Server) CreateActivationToken(ctx context.Context, req *pb.Request) (*pb
 	if err != nil {
 		return nil, err
 	}
-	if err := s.InsertToken(ctx, &ActivationTokenInfo{
+	if err := s.InsertActivationToken(ctx, &ActivationTokenInfo{
 		Token:  activationToken,
 		UserID: req.UserId,
 	}); err != nil {

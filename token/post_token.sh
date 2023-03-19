@@ -16,4 +16,5 @@ curl_args=(
     # -H "$AUTH_HEADER"
 )
 
-curl "${curl_args[@]}"
+response=$( curl "${curl_args[@]}" )
+echo $response

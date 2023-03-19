@@ -10,8 +10,3 @@ run/dev/token/http:
 run/dev/token/grpc:
 	@echo "starting grpc server"
 	go run ./cmd/grpc
-
-.PHONY: run/dev/psql/token
-run/dev/psql/token:
-	@echo "starting postgres for token service"
-	@./postgres.sh ${PSQL_DSN}

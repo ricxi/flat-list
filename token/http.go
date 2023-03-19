@@ -17,17 +17,25 @@ func HandlerCreateToken(repo *Repository) httprouter.Handle {
 		}
 
 		userID := ps.ByName("userID")
+		if userID == "" {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		info := ActivationTokenInfo{
 			Token:  activationToken,
 			UserID: userID,
 		}
 
-		if err := repo.InsertToken(r.Context(), &info); err != nil {
+		if err := repo.InsertActivationToken(r.Context(), &info); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		w.Write([]byte("{\"status\":\"success\"}"))
+		w.WriteHeader(http.StatusCreated)
+		if err := json.NewEncoder(w).Encode(map[string]string{"token": activationToken}); err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -37,7 +45,7 @@ func HandleGetTokens(repo *Repository) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		userID := ps.ByName("userID")
 
-		tokens, err := repo.GetTokens(r.Context(), userID)
+		tokens, err := repo.GetActivationTokens(r.Context(), userID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

@@ -16,7 +16,7 @@ docker run -d \
 
 # make 3ish attempts to check if postgres is ready to accept connections
 tries=0
-until [ "$(docker exec postgres-instance pg_isready | grep "accepting connections" )" ] || [ "$tries" -gt 3 ]; do
+until [ "$(docker exec postgres-instance pg_isready | grep "accepting connections")" ] || [ "$tries" -gt 3 ]; do
     echo "waiting for postgres to accept connections"
     sleep 2
     tries=$((tries+1))
@@ -24,5 +24,5 @@ done
 
 # run migrations if postgres is ready to accept connections
 if [ "$tries" -le 3 ]; then
-    migrate -path=./migrations -database "$psql_dsn" up
+    migrate -path=../migrations/token/ -database "$psql_dsn" up
 fi
