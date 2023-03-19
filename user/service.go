@@ -123,6 +123,10 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 	return uInfo, nil
 }
 
+func (s *service) ActivateUser(ctx context.Context, activationToken string) error {
+	return nil
+}
+
 func generateJWT(claims jwt.MapClaims) (string, error) {
 	secretKey, found := os.LookupEnv("JWT_SECRET_KEY")
 	if !found {
