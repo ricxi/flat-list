@@ -124,3 +124,14 @@ func (tc *tokenClient) CreateActivationToken(ctx context.Context, userID string)
 
 	return out.ActivationToken, nil
 }
+
+func (tc *tokenClient) ValidateActivationToken(ctx context.Context, activationToken string) (string, error) {
+	in := tservice.ValidateTokenRequest{ActivationToken: activationToken}
+	out, err := tc.c.ValidateActivationToken(context.Background(), &in)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	return out.UserId, nil
+}

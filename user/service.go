@@ -9,10 +9,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	ts "github.com/ricxi/flat-list/token/pb"
 	"golang.org/x/crypto/bcrypt"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Service interface {
@@ -137,15 +134,7 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 }
 
 func (s *service) ActivateUser(ctx context.Context, activationToken string) error {
-	cc, err := grpc.Dial(":5003", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	c := ts.NewTokenClient(cc)
-
-	in := ts.ValidateTokenRequest{ActivationToken: activationToken}
-	out, err := c.ValidateActivationToken(context.Background(), &in)
+	userID, err := s.tc.ValidateActivationToken(context.Background(), activationToken)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -154,7 +143,7 @@ func (s *service) ActivateUser(ctx context.Context, activationToken string) erro
 	var userUpdate UserInfo
 
 	updateTime := time.Now().In(time.UTC)
-	userUpdate.ID = out.UserId
+	userUpdate.ID = userID
 	userUpdate.Activated = true
 	userUpdate.UpdatedAt = &updateTime
 
@@ -162,6 +151,48 @@ func (s *service) ActivateUser(ctx context.Context, activationToken string) erro
 		log.Println(err)
 		return err
 	}
+
+	return nil
+}
+
+// RestartActivation generates a new activation token and sends a new activation email to a user
+// so long as they provide their email and a valid password (basically their login info).
+// It is a route that is accessed by users who did receive a valid activation token or email due
+// to unforseen or other cirumstances.
+func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error {
+	if err := s.v.ValidateLogin(u); err != nil {
+		return err
+	}
+
+	uInfo, err := s.repository.GetUserByEmail(ctx, u.Email)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return ErrInvalidEmail
+		}
+		log.Println(err)
+		return err
+	}
+
+	if err := s.passwordManager.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return ErrInvalidPassword
+		}
+
+		log.Println(err)
+		return err
+	}
+
+	activationToken, err := s.tc.CreateActivationToken(context.Background(), uInfo.ID)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	go func() {
+		if err := s.client.SendActivationEmail(uInfo.Email, uInfo.FirstName, activationToken); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	return nil
 }
