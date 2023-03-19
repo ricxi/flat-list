@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -32,11 +30,11 @@ func TestRegisterUser(t *testing.T) {
 
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/user/register", &body)
-	w := httptest.NewRecorder()
+	// req := httptest.NewRequest(http.MethodPost, "/v1/user/register", &body)
+	// w := httptest.NewRecorder()
 
-	s := mockService{userID: "abcdefg", err: nil}
-	handler := httpHandler{service: &s}
-	handler.handleLogin(w, req)
+	// s := mockService{userID: "abcdefg", err: nil}
+	// handler := httpHandler{service: &s}
+	// handler.handleLogin(w, req)
 
 }

@@ -31,7 +31,7 @@ func Connect(connStr string) (*sql.DB, error) {
 	return db, nil
 }
 
-// InsertToken inserts a new activation token for a given user based on their id
+// InsertActivationToken inserts a new activation token for a given user based on their id
 func (r *Repository) InsertActivationToken(ctx context.Context, info *ActivationTokenInfo) error {
 	query := "INSERT INTO activation_tokens (token, user_id) VALUES ($1, $2)"
 

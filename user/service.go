@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base32"
+	"encoding/json"
 	"errors"
 	"log"
+	"net/http"
 	"os"
 
 	"time"
@@ -66,14 +68,35 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 		return "", err
 	}
 
-	activationToken, err := generateActivationToken()
-	if err != nil {
-		return "", err
-	}
+	// activationToken, err := generateActivationToken()
+	// if err != nil {
+	// 	return "", err
+	// }
 
 	go func() {
-		if err := s.client.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
+		c := http.Client{Timeout: (3 * time.Second)}
+		req, err := http.NewRequest(http.MethodPost, "http://localhost:5002/v1/token/activation/"+userID, nil)
+		if err != nil {
 			log.Println(err)
+		}
+
+		res, err := c.Do(req)
+		if err != nil {
+			log.Println(err)
+		}
+
+		defer res.Body.Close()
+		activationTokenData := struct {
+			Token string `json:"token"`
+		}{}
+		if err := json.NewDecoder(res.Body).Decode(&activationTokenData); err != nil {
+			log.Println(err)
+		}
+
+		if activationTokenData.Token != "" {
+			if err := s.client.SendActivationEmail(u.Email, u.FirstName, activationTokenData.Token); err != nil {
+				log.Println(err)
+			}
 		}
 	}()
 
