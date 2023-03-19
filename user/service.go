@@ -9,16 +9,14 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	ts "github.com/ricxi/flat-list/token/pb"
 	"golang.org/x/crypto/bcrypt"
-	"google.golang.org/api/transport/grpc"
-	"google.golang.org/grpc"
 )
 
 type Service interface {
 	RegisterUser(ctx context.Context, user *UserRegistrationInfo) (string, error)
 	LoginUser(ctx context.Context, user *UserLoginInfo) (*UserInfo, error)
 	ActivateUser(ctx context.Context, activationToken string) error
+	RestartActivation(ctx context.Context, u *UserLoginInfo) error
 }
 
 type service struct {
@@ -26,6 +24,7 @@ type service struct {
 	client          Client
 	passwordManager PasswordManager
 	v               Validator
+	tc              *tokenClient
 }
 
 func NewService(
@@ -34,12 +33,20 @@ func NewService(
 	passwordManager PasswordManager,
 	validator Validator,
 ) Service {
-	return &service{
+	s := service{
 		repository:      repository,
 		client:          client,
 		passwordManager: passwordManager,
 		v:               validator,
 	}
+
+	tc, err := NewTokenClient("5003")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	s.tc = tc
+
+	return &s
 }
 
 func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
@@ -67,20 +74,16 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 		return "", err
 	}
 
+	activationToken, err := s.tc.CreateActivationToken(context.Background(), userID)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
 	go func() {
-		cc, err := grpc.Dial(":5003")
-		if err != nil {
+		// send an activation email if a token is successfully generated
+		if err := s.client.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
 			log.Println(err)
-		}
-		c := ts.NewTokenClient(cc)
-		res, err := c.CreateActivationToken(context.Background(), &ts.Request{UserId: userID})
-		if err != nil {
-			log.Println(err)
-		} else {
-			// send an activation email if a token is generated
-			if err := s.client.SendActivationEmail(u.Email, u.FirstName, res.ActivationToken); err != nil {
-				log.Println(err)
-			}
 		}
 	}()
 
@@ -132,11 +135,65 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 }
 
 func (s *service) ActivateUser(ctx context.Context, activationToken string) error {
+	userID, err := s.tc.ValidateActivationToken(context.Background(), activationToken)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 
-	// search database for token
-	// compare token
-	// search database for user
-	// set user's activate status to true
+	var userUpdate UserInfo
+
+	updateTime := time.Now().In(time.UTC)
+	userUpdate.ID = userID
+	userUpdate.Activated = true
+	userUpdate.UpdatedAt = &updateTime
+
+	if err := s.repository.UpdateUserByID(ctx, &userUpdate); err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+// RestartActivation generates a new activation token and sends a new activation email to a user
+// so long as they provide their email and a valid password (basically their login info).
+// It is a route that is accessed by users who did receive a valid activation token or email due
+// to unforseen or other cirumstances.
+func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error {
+	if err := s.v.ValidateLogin(u); err != nil {
+		return err
+	}
+
+	uInfo, err := s.repository.GetUserByEmail(ctx, u.Email)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return ErrInvalidEmail
+		}
+		log.Println(err)
+		return err
+	}
+
+	if err := s.passwordManager.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return ErrInvalidPassword
+		}
+
+		log.Println(err)
+		return err
+	}
+
+	activationToken, err := s.tc.CreateActivationToken(context.Background(), uInfo.ID)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	go func() {
+		if err := s.client.SendActivationEmail(uInfo.Email, uInfo.FirstName, activationToken); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	return nil
 }

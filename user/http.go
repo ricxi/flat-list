@@ -36,6 +36,7 @@ func NewHandler(service Service) http.Handler {
 		r.Post("/register", h.handleRegister)
 		r.Post("/login", h.handleLogin)
 		r.Put("/activate/{token}", h.handleActivate)
+		r.Post("/reactivate", h.handleReactivate)
 	})
 
 	return r
@@ -81,11 +82,29 @@ func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 func (h httpHandler) handleActivate(w http.ResponseWriter, r *http.Request) {
 	activationToken := chi.URLParam(r, "token")
 	if activationToken == "" {
+		log.Println("ERROR: missing token")
 		writeErrorToResponse(w, "missing token paramater", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.service.ActivateUser(r.Context(), activationToken); err != nil {
+		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	writeToResponse(w, Response{"status": "success"}, http.StatusOK)
+}
+
+// handleReactivate is called to generate a new activation token and resend a new activation email to a user
+func (h httpHandler) handleReactivate(w http.ResponseWriter, r *http.Request) {
+
+	var u UserLoginInfo
+	if err := readFromRequest(w, r, &u); err != nil {
+		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.service.RestartActivation(r.Context(), &u); err != nil {
 		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}

@@ -39,6 +39,8 @@ github.com/ricxi/flat-list/mailer v0.0.0-20230317045119-60100e35d983 h1:xuq1DlG3
 github.com/ricxi/flat-list/mailer v0.0.0-20230317045119-60100e35d983/go.mod h1:al23zJoFYs94ZMPuACzlSFVSS/jPXVEwd6hBrUhdzj8=
 github.com/ricxi/flat-list/token v0.0.0-20230319095728-95da0212a8be h1:CvaKHzB73FyuQd/rECjILWv95sqDWJSOtQ9IE/1dglM=
 github.com/ricxi/flat-list/token v0.0.0-20230319095728-95da0212a8be/go.mod h1:6YdTeI/1gCtIFoh/sdwZXArANFqwTtHArgIiZhc4IOM=
+github.com/ricxi/flat-list/token v0.0.0-20230319105441-36e92f865b8c h1:ynKP/IQFDONy5+YYlxHNy4D9Yf24/kfx6KcJ1REBUs0=
+github.com/ricxi/flat-list/token v0.0.0-20230319105441-36e92f865b8c/go.mod h1:6YdTeI/1gCtIFoh/sdwZXArANFqwTtHArgIiZhc4IOM=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.2 h1:4jaiDzPyXQvSd7D0EjG45355tLlV3VOECpq10pLC+8s=

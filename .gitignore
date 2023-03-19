@@ -1,5 +1,6 @@
 **/bin
 **/*.env
 **/*.envrc
-**/.vscode
+**/*.vscode
+*.vscode
 *.code-workspace
