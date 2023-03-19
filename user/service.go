@@ -2,17 +2,17 @@ package user
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log"
-	"net/http"
 	"os"
 
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	tokenservice "github.com/ricxi/flat-list/token/pb"
+	ts "github.com/ricxi/flat-list/token/pb"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/api/transport/grpc"
+	"google.golang.org/grpc"
 )
 
 type Service interface {
@@ -68,27 +68,17 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 	}
 
 	go func() {
-		c := http.Client{Timeout: (3 * time.Second)}
-		req, err := http.NewRequest(http.MethodPost, "http://localhost:5002/v1/token/activation/"+userID, nil)
+		cc, err := grpc.Dial(":5003")
 		if err != nil {
 			log.Println(err)
 		}
-
-		res, err := c.Do(req)
+		c := ts.NewTokenClient(cc)
+		res, err := c.CreateActivationToken(context.Background(), &ts.Request{UserId: userID})
 		if err != nil {
 			log.Println(err)
-		}
-
-		defer res.Body.Close()
-		activationTokenData := struct {
-			Token string `json:"token"`
-		}{}
-		if err := json.NewDecoder(res.Body).Decode(&activationTokenData); err != nil {
-			log.Println(err)
-		}
-
-		if activationTokenData.Token != "" {
-			if err := s.client.SendActivationEmail(u.Email, u.FirstName, activationTokenData.Token); err != nil {
+		} else {
+			// send an activation email if a token is generated
+			if err := s.client.SendActivationEmail(u.Email, u.FirstName, res.ActivationToken); err != nil {
 				log.Println(err)
 			}
 		}
@@ -143,9 +133,6 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 
 func (s *service) ActivateUser(ctx context.Context, activationToken string) error {
 
-	tokenservice.CreateActivationToken()
-
-	tokenservice.Request{}
 	// search database for token
 	// compare token
 	// search database for user
