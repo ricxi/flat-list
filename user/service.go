@@ -2,8 +2,6 @@ package user
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base32"
 	"encoding/json"
 	"errors"
 	"log"
@@ -67,11 +65,6 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 		log.Println(err)
 		return "", err
 	}
-
-	// activationToken, err := generateActivationToken()
-	// if err != nil {
-	// 	return "", err
-	// }
 
 	go func() {
 		c := http.Client{Timeout: (3 * time.Second)}
@@ -165,18 +158,4 @@ func generateJWT(claims jwt.MapClaims) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secretKey))
-}
-
-// generate an activation token that is used
-// to validate a newly registered user's account
-func generateActivationToken() (string, error) {
-	tokenBytes := make([]byte, 16)
-
-	if _, err := rand.Read(tokenBytes); err != nil {
-		return "", err
-	}
-
-	token := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(tokenBytes)
-
-	return token, nil
 }
