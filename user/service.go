@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	tokenservice "github.com/ricxi/flat-list/token/pb"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -142,6 +143,9 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 
 func (s *service) ActivateUser(ctx context.Context, activationToken string) error {
 
+	tokenservice.CreateActivationToken()
+
+	tokenservice.Request{}
 	// search database for token
 	// compare token
 	// search database for user
