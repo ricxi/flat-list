@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/ricxi/flat-list/mailer"
 	"github.com/ricxi/flat-list/mailer/pb"
@@ -41,7 +42,7 @@ type grpcClient struct {
 }
 
 func newGrpcClient(port string) (grpcClient, error) {
-	cc, err := grpc.Dial(":"+g.port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cc, err := grpc.Dial(":"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return grpcClient{}, err
 	}
@@ -96,7 +97,7 @@ func (h httpClient) SendActivationEmail(email, name, activationToken string) err
 		return err
 	}
 
-	c := http.Client{}
+	c := http.Client{Timeout: 5 * time.Second}
 
 	_, err = c.Do(req)
 	if err != nil {
@@ -107,6 +108,8 @@ func (h httpClient) SendActivationEmail(email, name, activationToken string) err
 	return nil
 }
 
+// tokenClient contains methods to call
+// the token service
 type tokenClient struct {
 	c tservice.TokenClient
 }
@@ -137,7 +140,6 @@ func (tc *tokenClient) ValidateActivationToken(ctx context.Context, activationTo
 	in := tservice.ValidateTokenRequest{ActivationToken: activationToken}
 	out, err := tc.c.ValidateActivationToken(context.Background(), &in)
 	if err != nil {
-		log.Println(err)
 		return "", err
 	}
 
