@@ -142,7 +142,6 @@ func (us *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*U
 func (us *mongoRepository) UpdateUserByID(ctx context.Context, u *UserInfo) error {
 	coll := us.client.Database(us.database).Collection(us.coll)
 
-	fmt.Println("ID: ", u.ID)
 	userOID, err := primitive.ObjectIDFromHex(u.ID)
 	if err != nil {
 		return err
