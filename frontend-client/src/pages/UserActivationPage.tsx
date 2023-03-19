@@ -1,28 +1,30 @@
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
+const USER_ACTIVATION_ENDPOINT = 'http://localhost:9000/v1/user/activate';
 
 function UserActivationPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const handleClick = async () => {
     const token = searchParams.get('token');
 
     if (token === null) {
-      alert('missing token');
+      navigate('/activated/failed');
+      return;
     }
 
-    const url = `http://localhost:9000/v1/user/activate/${token}`;
-
-    const res = await fetch(url, {
+    // Should I put the token in the body?
+    const res = await fetch(USER_ACTIVATION_ENDPOINT + '/' + token, {
       method: 'PUT',
     });
 
-    console.log(token);
-
     if (res.status !== 200) {
-      console.error('problem activatign your account, please try again');
-    } else {
-      console.log('success!');
+      navigate('/activated/failed');
+      return;
     }
+
+    navigate('/activated/success');
   };
 
   return (

@@ -3,7 +3,6 @@ package user
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -91,8 +90,6 @@ func (h httpHandler) handleActivate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("token:")
-	fmt.Println(activationToken)
 	writeToResponse(w, Response{"status": "success"}, http.StatusOK)
 }
 
