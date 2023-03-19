@@ -1,4 +1,5 @@
 #!/bin/bash
+# check that http server is working to create and register a token for a user
 
 # JSON_PAYLOAD=''
 
@@ -12,6 +13,7 @@ url_param="fakeuserid"
 curl_args=(
     -X POST "${END_POINT}/${url_param}"
     # --data "$payload"
+    -s
     -H "Content-Type:application/json"
     # -H "$AUTH_HEADER"
 )

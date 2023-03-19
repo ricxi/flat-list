@@ -6,7 +6,6 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/julienschmidt/httprouter"
 	"githug.com/ricxi/flat-list/token"
 )
 
@@ -23,13 +22,10 @@ func main() {
 	defer db.Close()
 
 	repo := token.NewRepository(db)
-
-	r := httprouter.New()
-	r.POST("/v1/token/activation/:userID", token.HandlerCreateToken(&repo))
-	r.GET("/v1/token/:userID", token.HandleGetTokens(&repo))
+	h := token.NewHTTPHandler(repo)
 
 	srv := &http.Server{
-		Handler:      r,
+		Handler:      h,
 		Addr:         ":" + config.HttpPort,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
