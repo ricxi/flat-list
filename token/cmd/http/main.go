@@ -6,7 +6,7 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"githug.com/ricxi/flat-list/token"
+	"github.com/ricxi/flat-list/token"
 )
 
 func main() {

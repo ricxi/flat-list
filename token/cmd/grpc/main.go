@@ -5,8 +5,8 @@ import (
 	"net"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"githug.com/ricxi/flat-list/token"
-	"githug.com/ricxi/flat-list/token/pb"
+	"github.com/ricxi/flat-list/token"
+	"github.com/ricxi/flat-list/token/pb"
 	"google.golang.org/grpc"
 )
 

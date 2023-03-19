@@ -3,7 +3,7 @@ package token
 import (
 	"context"
 
-	"githug.com/ricxi/flat-list/token/pb"
+	"github.com/ricxi/flat-list/token/pb"
 )
 
 type Server struct {

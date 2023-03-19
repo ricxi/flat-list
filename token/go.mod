@@ -1,4 +1,4 @@
-module githug.com/ricxi/flat-list/token
+module github.com/ricxi/flat-list/token
 
 go 1.19
 
