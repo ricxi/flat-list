@@ -40,26 +40,15 @@ func (r *Repository) InsertActivationToken(ctx context.Context, info *Activation
 	return err
 }
 
-// GetActivationTokens returns a string of tokens that share the same user id
-func (r *Repository) GetActivationTokens(ctx context.Context, userID string) ([]string, error) {
-	query := "SELECT token FROM activation_tokens WHERE activation_tokens.user_id = $1"
+// GetUserID receives an activation token and searches for the user id associated with it
+func (r *Repository) GetUserID(ctx context.Context, activationToken string) (string, error) {
+	query := "SELECT user_id FROM activation_tokens WHERE activation_tokens.token = $1"
 
-	rows, err := r.db.QueryContext(ctx, query, userID)
-	if err != nil {
-		return nil, err
+	row := r.db.QueryRowContext(ctx, query, activationToken)
+	var userID string
+	if err := row.Scan(&userID); err != nil {
+		return "", err
 	}
 
-	var tokens []string
-	for rows.Next() {
-		var token string
-		if err := rows.Scan(&token); err != nil {
-			return nil, err
-		}
-		tokens = append(tokens, token)
-	}
-	if rows.Err() != nil {
-		return nil, err
-	}
-
-	return tokens, nil
+	return userID, nil
 }

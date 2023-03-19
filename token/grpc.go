@@ -11,7 +11,7 @@ type Server struct {
 	Repository
 }
 
-func (s Server) CreateActivationToken(ctx context.Context, req *pb.Request) (*pb.Response, error) {
+func (s Server) CreateActivationToken(ctx context.Context, req *pb.CreateTokenRequest) (*pb.CreateTokenResponse, error) {
 	activationToken, err := generateActivationToken()
 	if err != nil {
 		return nil, err
@@ -23,7 +23,18 @@ func (s Server) CreateActivationToken(ctx context.Context, req *pb.Request) (*pb
 		return nil, err
 	}
 
-	return &pb.Response{
+	return &pb.CreateTokenResponse{
 		ActivationToken: activationToken,
+	}, nil
+}
+
+func (s Server) ValidateActivationToken(ctx context.Context, req *pb.ValidateTokenRequest) (*pb.ValidateTokenResponse, error) {
+	userID, err := s.GetUserID(ctx, req.ActivationToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ValidateTokenResponse{
+		UserId: userID,
 	}, nil
 }

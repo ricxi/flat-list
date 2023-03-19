@@ -4,14 +4,23 @@ option go_package = "github.com/ricxi/flat-list/pb";
 
 package pb;
 
-message Request {
+message CreateTokenRequest {
     string user_id = 1;
 }
 
-message Response {
+message CreateTokenResponse {
     string activation_token = 1;
 }
 
+message ValidateTokenRequest {
+    string activation_token = 1;
+}
+
+message ValidateTokenResponse {
+    string user_id = 1;
+}
+
 service Token{
-    rpc CreateActivationToken(Request) returns (Response);
+    rpc CreateActivationToken(CreateTokenRequest) returns (CreateTokenResponse);
+    rpc ValidateActivationToken(ValidateTokenRequest) returns (ValidateTokenResponse);
 }

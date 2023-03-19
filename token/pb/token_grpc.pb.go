@@ -22,7 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TokenClient interface {
-	CreateActivationToken(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+	CreateActivationToken(ctx context.Context, in *CreateTokenRequest, opts ...grpc.CallOption) (*CreateTokenResponse, error)
+	ValidateActivationToken(ctx context.Context, in *ValidateTokenRequest, opts ...grpc.CallOption) (*ValidateTokenResponse, error)
 }
 
 type tokenClient struct {
@@ -33,9 +34,18 @@ func NewTokenClient(cc grpc.ClientConnInterface) TokenClient {
 	return &tokenClient{cc}
 }
 
-func (c *tokenClient) CreateActivationToken(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
+func (c *tokenClient) CreateActivationToken(ctx context.Context, in *CreateTokenRequest, opts ...grpc.CallOption) (*CreateTokenResponse, error) {
+	out := new(CreateTokenResponse)
 	err := c.cc.Invoke(ctx, "/pb.Token/CreateActivationToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tokenClient) ValidateActivationToken(ctx context.Context, in *ValidateTokenRequest, opts ...grpc.CallOption) (*ValidateTokenResponse, error) {
+	out := new(ValidateTokenResponse)
+	err := c.cc.Invoke(ctx, "/pb.Token/ValidateActivationToken", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +56,8 @@ func (c *tokenClient) CreateActivationToken(ctx context.Context, in *Request, op
 // All implementations must embed UnimplementedTokenServer
 // for forward compatibility
 type TokenServer interface {
-	CreateActivationToken(context.Context, *Request) (*Response, error)
+	CreateActivationToken(context.Context, *CreateTokenRequest) (*CreateTokenResponse, error)
+	ValidateActivationToken(context.Context, *ValidateTokenRequest) (*ValidateTokenResponse, error)
 	mustEmbedUnimplementedTokenServer()
 }
 
@@ -54,8 +65,11 @@ type TokenServer interface {
 type UnimplementedTokenServer struct {
 }
 
-func (UnimplementedTokenServer) CreateActivationToken(context.Context, *Request) (*Response, error) {
+func (UnimplementedTokenServer) CreateActivationToken(context.Context, *CreateTokenRequest) (*CreateTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateActivationToken not implemented")
+}
+func (UnimplementedTokenServer) ValidateActivationToken(context.Context, *ValidateTokenRequest) (*ValidateTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateActivationToken not implemented")
 }
 func (UnimplementedTokenServer) mustEmbedUnimplementedTokenServer() {}
 
@@ -71,7 +85,7 @@ func RegisterTokenServer(s grpc.ServiceRegistrar, srv TokenServer) {
 }
 
 func _Token_CreateActivationToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Request)
+	in := new(CreateTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -83,7 +97,25 @@ func _Token_CreateActivationToken_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: "/pb.Token/CreateActivationToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TokenServer).CreateActivationToken(ctx, req.(*Request))
+		return srv.(TokenServer).CreateActivationToken(ctx, req.(*CreateTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Token_ValidateActivationToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TokenServer).ValidateActivationToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Token/ValidateActivationToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TokenServer).ValidateActivationToken(ctx, req.(*ValidateTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -98,6 +130,10 @@ var Token_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateActivationToken",
 			Handler:    _Token_CreateActivationToken_Handler,
+		},
+		{
+			MethodName: "ValidateActivationToken",
+			Handler:    _Token_ValidateActivationToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

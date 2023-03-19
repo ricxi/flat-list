@@ -14,8 +14,8 @@ func NewHTTPHandler(repository Repository) http.Handler {
 
 	r := httprouter.New()
 
-	r.POST("/v1/token/activation/:userID", h.handleCreateToken)
-	r.GET("/v1/token/:userID", h.handleGetTokens)
+	r.POST("/v1/token/activation/:userId", h.handleCreateToken)
+	r.GET("/v1/token/:userId", h.handleValidateToken)
 
 	return r
 }
@@ -32,7 +32,7 @@ func (h *httpHandler) handleCreateToken(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	userID := ps.ByName("userID")
+	userID := ps.ByName("userId")
 	if userID == "" {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -56,19 +56,23 @@ func (h *httpHandler) handleCreateToken(w http.ResponseWriter, r *http.Request, 
 
 // Return all the activation tokens that are listed under
 // the same user id
-func (h *httpHandler) handleGetTokens(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	userID := ps.ByName("userID")
+func (h *httpHandler) handleValidateToken(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	activationToken := ps.ByName("token")
+	if activationToken == "" {
+		http.Error(w, "token required", http.StatusBadRequest)
+		return
+	}
 
-	tokens, err := h.repository.GetActivationTokens(r.Context(), userID)
+	userID, err := h.repository.GetUserID(r.Context(), activationToken)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(struct {
-		Tokens []string `json:"tokens"`
+		UserID string `json:"userId"`
 	}{
-		Tokens: tokens,
+		UserID: userID,
 	}); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
