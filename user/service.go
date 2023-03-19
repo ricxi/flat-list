@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log"
-	"os"
 
 	"time"
 
@@ -196,14 +195,4 @@ func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error
 	}()
 
 	return nil
-}
-
-func generateJWT(claims jwt.MapClaims) (string, error) {
-	secretKey, found := os.LookupEnv("JWT_SECRET_KEY")
-	if !found {
-		return "", ErrMissingEnvs
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secretKey))
 }
