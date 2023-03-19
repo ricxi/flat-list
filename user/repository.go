@@ -17,6 +17,7 @@ import (
 type Repository interface {
 	CreateUser(ctx context.Context, user *UserRegistrationInfo) (string, error)
 	GetUserByEmail(ctx context.Context, email string) (*UserInfo, error)
+	UpdateUserByID(ctx context.Context, u *UserInfo) error
 }
 
 // mongoRepository implements Repository interface
@@ -119,7 +120,7 @@ func (us *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*U
 	filter := bson.M{"email": email}
 	if err := coll.FindOne(ctx, filter).Decode(&userDoc); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, fmt.Errorf("given email : %w", ErrUserNotFound)
+			return nil, fmt.Errorf("%w by email", ErrUserNotFound)
 		}
 		return nil, err
 	}
@@ -134,4 +135,32 @@ func (us *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*U
 		CreatedAt:      userDoc.CreatedAt,
 		UpdatedAt:      userDoc.UpdatedAt,
 	}, nil
+}
+
+// UpdateUserByID updates a user's info based on their id
+// ! It's currently only set up to update a user's activation status, but this will change
+func (us *mongoRepository) UpdateUserByID(ctx context.Context, u *UserInfo) error {
+	coll := us.client.Database(us.database).Collection(us.coll)
+
+	userOID, err := primitive.ObjectIDFromHex(u.ID)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": userOID}
+	update := bson.M{
+		"$set": bson.M{
+			"activated": u.Activated,
+			"updatedAt": u.UpdatedAt,
+		},
+	}
+	result := coll.FindOneAndUpdate(ctx, filter, update)
+	if err := result.Err(); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return fmt.Errorf("unable to update by id: %w", ErrUserNotFound)
+		}
+		return err
+	}
+
+	return nil
 }

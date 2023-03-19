@@ -81,6 +81,7 @@ func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 func (h httpHandler) handleActivate(w http.ResponseWriter, r *http.Request) {
 	activationToken := chi.URLParam(r, "token")
 	if activationToken == "" {
+		log.Println("ERROR: missing token")
 		writeErrorToResponse(w, "missing token paramater", http.StatusBadRequest)
 		return
 	}

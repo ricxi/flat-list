@@ -11,8 +11,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	ts "github.com/ricxi/flat-list/token/pb"
 	"golang.org/x/crypto/bcrypt"
-	"google.golang.org/api/transport/grpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Service interface {
@@ -68,12 +68,12 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 	}
 
 	go func() {
-		cc, err := grpc.Dial(":5003")
+		cc, err := grpc.Dial(":5003", grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Println(err)
 		}
 		c := ts.NewTokenClient(cc)
-		res, err := c.CreateActivationToken(context.Background(), &ts.Request{UserId: userID})
+		res, err := c.CreateActivationToken(context.Background(), &ts.CreateTokenRequest{UserId: userID})
 		if err != nil {
 			log.Println(err)
 		} else {
@@ -132,11 +132,31 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 }
 
 func (s *service) ActivateUser(ctx context.Context, activationToken string) error {
+	cc, err := grpc.Dial(":5003", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	c := ts.NewTokenClient(cc)
 
-	// search database for token
-	// compare token
-	// search database for user
-	// set user's activate status to true
+	in := ts.ValidateTokenRequest{ActivationToken: activationToken}
+	out, err := c.ValidateActivationToken(context.Background(), &in)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	var userUpdate UserInfo
+
+	updateTime := time.Now().In(time.UTC)
+	userUpdate.ID = out.UserId
+	userUpdate.Activated = true
+	userUpdate.UpdatedAt = &updateTime
+
+	if err := s.repository.UpdateUserByID(ctx, &userUpdate); err != nil {
+		log.Println(err)
+		return err
+	}
 
 	return nil
 }

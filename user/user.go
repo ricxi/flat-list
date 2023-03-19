@@ -11,7 +11,7 @@ type UserInfo struct {
 	LastName       string     `json:"lastName"`
 	Email          string     `json:"email"`
 	Password       string     `json:"-"`
-	HashedPassword string     `json:"j"`
+	HashedPassword string     `json:"-"`
 	Activated      bool       `json:"-"`
 	CreatedAt      *time.Time `json:"-"`
 	UpdatedAt      *time.Time `json:"-"`
