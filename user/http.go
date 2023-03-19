@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 type httpHandler struct {
@@ -22,6 +23,15 @@ func NewHandler(service Service) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+
 	r.Route("/v1/user", func(r chi.Router) {
 		r.Get("/healthcheck", h.handleHealthCheck)
 		r.Post("/register", h.handleRegister)
@@ -81,7 +91,8 @@ func (h httpHandler) handleActivate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("ok", activationToken)
+	fmt.Println("token:")
+	fmt.Println(activationToken)
 	writeToResponse(w, Response{"status": "success"}, http.StatusOK)
 }
 

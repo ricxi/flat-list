@@ -10,11 +10,13 @@ function UserActivationPage() {
       alert('missing token');
     }
 
-    const url = `http://localhost:9001/v1/user/activate/${token}`;
+    const url = `http://localhost:9000/v1/user/activate/${token}`;
 
     const res = await fetch(url, {
       method: 'PUT',
     });
+
+    console.log(token);
 
     if (res.status !== 200) {
       console.error('problem activatign your account, please try again');
