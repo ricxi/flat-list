@@ -103,7 +103,7 @@ func (m *mongoRepository) CreateUser(ctx context.Context, u *UserRegistrationInf
 }
 
 // GetUserByEmail Queries a user with their email
-func (us *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*UserInfo, error) {
+func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*UserInfo, error) {
 	type UserDoc struct {
 		OID            primitive.ObjectID `bson:"_id,omitempty"`
 		FirstName      string             `bson:"firstName"`
@@ -115,7 +115,7 @@ func (us *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*U
 		UpdatedAt      *time.Time         `bson:"updatedAt"`
 	}
 
-	coll := us.client.Database(us.database).Collection(us.coll)
+	coll := m.client.Database(m.database).Collection(m.coll)
 	var userDoc UserDoc
 	filter := bson.M{"email": email}
 	if err := coll.FindOne(ctx, filter).Decode(&userDoc); err != nil {
@@ -139,8 +139,8 @@ func (us *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*U
 
 // UpdateUserByID updates a user's info based on their id
 // ! It's currently only set up to update a user's activation status, but this will change
-func (us *mongoRepository) UpdateUserByID(ctx context.Context, u *UserInfo) error {
-	coll := us.client.Database(us.database).Collection(us.coll)
+func (m *mongoRepository) UpdateUserByID(ctx context.Context, u *UserInfo) error {
+	coll := m.client.Database(m.database).Collection(m.coll)
 
 	userOID, err := primitive.ObjectIDFromHex(u.ID)
 	if err != nil {
