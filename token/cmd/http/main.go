@@ -10,12 +10,12 @@ import (
 )
 
 func main() {
-	config, err := token.LoadConfig()
+	envs, err := token.LoadEnvs()
 	if err != nil {
 		log.Fatalln("problem loading configuation: ", err)
 	}
 
-	db, err := token.Connect(config.DatabaseURL)
+	db, err := token.Connect(envs.DatabaseURL)
 	if err != nil {
 		log.Fatalln("problem connecting to postgres: ", err)
 	}
@@ -26,7 +26,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      h,
-		Addr:         ":" + config.HttpPort,
+		Addr:         ":" + envs.HttpPort,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}

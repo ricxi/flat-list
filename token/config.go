@@ -5,13 +5,13 @@ import (
 	"os"
 )
 
-type config struct {
+type envs struct {
 	DatabaseURL string
 	GrpcPort    string
 	HttpPort    string
 }
 
-func LoadConfig() (*config, error) {
+func LoadEnvs() (*envs, error) {
 	connStr := os.Getenv("DATABASE_URL")
 	if connStr == "" {
 		return nil, errors.New("db connection env cannot be empty")
@@ -27,7 +27,7 @@ func LoadConfig() (*config, error) {
 		return nil, errors.New("GRPC_PORT environment variable could not be found")
 	}
 
-	return &config{
+	return &envs{
 		DatabaseURL: connStr,
 		HttpPort:    httpPort,
 		GrpcPort:    grpcPort,
