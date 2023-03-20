@@ -24,7 +24,7 @@ type Repository interface {
 type mongoRepository struct {
 	client   *mongo.Client
 	database string
-	coll     string
+	coll     *mongo.Collection
 	timeout  time.Duration
 }
 
@@ -47,16 +47,18 @@ func NewMongoClient(uri string, timeout int) (*mongo.Client, error) {
 
 // Create a new user repository with the mongo client and database name
 func NewMongoRepository(client *mongo.Client, database string, timeout int) Repository {
-	m := &mongoRepository{
+	usersCollection := client.Database(database).Collection("users")
+
+	m := mongoRepository{
 		client:   client,
 		database: database,
 		timeout:  time.Duration(timeout) * time.Second,
-		coll:     "user",
+		coll:     usersCollection,
 	}
 
 	m.setupIndexes()
 
-	return m
+	return &m
 }
 
 func (m *mongoRepository) setupIndexes() {
@@ -71,8 +73,7 @@ func (m *mongoRepository) setupIndexes() {
 		Options: options.Index().SetUnique(true),
 	}
 
-	coll := m.client.Database(m.database).Collection(m.coll)
-	_, err := coll.Indexes().CreateOne(ctx, indexModel)
+	_, err := m.coll.Indexes().CreateOne(ctx, indexModel)
 	if err != nil {
 		log.Println("setupIdexes:", err)
 	}
@@ -80,8 +81,6 @@ func (m *mongoRepository) setupIndexes() {
 
 // CreateOne inserts a new user with a unique email into the database.
 func (m *mongoRepository) CreateUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
-	coll := m.client.Database(m.database).Collection(m.coll)
-
 	userInfo := bson.M{
 		"firstName":      u.FirstName,
 		"lastName":       u.LastName,
@@ -91,7 +90,7 @@ func (m *mongoRepository) CreateUser(ctx context.Context, u *UserRegistrationInf
 		"createdAt":      u.CreatedAt,
 		"updatedAt":      u.UpdatedAt,
 	}
-	result, err := coll.InsertOne(ctx, &userInfo)
+	result, err := m.coll.InsertOne(ctx, &userInfo)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return "", ErrDuplicateUser
@@ -115,10 +114,9 @@ func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*Us
 		UpdatedAt      *time.Time         `bson:"updatedAt"`
 	}
 
-	coll := m.client.Database(m.database).Collection(m.coll)
 	var userDoc UserDoc
 	filter := bson.M{"email": email}
-	if err := coll.FindOne(ctx, filter).Decode(&userDoc); err != nil {
+	if err := m.coll.FindOne(ctx, filter).Decode(&userDoc); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, fmt.Errorf("%w by email", ErrUserNotFound)
 		}
@@ -140,8 +138,6 @@ func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*Us
 // UpdateUserByID updates a user's info based on their id
 // ! It's currently only set up to update a user's activation status, but this will change
 func (m *mongoRepository) UpdateUserByID(ctx context.Context, u *UserInfo) error {
-	coll := m.client.Database(m.database).Collection(m.coll)
-
 	userOID, err := primitive.ObjectIDFromHex(u.ID)
 	if err != nil {
 		return err
@@ -154,7 +150,7 @@ func (m *mongoRepository) UpdateUserByID(ctx context.Context, u *UserInfo) error
 			"updatedAt": u.UpdatedAt,
 		},
 	}
-	result := coll.FindOneAndUpdate(ctx, filter, update)
+	result := m.coll.FindOneAndUpdate(ctx, filter, update)
 	if err := result.Err(); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return fmt.Errorf("unable to update by id: %w", ErrUserNotFound)
