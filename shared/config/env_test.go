@@ -1,85 +1,124 @@
-package config
+package config_test
 
 import (
 	"testing"
+
+	"github.com/ricxi/flat-list/shared/config"
 )
 
-func TestEnvConfigErr_Error(t *testing.T) {
-	type fields struct {
-		missingEnvs []string
-		invalidEnvs []string
+func TestLoadEnvs(t *testing.T) {
+	type args struct {
+		envKeys   []string
+		envValues []string
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   string
+		name    string
+		args    args
+		want    map[string]string
+		wantErr bool
 	}{
 		{
-			name: "NoErrors",
-			fields: fields{
-				missingEnvs: []string{},
-				invalidEnvs: []string{},
+			name: "SuccessLoadTwoEnvs",
+			args: args{
+				envKeys:   []string{"PORT", "HOST"},
+				envValues: []string{"5000", "127.0.0.1"},
 			},
-			want: "",
+			want:    map[string]string{"PORT": "5000", "HOST": "127.0.0.1"},
+			wantErr: false,
 		},
 		{
-			name: "NoNilDereference",
-			fields: fields{
-				missingEnvs: nil,
-				invalidEnvs: nil,
+			name: "FailMissingOneEnv",
+			args: args{
+				envKeys:   []string{"PORT", "HOST"},
+				envValues: []string{"5000"},
 			},
-			want: "",
+			want:    map[string]string{},
+			wantErr: true,
 		},
 		{
-			name: "OnlyOneMissingEnvError",
-			fields: fields{
-				missingEnvs: []string{"PORT"},
-				invalidEnvs: nil,
+			name: "FailNoEnvs",
+			args: args{
+				envKeys:   nil,
+				envValues: nil,
 			},
-			want: "missing [PORT] environment variable(s)",
-		},
-		{
-			name: "OnlyMissingEnvErrors",
-			fields: fields{
-				missingEnvs: []string{"PORT", "HOST", "DBNAME"},
-				invalidEnvs: nil,
-			},
-			want: "missing [PORT HOST DBNAME] environment variable(s)",
-		},
-		{
-			name: "OnlyOneInvalidEnvError",
-			fields: fields{
-				missingEnvs: nil,
-				invalidEnvs: []string{"PORT"},
-			},
-			want: "invalid [PORT] environment variable(s)",
-		},
-		{
-			name: "OnlyInvalidEnvErrors",
-			fields: fields{
-				missingEnvs: nil,
-				invalidEnvs: []string{"PORT HOST DB_URI"},
-			},
-			want: "invalid [PORT HOST DB_URI] environment variable(s)",
-		},
-		{
-			name: "BothInvalidAndMissingEnvErrors",
-			fields: fields{
-				missingEnvs: []string{"PORT", "HOST"},
-				invalidEnvs: []string{"DB_NAME", "SMTP_ADDR", "DB_URI"},
-			},
-			want: "missing [PORT HOST] and invalid [DB_NAME SMTP_ADDR DB_URI] environment variable(s)",
+			want:    map[string]string{},
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &EnvConfigErr{
-				missingEnvs: tt.fields.missingEnvs,
-				invalidEnvs: tt.fields.invalidEnvs,
+			for k, v := range tt.args.envValues {
+				t.Setenv(tt.args.envKeys[k], v)
 			}
-			if got := m.Error(); got != tt.want {
-				t.Errorf("got EnvConfigErr.Error() = %v, want %v", got, tt.want)
+
+			got, err := config.LoadEnvs(tt.args.envKeys...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("got LoadEnvs() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !compareEnvMaps(got, tt.want) {
+				t.Errorf("got LoadEnvs() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("got LoadEnvs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func compareEnvMaps(m1, m2 map[string]string) bool {
+	if len(m1) != len(m2) {
+		return false
+	}
+
+	for k, v := range m1 {
+		if m2[k] != v {
+			return false
+		}
+	}
+
+	return true
+}
+
+func Test_envMap_ValidateAsInt(t *testing.T) {
+	type args struct {
+		envkey   string
+		envValue string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "SuccessfulIntConversion",
+			args: args{
+				envkey:   "PORT",
+				envValue: "5000",
+			},
+			wantErr: false,
+		},
+		{
+			name: "FailIntConversion",
+			args: args{
+				envkey:   "PORT",
+				envValue: "STRINGSHOULDFAIL5000",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv(tt.args.envkey, tt.args.envValue)
+
+			em, err := config.LoadEnvs(tt.args.envkey)
+			if err != nil {
+				t.Fatal("got error, but did not expect one for this test")
+				return
+			}
+
+			if err := em.ValidateAsInt(tt.args.envkey); (err != nil) != tt.wantErr {
+				t.Errorf("envMap.ValidateAsInt() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

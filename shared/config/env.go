@@ -1,43 +1,45 @@
-// Package config contains custom errors for managing environment variables
 package config
 
 import (
-	"fmt"
+	"errors"
+	"os"
+	"strconv"
 )
 
-type EnvConfigErr struct {
-	missingEnvs []string
-	invalidEnvs []string
-}
+type envMap map[string]string
 
-func (e *EnvConfigErr) Error() string {
-	if !e.HasErrors() {
-		return ""
+func LoadEnvs(envs ...string) (envMap, error) {
+	if len(envs) == 0 {
+		return nil, ErrNoEnvs
 	}
 
-	var errs string
-	if len(e.missingEnvs) != 0 {
-		errs += fmt.Sprintf("missing %v", e.missingEnvs)
-		if len(e.invalidEnvs) != 0 {
-			errs += " and "
+	errs := EnvConfigErr{}
+	em := envMap{}
+	for _, envar := range envs {
+		enval := os.Getenv(envar)
+		if enval == "" {
+			errs.addMissingEnv(enval)
+		} else {
+			em[envar] = enval
 		}
 	}
-	if len(e.invalidEnvs) != 0 {
-		errs += fmt.Sprintf("invalid %v", e.invalidEnvs)
+
+	if errs.hasErrors() {
+		return nil, &errs
 	}
 
-	errs += " environment variable(s)"
-	return errs
+	return em, nil
 }
 
-func (m *EnvConfigErr) AddMissingEnv(missing string) {
-	m.missingEnvs = append(m.missingEnvs, missing)
-}
+// Checks if the value for an environment variable's key can be
+// converted into an integer. This is useful for certain networking
+// methods which require a port parameter to be an integer.
+func (em envMap) ValidateAsInt(envkey string) error {
+	enval, ok := em[envkey]
+	if !ok {
+		return errors.New("invalid key: this env was not found in this map")
+	}
 
-func (m *EnvConfigErr) AddInvalidEnv(invalid string) {
-	m.invalidEnvs = append(m.invalidEnvs, invalid)
-}
-
-func (m *EnvConfigErr) HasErrors() bool {
-	return (len(m.missingEnvs) + len(m.invalidEnvs)) != 0
+	_, err := strconv.Atoi(enval)
+	return err
 }
