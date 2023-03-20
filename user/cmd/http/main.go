@@ -9,25 +9,25 @@ import (
 )
 
 func main() {
-	cfg, err := getEnvs()
+	envs, err := LoadEnvs()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	client, err := user.NewMongoClient(cfg.mongoURI, cfg.mongoTimeout)
+	client, err := user.NewMongoClient(envs.mongoURI, envs.mongoTimeout)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer client.Disconnect(context.Background())
 
-	mongoRepository := user.NewMongoRepository(client, cfg.mongoDBName, cfg.mongoTimeout)
+	mongoRepository := user.NewMongoRepository(client, envs.mongoDBName, envs.mongoTimeout)
 	service, err := buildService(mongoRepository)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	handler := user.NewHandler(service)
-	server := user.NewServer(handler, cfg.port)
+	server := user.NewServer(handler, envs.port)
 	server.Run()
 }
 
