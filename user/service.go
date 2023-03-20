@@ -18,34 +18,13 @@ type Service interface {
 	RestartActivation(ctx context.Context, u *UserLoginInfo) error
 }
 
+// service is instantiated using a builder (see builder.go file)
 type service struct {
 	repository      Repository
 	client          Client
 	passwordManager PasswordManager
 	v               Validator
 	tc              *tokenClient
-}
-
-func NewService(
-	repository Repository,
-	client Client,
-	passwordManager PasswordManager,
-	validator Validator,
-) Service {
-	s := service{
-		repository:      repository,
-		client:          client,
-		passwordManager: passwordManager,
-		v:               validator,
-	}
-
-	tc, err := NewTokenClient("5003")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	s.tc = tc
-
-	return &s
 }
 
 func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {

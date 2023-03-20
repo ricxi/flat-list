@@ -40,10 +40,13 @@ func buildService(repository user.Repository) (user.Service, error) {
 		return nil, err
 	}
 
-	return user.NewService(
-		repository,
-		grpcClient,
-		passwordManager,
-		validator,
-	), nil
+	service := user.
+		NewServiceBuilder().
+		Repository(repository).
+		PasswordManager(passwordManager).
+		Client(grpcClient).
+		Validator(validator).
+		Build()
+
+	return service, nil
 }
