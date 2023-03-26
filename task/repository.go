@@ -11,7 +11,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-type Repository interface{}
+type Repository interface {
+	CreateOne(ctx context.Context, task *NewTask) (string, error)
+	GetOne(ctx context.Context, id string) (*Task, error)
+}
 
 type repository struct {
 	client *mongo.Client
@@ -67,4 +70,24 @@ func (r *repository) CreateOne(ctx context.Context, task *NewTask) (string, erro
 	}
 
 	return result.InsertedID.(primitive.ObjectID).Hex(), nil
+}
+
+func (r *repository) GetOne(ctx context.Context, id string) (*Task, error) {
+	oID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{"_id": oID}
+	result := r.coll.FindOne(ctx, filter)
+	if result.Err() != nil {
+		return nil, err
+	}
+
+	var task Task
+	if err := result.Decode(&task); err != nil {
+		return nil, err
+	}
+
+	return &task, nil
 }
