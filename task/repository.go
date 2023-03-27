@@ -79,15 +79,15 @@ func (r *repository) GetOne(ctx context.Context, id string) (*Task, error) {
 	}
 
 	filter := bson.M{"_id": oID}
-	result := r.coll.FindOne(ctx, filter)
-	if result.Err() != nil {
+	var task Task
+	if err := r.coll.FindOne(ctx, &filter).Decode(&task); err != nil {
 		return nil, err
 	}
 
-	var task Task
-	if err := result.Decode(&task); err != nil {
-		return nil, err
-	}
+	// Checking the result for an error, then running the line below causes a nil pointer runtime error if no document is found
+	// if err := result.Decode(&task); err != nil {
+	// 	return nil, err
+	// }
 
 	return &task, nil
 }
