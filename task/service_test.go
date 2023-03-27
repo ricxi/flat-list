@@ -88,13 +88,16 @@ func TestGetTaskByID(t *testing.T) {
 	t.Run("SuccessGetTask", func(t *testing.T) {
 		assert := assert.New(t)
 
+		createdAt := time.Now().UTC()
 		task := Task{
-			ID:       primitive.NewObjectID().Hex(),
-			UserID:   primitive.NewObjectID().Hex(),
-			Name:     "Laundry",
-			Details:  "tumble low and dry",
-			Priority: "low",
-			Category: "chores",
+			ID:        primitive.NewObjectID().Hex(),
+			UserID:    primitive.NewObjectID().Hex(),
+			Name:      "Laundry",
+			Details:   "tumble low and dry",
+			Priority:  "low",
+			Category:  "chores",
+			CreatedAt: &createdAt,
+			UpdatedAt: &createdAt,
 		}
 
 		s := &service{
