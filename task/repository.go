@@ -57,7 +57,7 @@ func (r *repository) CreateOne(ctx context.Context, task *NewTask) (string, erro
 
 	doc := bson.M{
 		"name":      task.Name,
-		"userID":    uOID,
+		"userId":    uOID,
 		"details":   task.Details,
 		"priority":  task.Priority,
 		"category":  task.Category,
@@ -79,8 +79,17 @@ func (r *repository) GetOne(ctx context.Context, id string) (*Task, error) {
 	}
 
 	filter := bson.M{"_id": oID}
-	var task Task
-	if err := r.coll.FindOne(ctx, &filter).Decode(&task); err != nil {
+	taskDoc := struct {
+		ID        string     `bson:"_id,omitempty"`
+		UserID    string     `bson:"userId,omitempty"`
+		Name      string     `bson:"name"`
+		Details   string     `bson:"details,omitempty"`
+		Priority  string     `bson:"priority,omitempty"`
+		Category  string     `bson:"category,omitempty"`
+		CreatedAt *time.Time `bson:"createdAt,omitempty"`
+		UpdatedAt *time.Time `bson:"updatedAt,omitempty"`
+	}{}
+	if err := r.coll.FindOne(ctx, &filter).Decode(&taskDoc); err != nil {
 		return nil, err
 	}
 
@@ -89,5 +98,14 @@ func (r *repository) GetOne(ctx context.Context, id string) (*Task, error) {
 	// 	return nil, err
 	// }
 
-	return &task, nil
+	return &Task{
+		ID:        taskDoc.ID,
+		UserID:    taskDoc.UserID,
+		Name:      taskDoc.Name,
+		Details:   taskDoc.Details,
+		Priority:  taskDoc.Priority,
+		Category:  taskDoc.Category,
+		CreatedAt: taskDoc.CreatedAt,
+		UpdatedAt: taskDoc.UpdatedAt,
+	}, nil
 }

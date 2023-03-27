@@ -13,7 +13,7 @@ type NewTask struct {
 }
 
 type Task struct {
-	ID        string     `json:"id,omitempty"`
+	ID        string     `json:"taskId,omitempty"`
 	UserID    string     `json:"userId,omitempty"`
 	Name      string     `json:"name"`
 	Details   string     `json:"details,omitempty"`

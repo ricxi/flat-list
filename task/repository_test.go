@@ -71,19 +71,21 @@ func createOneTask() NewTask {
 }
 
 func TestCreateOne(t *testing.T) {
-	r, teardown := setupRepo(t)
-	defer teardown(t)
+	t.Run("SuccessCreateOneTask", func(t *testing.T) {
+		r, teardown := setupRepo(t)
+		defer teardown(t)
+		assert := assert.New(t)
 
-	task := createOneTask()
-	taskID, err := r.CreateOne(context.Background(), &task)
+		task := createOneTask()
+		gotTaskID, err := r.CreateOne(context.Background(), &task)
 
-	assert := assert.New(t)
-	assert.NoError(err)
-	if assert.NotEmpty(taskID) {
-		if !primitive.IsValidObjectID(taskID) {
-			t.Errorf("expected a hex that can be converted into a primitive.ObjectID")
+		assert.NoError(err)
+		if assert.NotEmpty(gotTaskID) {
+			if !primitive.IsValidObjectID(gotTaskID) {
+				t.Errorf("expected a hex that can be converted into a primitive.ObjectID")
+			}
 		}
-	}
+	})
 }
 
 func TestGetOne(t *testing.T) {
@@ -91,17 +93,18 @@ func TestGetOne(t *testing.T) {
 	defer teardown(t)
 
 	t.Run("SuccessGetOneTask", func(t *testing.T) {
+		assert := assert.New(t)
+
 		task := createOneTask()
 		taskID, err := r.CreateOne(context.Background(), &task)
 		require.NoError(t, err)
 		require.NotEmpty(t, taskID)
 
 		actualTask, err := r.GetOne(context.Background(), taskID)
-
-		assert := assert.New(t)
 		assert.NoError(err)
 		assert.NotNil(actualTask)
 		if assert.NotEmpty(*actualTask) {
+			assert.Equal(taskID, actualTask.ID)
 			assert.Equal(task.UserID, actualTask.UserID)
 			assert.Equal(task.Name, actualTask.Name)
 			assert.Equal(task.Details, actualTask.Details)
@@ -113,11 +116,13 @@ func TestGetOne(t *testing.T) {
 	})
 
 	t.Run("FailGetOneTask", func(t *testing.T) {
+		assert := assert.New(t)
 		taskID := primitive.NewObjectID().Hex()
 
 		task, err := r.GetOne(context.Background(), taskID)
-		assert.Error(t, err)
-		assert.EqualError(t, err, mongo.ErrNoDocuments.Error())
-		assert.Nil(t, task)
+		assert.Nil(task)
+		if assert.Error(err) {
+			assert.EqualError(err, mongo.ErrNoDocuments.Error())
+		}
 	})
 }
