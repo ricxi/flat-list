@@ -14,6 +14,7 @@ import (
 type Repository interface {
 	CreateOne(ctx context.Context, task *NewTask) (string, error)
 	GetOne(ctx context.Context, id string) (*Task, error)
+	UpdateOne(ctx context.Context, task *Task) (*Task, error)
 }
 
 type repository struct {
@@ -107,5 +108,44 @@ func (r *repository) GetOne(ctx context.Context, id string) (*Task, error) {
 		Category:  taskDoc.Category,
 		CreatedAt: taskDoc.CreatedAt,
 		UpdatedAt: taskDoc.UpdatedAt,
+	}, nil
+}
+
+func (r *repository) UpdateOne(ctx context.Context, task *Task) (*Task, error) {
+	oID, err := primitive.ObjectIDFromHex(task.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{"_id": oID}
+	update := bson.M{
+		"$set": &TaskDocument{
+			Name:      task.Name,
+			Details:   task.Details,
+			Priority:  task.Priority,
+			Category:  task.Category,
+			UpdatedAt: task.UpdatedAt,
+		},
+	}
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	result := r.coll.FindOneAndUpdate(ctx, &filter, &update, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var td TaskDocument
+	if err := result.Decode(&td); err != nil {
+		return nil, err
+	}
+
+	return &Task{
+		ID:        td.ID.Hex(),
+		UserID:    td.UserID.Hex(),
+		Name:      td.Name,
+		Details:   td.Details,
+		Priority:  td.Priority,
+		Category:  td.Category,
+		CreatedAt: td.CreatedAt,
+		UpdatedAt: td.UpdatedAt,
 	}, nil
 }

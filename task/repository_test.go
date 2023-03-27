@@ -126,3 +126,35 @@ func TestGetOne(t *testing.T) {
 		}
 	})
 }
+
+func TestUpdateOne(t *testing.T) {
+	r, teardown := setupRepo(t)
+	defer teardown(t)
+	t.Run("UpdateTaskSuccess", func(t *testing.T) {
+		assert := assert.New(t)
+		newTask := createOneTask()
+		taskID, err := r.CreateOne(context.Background(), &newTask)
+		require.NoError(t, err)
+
+		updatePayload := Task{
+			ID:       taskID,
+			Priority: "medium",
+		}
+
+		updatedTask, err := r.UpdateOne(context.Background(), &updatePayload)
+		assert.NoError(err)
+
+		expectedTask := newTask
+		expectedTask.Priority = updatePayload.Priority
+		if assert.NotNil(updatedTask) && assert.NotEmpty(*updatedTask) {
+			assert.Equal(taskID, updatedTask.ID)
+			assert.Equal(expectedTask.UserID, updatedTask.UserID)
+			assert.Equal(expectedTask.Name, updatedTask.Name)
+			assert.Equal(expectedTask.Details, updatedTask.Details)
+			assert.Equal(expectedTask.Priority, updatedTask.Priority)
+			assert.Equal(expectedTask.Category, updatedTask.Category)
+			assert.WithinDuration(*expectedTask.CreatedAt, *updatedTask.CreatedAt, time.Second)
+			assert.WithinDuration(*expectedTask.UpdatedAt, *updatedTask.UpdatedAt, time.Second)
+		}
+	})
+}

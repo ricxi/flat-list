@@ -24,3 +24,7 @@ func (m *mockRepository) GetOne(ctx context.Context, id string) (*Task, error) {
 	}
 	return m.task, m.err
 }
+
+func (m *mockRepository) UpdateOne(ctx context.Context, task *Task) (*Task, error) {
+	return m.task, m.err
+}
