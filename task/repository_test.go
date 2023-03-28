@@ -71,7 +71,7 @@ func createOneTask() NewTask {
 }
 
 func TestCreateOne(t *testing.T) {
-	t.Run("SuccessCreateOneTask", func(t *testing.T) {
+	t.Run("CreateOneTaskSuccess", func(t *testing.T) {
 		r, teardown := setupRepo(t)
 		defer teardown(t)
 		assert := assert.New(t)
@@ -92,7 +92,7 @@ func TestGetOne(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
 
-	t.Run("SuccessGetOneTask", func(t *testing.T) {
+	t.Run("GetOneTaskSuccess", func(t *testing.T) {
 		assert := assert.New(t)
 
 		task := createOneTask()
@@ -102,8 +102,8 @@ func TestGetOne(t *testing.T) {
 
 		actualTask, err := r.GetOne(context.Background(), taskID)
 		assert.NoError(err)
-		assert.NotNil(actualTask)
-		if assert.NotEmpty(*actualTask) {
+
+		if assert.NotNil(actualTask) && assert.NotEmpty(*actualTask) {
 			assert.Equal(taskID, actualTask.ID)
 			assert.Equal(task.UserID, actualTask.UserID)
 			assert.Equal(task.Name, actualTask.Name)
@@ -115,7 +115,7 @@ func TestGetOne(t *testing.T) {
 		}
 	})
 
-	t.Run("FailGetOneTask", func(t *testing.T) {
+	t.Run("GetOneTaskFail", func(t *testing.T) {
 		assert := assert.New(t)
 		taskID := primitive.NewObjectID().Hex()
 
