@@ -122,3 +122,48 @@ func TestGetTaskByID(t *testing.T) {
 	})
 
 }
+
+func TestUpdateTask(t *testing.T) {
+	t.Run("UpdateTaskNameSuccess", func(t *testing.T) {
+		assert := assert.New(t)
+
+		createdAt := time.Now().UTC()
+		expectedTask := Task{
+			ID:        primitive.NewObjectID().Hex(),
+			UserID:    primitive.NewObjectID().Hex(),
+			Name:      "Laundry",
+			Details:   "tumble low and dry",
+			Priority:  "low",
+			Category:  "chores",
+			CreatedAt: &createdAt,
+			UpdatedAt: &createdAt,
+		}
+
+		s := &service{
+			r: &mockRepository{
+				err:  nil,
+				task: &expectedTask,
+			},
+		}
+
+		updatePayload := Task{
+			ID:     expectedTask.ID,
+			UserID: expectedTask.UserID,
+			Name:   "Repair the laundry machine",
+		}
+
+		actualTask, err := s.UpdateTask(context.Background(), &updatePayload)
+		assert.NoError(err)
+		if assert.NotNil(actualTask) && assert.NotEmpty(*actualTask) {
+			assert.Equal(expectedTask.ID, actualTask.ID)
+			assert.Equal(expectedTask.UserID, actualTask.UserID)
+			assert.Equal(expectedTask.Name, actualTask.Name)
+			assert.Equal(expectedTask.Details, actualTask.Details)
+			assert.Equal(expectedTask.Priority, actualTask.Priority)
+			assert.Equal(expectedTask.Category, actualTask.Category)
+			assert.WithinDuration(*expectedTask.CreatedAt, *actualTask.CreatedAt, time.Second)
+			assert.WithinDuration(*expectedTask.UpdatedAt, *actualTask.UpdatedAt, time.Second)
+		}
+
+	})
+}

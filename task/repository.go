@@ -12,9 +12,9 @@ import (
 )
 
 type Repository interface {
-	CreateOne(ctx context.Context, task *NewTask) (string, error)
-	GetOne(ctx context.Context, id string) (*Task, error)
-	UpdateOne(ctx context.Context, task *Task) (*Task, error)
+	CreateTask(ctx context.Context, task *NewTask) (string, error)
+	GetTaskByID(ctx context.Context, id string) (*Task, error)
+	UpdateTask(ctx context.Context, task *Task) (*Task, error)
 }
 
 type repository struct {
@@ -50,7 +50,7 @@ func NewMongoClient(uri string, timeout int64) (*mongo.Client, error) {
 	return client, nil
 }
 
-func (r *repository) CreateOne(ctx context.Context, task *NewTask) (string, error) {
+func (r *repository) CreateTask(ctx context.Context, task *NewTask) (string, error) {
 	uOID, err := primitive.ObjectIDFromHex(task.UserID)
 	if err != nil {
 		return "", err
@@ -73,7 +73,7 @@ func (r *repository) CreateOne(ctx context.Context, task *NewTask) (string, erro
 	return result.InsertedID.(primitive.ObjectID).Hex(), nil
 }
 
-func (r *repository) GetOne(ctx context.Context, id string) (*Task, error) {
+func (r *repository) GetTaskByID(ctx context.Context, id string) (*Task, error) {
 	oID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (r *repository) GetOne(ctx context.Context, id string) (*Task, error) {
 	}, nil
 }
 
-func (r *repository) UpdateOne(ctx context.Context, task *Task) (*Task, error) {
+func (r *repository) UpdateTask(ctx context.Context, task *Task) (*Task, error) {
 	oID, err := primitive.ObjectIDFromHex(task.ID)
 	if err != nil {
 		return nil, err

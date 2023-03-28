@@ -70,14 +70,14 @@ func createOneTask() NewTask {
 	return task
 }
 
-func TestCreateOne(t *testing.T) {
-	t.Run("CreateOneTaskSuccess", func(t *testing.T) {
+func TestRepositoryCreateTask(t *testing.T) {
+	t.Run("CreateTaskSuccess", func(t *testing.T) {
 		r, teardown := setupRepo(t)
 		defer teardown(t)
 		assert := assert.New(t)
 
 		task := createOneTask()
-		gotTaskID, err := r.CreateOne(context.Background(), &task)
+		gotTaskID, err := r.CreateTask(context.Background(), &task)
 
 		assert.NoError(err)
 		if assert.NotEmpty(gotTaskID) {
@@ -88,19 +88,19 @@ func TestCreateOne(t *testing.T) {
 	})
 }
 
-func TestGetOne(t *testing.T) {
+func TestRepositoryGetTaskByID(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
 
-	t.Run("GetOneTaskSuccess", func(t *testing.T) {
+	t.Run("GetTaskSuccess", func(t *testing.T) {
 		assert := assert.New(t)
 
 		task := createOneTask()
-		taskID, err := r.CreateOne(context.Background(), &task)
+		taskID, err := r.CreateTask(context.Background(), &task)
 		require.NoError(t, err)
 		require.NotEmpty(t, taskID)
 
-		actualTask, err := r.GetOne(context.Background(), taskID)
+		actualTask, err := r.GetTaskByID(context.Background(), taskID)
 		assert.NoError(err)
 
 		if assert.NotNil(actualTask) && assert.NotEmpty(*actualTask) {
@@ -115,11 +115,11 @@ func TestGetOne(t *testing.T) {
 		}
 	})
 
-	t.Run("GetOneTaskFail", func(t *testing.T) {
+	t.Run("GetTaskFail", func(t *testing.T) {
 		assert := assert.New(t)
 		taskID := primitive.NewObjectID().Hex()
 
-		task, err := r.GetOne(context.Background(), taskID)
+		task, err := r.GetTaskByID(context.Background(), taskID)
 		assert.Nil(task)
 		if assert.Error(err) {
 			assert.EqualError(err, mongo.ErrNoDocuments.Error())
@@ -127,13 +127,13 @@ func TestGetOne(t *testing.T) {
 	})
 }
 
-func TestUpdateOne(t *testing.T) {
+func TestRepositoryUpdateTask(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
 	t.Run("UpdateTaskSuccess", func(t *testing.T) {
 		assert := assert.New(t)
 		newTask := createOneTask()
-		taskID, err := r.CreateOne(context.Background(), &newTask)
+		taskID, err := r.CreateTask(context.Background(), &newTask)
 		require.NoError(t, err)
 
 		updatePayload := Task{
@@ -141,7 +141,7 @@ func TestUpdateOne(t *testing.T) {
 			Priority: "medium",
 		}
 
-		updatedTask, err := r.UpdateOne(context.Background(), &updatePayload)
+		updatedTask, err := r.UpdateTask(context.Background(), &updatePayload)
 		assert.NoError(err)
 
 		expectedTask := newTask

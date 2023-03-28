@@ -36,7 +36,7 @@ func (s *service) CreateTask(ctx context.Context, task *NewTask) (string, error)
 	task.UpdatedAt = &createdAt
 
 	// include a logger
-	return s.r.CreateOne(ctx, task)
+	return s.r.CreateTask(ctx, task)
 }
 
 func (s *service) GetTaskByID(ctx context.Context, id string) (*Task, error) {
@@ -44,5 +44,24 @@ func (s *service) GetTaskByID(ctx context.Context, id string) (*Task, error) {
 		return nil, fmt.Errorf("%w: taskId", ErrMissingField)
 	}
 
-	return s.r.GetOne(ctx, id)
+	return s.r.GetTaskByID(ctx, id)
+}
+
+func (s *service) UpdateTask(ctx context.Context, task *Task) (*Task, error) {
+	if task.ID == "" {
+		return nil, fmt.Errorf("%w: taskId", ErrMissingField)
+	}
+
+	if task.UserID == "" {
+		return nil, fmt.Errorf("%w: userId", ErrMissingField)
+	}
+
+	if task.Name == "" {
+		return nil, fmt.Errorf("%w: name", ErrMissingField)
+	}
+
+	updatedAt := time.Now().UTC()
+	task.UpdatedAt = &updatedAt
+
+	return s.r.UpdateTask(ctx, task)
 }
