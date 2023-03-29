@@ -232,3 +232,51 @@ func TestUpdateTask(t *testing.T) {
 		}
 	})
 }
+
+func TestDeleteTask(t *testing.T) {
+	t.Run("DeleteTaskSuccess", func(t *testing.T) {
+		s := service{
+			r: &mockRepository{
+				deleteResultCount: 1,
+				err:               nil,
+			},
+		}
+
+		taskID := primitive.NewObjectID().Hex()
+		err := s.DeleteTask(context.Background(), taskID)
+		assert.NoError(t, err)
+	})
+
+	t.Run("DeleteTaskFailMissingFieldTaskID", func(t *testing.T) {
+		s := service{
+			r: &mockRepository{
+				deleteResultCount: 1,
+				err:               nil,
+			},
+		}
+
+		taskID := ""
+		err := s.DeleteTask(context.Background(), taskID)
+		foundErr := assert.Error(t, err)
+		if foundErr {
+			assert.EqualError(t, err, ErrMissingField.Error()+": taskId")
+		}
+	})
+
+	t.Run("DeleteTaskFailTaskNotFound", func(t *testing.T) {
+		assert := assert.New(t)
+		s := service{
+			r: &mockRepository{
+				deleteResultCount: 0,
+				err:               nil,
+			},
+		}
+
+		taskID := primitive.NewObjectID().Hex()
+		err := s.DeleteTask(context.Background(), taskID)
+		foundErr := assert.Error(err)
+		if foundErr {
+			assert.EqualError(err, ErrTaskNotFound.Error())
+		}
+	})
+}
