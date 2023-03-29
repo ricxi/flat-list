@@ -65,3 +65,20 @@ func (s *service) UpdateTask(ctx context.Context, task *Task) (*Task, error) {
 
 	return s.r.UpdateTask(ctx, task)
 }
+
+func (s *service) DeleteTask(ctx context.Context, id string) error {
+	if id == "" {
+		return fmt.Errorf("%w: taskId", ErrMissingField)
+	}
+
+	deletedCount, err := s.r.DeleteTask(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if deletedCount == 0 {
+		return ErrTaskNotFound
+	}
+
+	return nil
+}
