@@ -131,7 +131,7 @@ func TestUpdateTask(t *testing.T) {
 		expectedTask := Task{
 			ID:        primitive.NewObjectID().Hex(),
 			UserID:    primitive.NewObjectID().Hex(),
-			Name:      "Laundry",
+			Name:      "Repair the laundry machine",
 			Details:   "tumble low and dry",
 			Priority:  "low",
 			Category:  "chores",
@@ -165,5 +165,68 @@ func TestUpdateTask(t *testing.T) {
 			assert.WithinDuration(*expectedTask.UpdatedAt, *actualTask.UpdatedAt, time.Second)
 		}
 
+	})
+
+	t.Run("UpdateTaskFailMissingID", func(t *testing.T) {
+		assert := assert.New(t)
+		s := &service{
+			r: &mockRepository{
+				err:  nil,
+				task: nil,
+			},
+		}
+
+		updatePayload := Task{
+			UserID: primitive.NewObjectID().Hex(),
+			Name:   "Repair the laundry machine",
+		}
+
+		actualTask, err := s.UpdateTask(context.Background(), &updatePayload)
+		assert.Nil(actualTask)
+		if assert.Error(err) {
+			assert.EqualError(err, ErrMissingField.Error()+": taskId")
+		}
+	})
+
+	t.Run("UpdateTaskFailMissingUserID", func(t *testing.T) {
+		assert := assert.New(t)
+		s := &service{
+			r: &mockRepository{
+				err:  nil,
+				task: nil,
+			},
+		}
+
+		updatePayload := Task{
+			ID:   primitive.NewObjectID().Hex(),
+			Name: "Repair the laundry machine",
+		}
+
+		actualTask, err := s.UpdateTask(context.Background(), &updatePayload)
+		assert.Nil(actualTask)
+		if assert.Error(err) {
+			assert.EqualError(err, ErrMissingField.Error()+": userId")
+		}
+	})
+
+	t.Run("UpdateTaskFailMissingTaskName", func(t *testing.T) {
+		assert := assert.New(t)
+		s := &service{
+			r: &mockRepository{
+				err:  nil,
+				task: nil,
+			},
+		}
+
+		updatePayload := Task{
+			ID:     primitive.NewObjectID().Hex(),
+			UserID: primitive.NewObjectID().Hex(),
+		}
+
+		actualTask, err := s.UpdateTask(context.Background(), &updatePayload)
+		assert.Nil(actualTask)
+		if assert.Error(err) {
+			assert.EqualError(err, ErrMissingField.Error()+": name")
+		}
 	})
 }
