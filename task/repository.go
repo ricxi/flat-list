@@ -15,6 +15,7 @@ type Repository interface {
 	CreateTask(ctx context.Context, task *NewTask) (string, error)
 	GetTaskByID(ctx context.Context, id string) (*Task, error)
 	UpdateTask(ctx context.Context, task *Task) (*Task, error)
+	DeleteTask(ctx context.Context, id string) (int64, error)
 }
 
 type repository struct {
@@ -148,4 +149,18 @@ func (r *repository) UpdateTask(ctx context.Context, task *Task) (*Task, error) 
 		CreatedAt: td.CreatedAt,
 		UpdatedAt: td.UpdatedAt,
 	}, nil
+}
+
+func (r *repository) DeleteTask(ctx context.Context, id string) (int64, error) {
+	oID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return 0, err
+	}
+
+	result, err := r.coll.DeleteOne(ctx, bson.M{"_id": oID})
+	if err != nil {
+		return 0, err
+	}
+
+	return result.DeletedCount, nil
 }

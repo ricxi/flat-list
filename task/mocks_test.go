@@ -9,9 +9,10 @@ import (
 var _ Repository = &mockRepository{}
 
 type mockRepository struct {
-	taskID string
-	task   *Task
-	err    error
+	taskID       string
+	task         *Task
+	deleteResult int64
+	err          error
 }
 
 func (m *mockRepository) CreateTask(ctx context.Context, task *NewTask) (string, error) {
@@ -27,4 +28,8 @@ func (m *mockRepository) GetTaskByID(ctx context.Context, id string) (*Task, err
 
 func (m *mockRepository) UpdateTask(ctx context.Context, task *Task) (*Task, error) {
 	return m.task, m.err
+}
+
+func (m *mockRepository) DeleteTask(ctx context.Context, id string) (int64, error) {
+	return m.deleteResult, m.err
 }

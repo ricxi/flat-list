@@ -123,6 +123,8 @@ func TestGetTaskByID(t *testing.T) {
 
 }
 
+// TestUpdateTask mainly tests the validation
+// carried out by the service layer
 func TestUpdateTask(t *testing.T) {
 	t.Run("UpdateTaskNameSuccess", func(t *testing.T) {
 		assert := assert.New(t)
