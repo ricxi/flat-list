@@ -71,7 +71,7 @@ func (s *service) DeleteTask(ctx context.Context, id string) error {
 		return fmt.Errorf("%w: taskId", ErrMissingField)
 	}
 
-	deletedCount, err := s.r.DeleteTask(ctx, id)
+	deletedCount, err := s.r.DeleteTaskByID(ctx, id)
 	if err != nil {
 		return err
 	}

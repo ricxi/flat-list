@@ -30,6 +30,6 @@ func (m *mockRepository) UpdateTask(ctx context.Context, task *Task) (*Task, err
 	return m.task, m.err
 }
 
-func (m *mockRepository) DeleteTask(ctx context.Context, id string) (int64, error) {
+func (m *mockRepository) DeleteTaskByID(ctx context.Context, id string) (int64, error) {
 	return m.deleteResult, m.err
 }

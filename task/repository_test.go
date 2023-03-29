@@ -159,28 +159,28 @@ func TestRepositoryUpdateTask(t *testing.T) {
 	})
 }
 
-func TestRepositoryDeleteTask(t *testing.T) {
+func TestDeleteTaskByID(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
 
-	t.Run("DeleteTaskSuccess", func(t *testing.T) {
+	t.Run("DeleteTaskByIDSuccess", func(t *testing.T) {
 		assert := assert.New(t)
 		newTask := createOneTask()
 		taskID, err := r.CreateTask(context.Background(), &newTask)
 		require.NoError(t, err)
 
-		deletedDocs, err := r.DeleteTask(context.Background(), taskID)
+		deletedDocs, err := r.DeleteTaskByID(context.Background(), taskID)
 		assert.NoError(err)
 		if assert.NotEmpty(deletedDocs) {
 			assert.Equal(deletedDocs, int64(1))
 		}
 	})
 
-	t.Run("DeleteTaskFail", func(t *testing.T) {
+	t.Run("DeleteTaskByIDFail", func(t *testing.T) {
 		assert := assert.New(t)
 
 		taskID := primitive.NewObjectID().Hex()
-		deletedDocs, err := r.DeleteTask(context.Background(), taskID)
+		deletedDocs, err := r.DeleteTaskByID(context.Background(), taskID)
 		assert.NoError(err)
 		if assert.Empty(deletedDocs) {
 			assert.Equal(deletedDocs, int64(0))
