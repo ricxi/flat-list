@@ -33,3 +33,15 @@ func (m *mockRepository) UpdateTask(ctx context.Context, task *Task) (*Task, err
 func (m *mockRepository) DeleteTaskByID(ctx context.Context, id string) (int64, error) {
 	return m.deleteResultCount, m.err
 }
+
+var _ Service = &mockService{}
+
+// mockService is used by the http handler
+type mockService struct {
+	taskID string
+	err    error
+}
+
+func (m *mockService) CreateTask(ctx context.Context, task *NewTask) (string, error) {
+	return m.taskID, m.err
+}
