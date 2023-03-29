@@ -159,7 +159,7 @@ func TestRepositoryUpdateTask(t *testing.T) {
 	})
 }
 
-func Test_repository_DeleteTask(t *testing.T) {
+func TestRepositoryDeleteTask(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
 
