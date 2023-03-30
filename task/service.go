@@ -2,8 +2,11 @@ package task
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Service interface {
@@ -47,7 +50,15 @@ func (s *service) GetTaskByID(ctx context.Context, id string) (*Task, error) {
 		return nil, fmt.Errorf("%w: taskId", ErrMissingField)
 	}
 
-	return s.r.GetTaskByID(ctx, id)
+	t, err := s.r.GetTaskByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrTaskNotFound
+		}
+		return nil, err
+	}
+
+	return t, nil
 }
 
 func (s *service) UpdateTask(ctx context.Context, task *Task) (*Task, error) {

@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func TestCreateTask(t *testing.T) {
@@ -85,7 +87,7 @@ func TestCreateTask(t *testing.T) {
 }
 
 func TestGetTaskByID(t *testing.T) {
-	t.Run("SuccessGetTask", func(t *testing.T) {
+	t.Run("GetTaskByIDFail", func(t *testing.T) {
 		assert := assert.New(t)
 
 		createdAt := time.Now().UTC()
@@ -121,6 +123,22 @@ func TestGetTaskByID(t *testing.T) {
 		}
 	})
 
+	t.Run("GetTaskByIDFail", func(t *testing.T) {
+		assert := assert.New(t)
+		s := &service{
+			r: &mockRepository{
+				err:  mongo.ErrNoDocuments,
+				task: nil,
+			},
+		}
+		taskID := primitive.NewObjectID().Hex()
+
+		actualTask, err := s.GetTaskByID(context.Background(), taskID)
+		require.Nil(t, actualTask)
+		if assert.Error(err) {
+			assert.EqualError(err, ErrTaskNotFound.Error())
+		}
+	})
 }
 
 // TestUpdateTask mainly tests the validation
