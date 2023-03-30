@@ -157,6 +157,21 @@ func TestRepositoryUpdateTask(t *testing.T) {
 			assert.WithinDuration(*expectedTask.UpdatedAt, *updatedTask.UpdatedAt, time.Second)
 		}
 	})
+
+	t.Run("UpdateTaskFail", func(t *testing.T) {
+		assert := assert.New(t)
+		taskID := primitive.NewObjectID().Hex()
+		updatePayload := Task{
+			ID:       taskID,
+			Priority: "medium",
+		}
+
+		updatedTask, err := r.UpdateTask(context.Background(), &updatePayload)
+		require.Nil(t, updatedTask)
+		if assert.Error(err) {
+			assert.EqualError(err, mongo.ErrNoDocuments.Error())
+		}
+	})
 }
 
 func TestDeleteTaskByID(t *testing.T) {
