@@ -3,7 +3,9 @@ module github.com/ricxi/flat-list/task
 go 1.20
 
 require (
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/google/uuid v1.3.0
+	github.com/stretchr/testify v1.8.2
 	go.mongodb.org/mongo-driver v1.11.3
 )
 
@@ -14,8 +16,6 @@ require (
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/stretchr/testify v1.8.2 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
