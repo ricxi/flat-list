@@ -122,7 +122,7 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 		task, err := r.GetTaskByID(context.Background(), taskID)
 		assert.Nil(task)
 		if assert.Error(err) {
-			assert.EqualError(err, mongo.ErrNoDocuments.Error())
+			assert.EqualError(err, ErrTaskNotFound.Error())
 		}
 	})
 }
@@ -184,21 +184,17 @@ func TestDeleteTaskByID(t *testing.T) {
 		taskID, err := r.CreateTask(context.Background(), &newTask)
 		require.NoError(t, err)
 
-		deletedDocs, err := r.DeleteTaskByID(context.Background(), taskID)
+		err = r.DeleteTaskByID(context.Background(), taskID)
 		assert.NoError(err)
-		if assert.NotEmpty(deletedDocs) {
-			assert.Equal(deletedDocs, int64(1))
-		}
 	})
 
-	t.Run("DeleteTaskByIDFail", func(t *testing.T) {
+	t.Run("DeleteTaskByIDFailDocumentNotFound", func(t *testing.T) {
 		assert := assert.New(t)
 
 		taskID := primitive.NewObjectID().Hex()
-		deletedDocs, err := r.DeleteTaskByID(context.Background(), taskID)
-		assert.NoError(err)
-		if assert.Empty(deletedDocs) {
-			assert.Equal(deletedDocs, int64(0))
+		err := r.DeleteTaskByID(context.Background(), taskID)
+		if assert.Error(err) {
+			assert.EqualError(err, ErrTaskNotFound.Error())
 		}
 	})
 }

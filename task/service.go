@@ -2,11 +2,8 @@ package task
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
-
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Service interface {
@@ -50,15 +47,7 @@ func (s *service) GetTaskByID(ctx context.Context, id string) (*Task, error) {
 		return nil, fmt.Errorf("%w: taskId", ErrMissingField)
 	}
 
-	t, err := s.r.GetTaskByID(ctx, id)
-	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, ErrTaskNotFound
-		}
-		return nil, err
-	}
-
-	return t, nil
+	return s.r.GetTaskByID(ctx, id)
 }
 
 func (s *service) UpdateTask(ctx context.Context, task *Task) (*Task, error) {
@@ -85,14 +74,5 @@ func (s *service) DeleteTask(ctx context.Context, id string) error {
 		return fmt.Errorf("%w: taskId", ErrMissingField)
 	}
 
-	deletedCount, err := s.r.DeleteTaskByID(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	if deletedCount == 0 {
-		return ErrTaskNotFound
-	}
-
-	return nil
+	return s.r.DeleteTaskByID(ctx, id)
 }

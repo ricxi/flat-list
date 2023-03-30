@@ -16,7 +16,7 @@ type Repository interface {
 	CreateTask(ctx context.Context, task *NewTask) (string, error)
 	GetTaskByID(ctx context.Context, id string) (*Task, error)
 	UpdateTask(ctx context.Context, task *Task) (*Task, error)
-	DeleteTaskByID(ctx context.Context, id string) (int64, error)
+	DeleteTaskByID(ctx context.Context, id string) error
 }
 
 type repository struct {
@@ -93,6 +93,9 @@ func (r *repository) GetTaskByID(ctx context.Context, id string) (*Task, error) 
 		UpdatedAt *time.Time `bson:"updatedAt,omitempty"`
 	}{}
 	if err := r.coll.FindOne(ctx, &filter).Decode(&taskDoc); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrTaskNotFound
+		}
 		return nil, err
 	}
 
@@ -155,16 +158,22 @@ func (r *repository) UpdateTask(ctx context.Context, task *Task) (*Task, error) 
 	}, nil
 }
 
-func (r *repository) DeleteTaskByID(ctx context.Context, id string) (int64, error) {
+func (r *repository) DeleteTaskByID(ctx context.Context, id string) error {
 	oID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	result, err := r.coll.DeleteOne(ctx, bson.M{"_id": oID})
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	return result.DeletedCount, nil
+	// This will be 0 if the document is not found (a 'mongo.ErrNoDocuments' error is not returned)
+	deletedCount := result.DeletedCount
+	if deletedCount == 0 {
+		return ErrTaskNotFound
+	}
+
+	return nil
 }

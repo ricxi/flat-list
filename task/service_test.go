@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func TestCreateTask(t *testing.T) {
@@ -127,7 +126,7 @@ func TestGetTaskByID(t *testing.T) {
 		assert := assert.New(t)
 		s := &service{
 			r: &mockRepository{
-				err:  mongo.ErrNoDocuments,
+				err:  ErrTaskNotFound,
 				task: nil,
 			},
 		}
@@ -255,8 +254,7 @@ func TestDeleteTask(t *testing.T) {
 	t.Run("DeleteTaskSuccess", func(t *testing.T) {
 		s := service{
 			r: &mockRepository{
-				deleteResultCount: 1,
-				err:               nil,
+				err: nil,
 			},
 		}
 
@@ -266,10 +264,10 @@ func TestDeleteTask(t *testing.T) {
 	})
 
 	t.Run("DeleteTaskFailMissingFieldTaskID", func(t *testing.T) {
+		// I didn't include an id because it never gets that far
 		s := service{
 			r: &mockRepository{
-				deleteResultCount: 1,
-				err:               nil,
+				err: nil,
 			},
 		}
 
@@ -285,8 +283,7 @@ func TestDeleteTask(t *testing.T) {
 		assert := assert.New(t)
 		s := service{
 			r: &mockRepository{
-				deleteResultCount: 0,
-				err:               nil,
+				err: ErrTaskNotFound,
 			},
 		}
 
