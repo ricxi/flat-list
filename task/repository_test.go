@@ -169,7 +169,7 @@ func TestRepositoryUpdateTask(t *testing.T) {
 		updatedTask, err := r.UpdateTask(context.Background(), &updatePayload)
 		require.Nil(t, updatedTask)
 		if assert.Error(err) {
-			assert.EqualError(err, mongo.ErrNoDocuments.Error())
+			assert.EqualError(err, ErrTaskNotFound.Error())
 		}
 	})
 }

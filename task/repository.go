@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -130,7 +131,10 @@ func (r *repository) UpdateTask(ctx context.Context, task *Task) (*Task, error) 
 	}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	result := r.coll.FindOneAndUpdate(ctx, &filter, &update, opts)
-	if err != nil {
+	if err := result.Err(); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrTaskNotFound
+		}
 		return nil, err
 	}
 
