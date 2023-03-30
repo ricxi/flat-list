@@ -18,12 +18,11 @@ import (
 func TestHandleCreateTask(t *testing.T) {
 	assert := assert.New(t)
 	expectedTaskID := primitive.NewObjectID().Hex()
-	s := mockService{
-		taskID: expectedTaskID,
-		err:    nil,
-	}
 	h := &httpHandler{
-		s: &s,
+		s: &mockService{
+			taskID: expectedTaskID,
+			err:    nil,
+		},
 	}
 
 	nt := NewTask{
@@ -81,6 +80,7 @@ func createTaskForHTTPTests() Task {
 
 func TestHandleGetTask(t *testing.T) {
 	t.Run("GetTaskSuccess", func(t *testing.T) {
+		assert := assert.New(t)
 		expectedTask := createTaskForHTTPTests()
 		h := httpHandler{
 			s: &mockService{
@@ -88,7 +88,6 @@ func TestHandleGetTask(t *testing.T) {
 				err:  nil,
 			},
 		}
-		assert := assert.New(t)
 
 		w := httptest.NewRecorder()
 
@@ -104,7 +103,6 @@ func TestHandleGetTask(t *testing.T) {
 		h.handleGetTask(w, r)
 
 		result := w.Result()
-
 		assert.Equal(http.StatusOK, result.StatusCode)
 
 		resBody := struct {
@@ -131,15 +129,13 @@ func TestHandleGetTask(t *testing.T) {
 		}
 	})
 
-	t.Run("GetTaskFailMissingUrlParams", func(t *testing.T) {
+	t.Run("FailMissingUrlParams", func(t *testing.T) {
+		assert := assert.New(t)
 		h := httpHandler{
 			s: &mockService{
-				// I didn't include task because it shouldn't get that far
 				err: nil,
 			},
 		}
-		expectedMessage := "missing url param id"
-		assert := assert.New(t)
 
 		w := httptest.NewRecorder()
 
@@ -151,7 +147,6 @@ func TestHandleGetTask(t *testing.T) {
 		h.handleGetTask(w, r)
 
 		result := w.Result()
-
 		assert.Equal(http.StatusBadRequest, result.StatusCode)
 
 		resBody := struct {
@@ -167,19 +162,17 @@ func TestHandleGetTask(t *testing.T) {
 
 		actualMessage := resBody.Message
 		if assert.NotEmpty(actualMessage) {
-			assert.Equal(expectedMessage, actualMessage)
+			assert.Equal("missing url param id", actualMessage)
 		}
 	})
 
-	t.Run("GetTaskFailMissingUrlParams", func(t *testing.T) {
+	t.Run("FailTaskNotFound", func(t *testing.T) {
+		assert := assert.New(t)
 		h := httpHandler{
 			s: &mockService{
-				// I didn't include task because it shouldn't get that far
-				err: nil,
+				err: ErrTaskNotFound,
 			},
 		}
-		expectedMessage := "missing url param id"
-		assert := assert.New(t)
 
 		w := httptest.NewRecorder()
 
@@ -188,10 +181,12 @@ func TestHandleGetTask(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		ctx := chi.NewRouteContext()
+		ctx.URLParams.Add("id", primitive.NewObjectID().Hex())
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, ctx))
 		h.handleGetTask(w, r)
 
 		result := w.Result()
-
 		assert.Equal(http.StatusBadRequest, result.StatusCode)
 
 		resBody := struct {
@@ -207,7 +202,13 @@ func TestHandleGetTask(t *testing.T) {
 
 		actualMessage := resBody.Message
 		if assert.NotEmpty(actualMessage) {
-			assert.Equal(expectedMessage, actualMessage)
+			assert.Equal(ErrTaskNotFound.Error(), actualMessage)
 		}
+	})
+}
+
+func TestHandleUpdateTask(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+
 	})
 }

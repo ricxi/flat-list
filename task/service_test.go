@@ -12,7 +12,7 @@ import (
 )
 
 func TestCreateTask(t *testing.T) {
-	t.Run("SucccessCreateTask", func(t *testing.T) {
+	t.Run("SuccessCreateTask", func(t *testing.T) {
 		assert := assert.New(t)
 		s := &service{
 			r: &mockRepository{

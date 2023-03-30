@@ -63,7 +63,29 @@ func (h *httpHandler) handleGetTask(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func (h *httpHandler) handleUpdateTask(w http.ResponseWriter, r *http.Request) {}
+func (h *httpHandler) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
+	var t Task
+	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ut, err := h.s.UpdateTask(r.Context(), &t)
+	if err != nil {
+		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	res := map[string]any{
+		"success": true,
+		"task":    ut,
+	}
+	if err := writeToResponse(w, res, http.StatusOK); err != nil {
+		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+}
+
 // func (h *httpHandler) handleDeleteTask(w http.ResponseWriter, r *http.Request) {}
 
 func writeToResponse(w http.ResponseWriter, res map[string]any, statusCode int) error {

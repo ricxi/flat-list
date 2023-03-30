@@ -9,7 +9,7 @@ import (
 type Service interface {
 	CreateTask(ctx context.Context, task *NewTask) (string, error)
 	GetTaskByID(ctx context.Context, id string) (*Task, error)
-	// UpdateTask(ctx context.Context, task *Task) (*Task, error)
+	UpdateTask(ctx context.Context, task *Task) (*Task, error)
 	// DeleteTask(ctx context.Context, id string) error
 }
 

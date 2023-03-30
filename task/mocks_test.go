@@ -49,3 +49,8 @@ func (m *mockService) CreateTask(ctx context.Context, task *NewTask) (string, er
 func (m *mockService) GetTaskByID(ctx context.Context, id string) (*Task, error) {
 	return m.task, m.err
 }
+
+func (m *mockService) UpdateTask(ctx context.Context, task *Task) (*Task, error) {
+	// m.task will be a mock of the updated task
+	return m.task, m.err
+}
