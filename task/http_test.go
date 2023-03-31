@@ -58,30 +58,24 @@ func TestHandleCreateTask(t *testing.T) {
 func TestHandleGetTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
+		require := require.New(t)
 		expectedTask := createTaskForHTTPTests()
-		h := httpHandler{
-			s: &mockService{
+		h := NewHTTPHandler(
+			&mockService{
 				task: &expectedTask,
 				err:  nil,
 			},
-		}
+		)
 
-		w := httptest.NewRecorder()
+		rr := httptest.NewRecorder()
 
-		// url doesn't really matter
-		r, err := http.NewRequest(http.MethodGet, "v1/task", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		// manually add url params to request context to avoid missing url param error
-		ctx := chi.NewRouteContext()
-		ctx.URLParams.Add("id", expectedTask.ID)
-		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, ctx))
-		h.handleGetTask(w, r)
+		r, err := http.NewRequest(http.MethodGet, "/v1/task/"+expectedTask.ID, nil)
+		require.NoError(err)
 
-		result := w.Result()
+		h.ServeHTTP(rr, r)
+
+		result := rr.Result()
 		assert.Equal(http.StatusOK, result.StatusCode)
-
 		resBody := struct {
 			Success bool `json:"success"`
 			Task    Task `json:"task"`
