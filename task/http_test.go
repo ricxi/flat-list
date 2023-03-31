@@ -18,12 +18,11 @@ import (
 func TestHandleCreateTask(t *testing.T) {
 	assert := assert.New(t)
 	expectedTaskID := primitive.NewObjectID().Hex()
-	h := &httpHandler{
-		s: &mockService{
-			taskID: expectedTaskID,
-			err:    nil,
-		},
+	s := &mockService{
+		taskID: expectedTaskID,
+		err:    nil,
 	}
+	h := NewHTTPHandler(s)
 
 	nt := NewTask{
 		UserID:   primitive.NewObjectID().Hex(),
@@ -44,7 +43,7 @@ func TestHandleCreateTask(t *testing.T) {
 	r, err := http.NewRequest(http.MethodPost, "v1/task/create", &body)
 	require.NoError(t, err)
 
-	h.handleCreateTask(w, r)
+	h.ServeHTTP(w, r)
 
 	result := w.Result()
 	assert.Equal(result.StatusCode, http.StatusCreated)
@@ -204,11 +203,5 @@ func TestHandleGetTask(t *testing.T) {
 		if assert.NotEmpty(actualMessage) {
 			assert.Equal(ErrTaskNotFound.Error(), actualMessage)
 		}
-	})
-}
-
-func TestHandleUpdateTask(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-
 	})
 }

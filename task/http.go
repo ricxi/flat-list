@@ -11,10 +11,20 @@ type httpHandler struct {
 	s Service
 }
 
-func NewHTTPHandler(s Service) *httpHandler {
-	return &httpHandler{
+func NewHTTPHandler(s Service) http.Handler {
+	h := &httpHandler{
 		s: s,
 	}
+
+	r := chi.NewMux()
+	r.Route("/v1/task", func(r chi.Router) {
+		r.Post("/", h.handleCreateTask)
+		r.Get("/{id}", h.handleGetTask)
+		r.Put("/", h.handleUpdateTask)
+		r.Delete("/{id}", h.handleDeleteTask)
+	})
+
+	return r
 }
 
 func (h *httpHandler) handleCreateTask(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +96,26 @@ func (h *httpHandler) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func (h *httpHandler) handleDeleteTask(w http.ResponseWriter, r *http.Request) {}
+func (h *httpHandler) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
+	taskID := chi.URLParam(r, "id")
+	if taskID == "" {
+		writeErrorToResponse(w, "missing url param id", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.s.DeleteTask(r.Context(), taskID); err != nil {
+		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	res := map[string]any{
+		"success": true,
+	}
+	if err := writeToResponse(w, res, http.StatusOK); err != nil {
+		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+}
 
 func writeToResponse(w http.ResponseWriter, res map[string]any, statusCode int) error {
 	w.WriteHeader(statusCode)
