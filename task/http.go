@@ -20,8 +20,14 @@ func NewHTTPHandler(s Service) http.Handler {
 	r.Route("/v1/task", func(r chi.Router) {
 		r.Post("/", h.handleCreateTask)
 		r.Get("/{id}", h.handleGetTask)
+		r.Get("/", h.handleGetTask)
 		r.Put("/", h.handleUpdateTask)
 		r.Delete("/{id}", h.handleDeleteTask)
+	})
+
+	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte(`{"success":"false", "message":"method not allowed"}`))
 	})
 
 	return r

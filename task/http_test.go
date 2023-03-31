@@ -1,7 +1,6 @@
 package task
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -9,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -102,78 +100,55 @@ func TestHandleGetTask(t *testing.T) {
 
 	t.Run("FailMissingUrlParams", func(t *testing.T) {
 		assert := assert.New(t)
-		h := httpHandler{
-			s: &mockService{
+		require := require.New(t)
+
+		expected := `{"message":"missing url param id","success":false}`
+		h := NewHTTPHandler(
+			&mockService{
 				err: nil,
 			},
-		}
+		)
 
-		w := httptest.NewRecorder()
+		rr := httptest.NewRecorder()
 
-		// url doesn't really matter
-		r, err := http.NewRequest(http.MethodGet, "v1/task", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		h.handleGetTask(w, r)
+		r, err := http.NewRequest(http.MethodGet, "/v1/task", nil)
+		require.NoError(err)
 
-		result := w.Result()
-		assert.Equal(http.StatusBadRequest, result.StatusCode)
+		h.ServeHTTP(rr, r)
 
-		resBody := struct {
-			Success bool   `json:"success"`
-			Message string `json:"message"`
-		}{}
-		if err := json.NewDecoder(result.Body).Decode(&resBody); err != nil {
-			t.Fatal(err)
-		}
-		defer result.Body.Close()
+		result := rr.Result()
+		require.Equal(http.StatusBadRequest, result.StatusCode)
 
-		assert.Equal(false, resBody.Success)
-
-		actualMessage := resBody.Message
-		if assert.NotEmpty(actualMessage) {
-			assert.Equal("missing url param id", actualMessage)
+		actual := strings.TrimSpace(rr.Body.String())
+		if assert.NotEmpty(actual) {
+			assert.Equal(expected, actual)
 		}
 	})
 
 	t.Run("FailTaskNotFound", func(t *testing.T) {
 		assert := assert.New(t)
-		h := httpHandler{
-			s: &mockService{
+		require := require.New(t)
+
+		expected := `{"message":"task not found","success":false}`
+		h := NewHTTPHandler(
+			&mockService{
 				err: ErrTaskNotFound,
 			},
-		}
+		)
 
-		w := httptest.NewRecorder()
+		rr := httptest.NewRecorder()
 
-		// url doesn't really matter
-		r, err := http.NewRequest(http.MethodGet, "v1/task", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		ctx := chi.NewRouteContext()
-		ctx.URLParams.Add("id", primitive.NewObjectID().Hex())
-		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, ctx))
-		h.handleGetTask(w, r)
+		r, err := http.NewRequest(http.MethodGet, "/v1/task/"+primitive.NewObjectID().Hex(), nil)
+		require.NoError(err)
 
-		result := w.Result()
+		h.ServeHTTP(rr, r)
+
+		result := rr.Result()
 		assert.Equal(http.StatusBadRequest, result.StatusCode)
 
-		resBody := struct {
-			Success bool   `json:"success"`
-			Message string `json:"message"`
-		}{}
-		if err := json.NewDecoder(result.Body).Decode(&resBody); err != nil {
-			t.Fatal(err)
-		}
-		defer result.Body.Close()
-
-		assert.Equal(false, resBody.Success)
-
-		actualMessage := resBody.Message
-		if assert.NotEmpty(actualMessage) {
-			assert.Equal(ErrTaskNotFound.Error(), actualMessage)
+		actual := strings.TrimSpace(rr.Body.String())
+		if assert.NotEmpty(actual) {
+			assert.Equal(expected, actual)
 		}
 	})
 }
