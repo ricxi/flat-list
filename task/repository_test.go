@@ -52,31 +52,13 @@ func setupRepo(t testing.TB) (Repository, teardownFunc) {
 	}
 }
 
-// createOneTask is a helper function used to make a task
-// for testing
-func createOneTask() NewTask {
-	// createdAt := time.Date(2023, time.March, 1, 2, 3, 4, 0, time.UTC)
-	createdAt := time.Now().UTC()
-	task := NewTask{
-		UserID:    primitive.NewObjectID().Hex(),
-		Name:      "Laundry",
-		Details:   "tumble low and dry",
-		Priority:  "low",
-		Category:  "chores",
-		CreatedAt: &createdAt,
-		UpdatedAt: &createdAt,
-	}
-
-	return task
-}
-
 func TestRepositoryCreateTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		r, teardown := setupRepo(t)
 		defer teardown(t)
 		assert := assert.New(t)
 
-		task := createOneTask()
+		task := createNewTask()
 		gotTaskID, err := r.CreateTask(context.Background(), &task)
 
 		assert.NoError(err)
@@ -95,7 +77,7 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 	t.Run("SuccessGetTask", func(t *testing.T) {
 		assert := assert.New(t)
 
-		task := createOneTask()
+		task := createNewTask()
 		taskID, err := r.CreateTask(context.Background(), &task)
 		require.NoError(t, err)
 		require.NotEmpty(t, taskID)
@@ -132,7 +114,7 @@ func TestRepositoryUpdateTask(t *testing.T) {
 	defer teardown(t)
 	t.Run("SuccessUpdateTask", func(t *testing.T) {
 		assert := assert.New(t)
-		newTask := createOneTask()
+		newTask := createNewTask()
 		taskID, err := r.CreateTask(context.Background(), &newTask)
 		require.NoError(t, err)
 
@@ -180,7 +162,7 @@ func TestDeleteTaskByID(t *testing.T) {
 
 	t.Run("SuccessDeleteTaskByID", func(t *testing.T) {
 		assert := assert.New(t)
-		newTask := createOneTask()
+		newTask := createNewTask()
 		taskID, err := r.CreateTask(context.Background(), &newTask)
 		require.NoError(t, err)
 

@@ -9,4 +9,4 @@ run/dev:
 .PHONY: test
 test:
 	@echo "testing app"
-	go test -v -cover
+	go test -cover

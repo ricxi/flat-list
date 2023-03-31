@@ -1,11 +1,11 @@
 package task
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,14 +17,17 @@ import (
 
 func TestHandleCreateTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-
 		assert := assert.New(t)
-		expectedTaskID := primitive.NewObjectID().Hex()
-		s := &mockService{
-			taskID: expectedTaskID,
-			err:    nil,
-		}
-		h := NewHTTPHandler(s)
+		require := require.New(t)
+
+		taskID := primitive.NewObjectID().Hex()
+		expected := `{"success":true,"taskId":"` + taskID + `"}`
+		h := NewHTTPHandler(
+			&mockService{
+				taskID: taskID,
+				err:    nil,
+			},
+		)
 
 		nt := NewTask{
 			UserID:   primitive.NewObjectID().Hex(),
@@ -34,51 +37,22 @@ func TestHandleCreateTask(t *testing.T) {
 			Category: "chores",
 		}
 
-		w := httptest.NewRecorder()
+		rr := httptest.NewRecorder()
 
-		var body bytes.Buffer
-		if err := json.NewEncoder(&body).Encode(&nt); err != nil {
-			t.Fatal(err)
+		body := toJSON(t, &nt)
+		r, err := http.NewRequest(http.MethodPost, "/v1/task", body)
+		require.NoError(err)
+
+		h.ServeHTTP(rr, r)
+
+		result := rr.Result()
+		assert.Equal(http.StatusCreated, result.StatusCode)
+
+		actual := strings.TrimSpace(rr.Body.String())
+		if assert.NotEmpty(actual) {
+			assert.Equal(expected, actual)
 		}
-
-		// method and endpoint do not matter
-		r, err := http.NewRequest(http.MethodPost, "v1/task/create", &body)
-		require.NoError(t, err)
-
-		h.ServeHTTP(w, r)
-
-		result := w.Result()
-		assert.Equal(result.StatusCode, http.StatusCreated)
-
-		rBody := struct {
-			Success bool   `json:"success"`
-			TaskID  string `json:"taskId"`
-		}{}
-		if err := json.NewDecoder(result.Body).Decode(&rBody); err != nil {
-			t.Fatal(err)
-		}
-		defer result.Body.Close()
-
-		if assert.NotEmpty(rBody) {
-			assert.Equal(expectedTaskID, rBody.TaskID)
-			assert.Equal(true, rBody.Success)
-		}
-
 	})
-}
-
-func createTaskForHTTPTests() Task {
-	createdAt := time.Now().UTC()
-	return Task{
-		ID:        primitive.NewObjectID().Hex(),
-		UserID:    primitive.NewObjectID().Hex(),
-		Name:      "Repair the laundry machine",
-		Details:   "tumble low and dry",
-		Priority:  "low",
-		Category:  "chores",
-		CreatedAt: &createdAt,
-		UpdatedAt: &createdAt,
-	}
 }
 
 func TestHandleGetTask(t *testing.T) {
@@ -207,5 +181,32 @@ func TestHandleGetTask(t *testing.T) {
 		if assert.NotEmpty(actualMessage) {
 			assert.Equal(ErrTaskNotFound.Error(), actualMessage)
 		}
+	})
+}
+
+func TestHandleUpdateTask(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+		// task does not matter
+		task := createTaskForHTTPTests()
+		h := httpHandler{
+			s: &mockService{
+				task: &task,
+				err:  nil,
+			},
+		}
+
+		w := httptest.NewRecorder()
+
+		// nothing matters here except for the task
+		body := toJSON(t, &task)
+		r, err := http.NewRequest(http.MethodPut, "/v1/task", body)
+		require.NoError(err)
+
+		h.handleUpdateTask(w, r)
+
+		result := w.Result()
+		assert.Equal(http.StatusOK, result.StatusCode)
 	})
 }
