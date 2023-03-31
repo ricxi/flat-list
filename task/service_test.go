@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func TestCreateTask(t *testing.T) {
+func TestServiceCreateTask(t *testing.T) {
 	t.Run("SuccessCreateTask", func(t *testing.T) {
 		assert := assert.New(t)
 		s := &service{
@@ -85,8 +85,8 @@ func TestCreateTask(t *testing.T) {
 	})
 }
 
-func TestGetTaskByID(t *testing.T) {
-	t.Run("GetTaskByIDFail", func(t *testing.T) {
+func TestServiceGetTaskByID(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
 
 		createdAt := time.Now().UTC()
@@ -122,7 +122,8 @@ func TestGetTaskByID(t *testing.T) {
 		}
 	})
 
-	t.Run("GetTaskByIDFail", func(t *testing.T) {
+	t.Run("FailTaskNotFound", func(t *testing.T) {
+		// Do not create a task
 		assert := assert.New(t)
 		s := &service{
 			r: &mockRepository{
@@ -142,8 +143,8 @@ func TestGetTaskByID(t *testing.T) {
 
 // TestUpdateTask mainly tests the validation
 // carried out by the service layer
-func TestUpdateTask(t *testing.T) {
-	t.Run("UpdateTaskNameSuccess", func(t *testing.T) {
+func TestServiceUpdateTask(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
 
 		createdAt := time.Now().UTC()
@@ -186,7 +187,7 @@ func TestUpdateTask(t *testing.T) {
 
 	})
 
-	t.Run("UpdateTaskFailMissingID", func(t *testing.T) {
+	t.Run("FailMissingID", func(t *testing.T) {
 		assert := assert.New(t)
 		s := &service{
 			r: &mockRepository{
@@ -207,7 +208,7 @@ func TestUpdateTask(t *testing.T) {
 		}
 	})
 
-	t.Run("UpdateTaskFailMissingUserID", func(t *testing.T) {
+	t.Run("FailMissingUserID", func(t *testing.T) {
 		assert := assert.New(t)
 		s := &service{
 			r: &mockRepository{
@@ -228,7 +229,7 @@ func TestUpdateTask(t *testing.T) {
 		}
 	})
 
-	t.Run("UpdateTaskFailMissingTaskName", func(t *testing.T) {
+	t.Run("FailMissingTaskName", func(t *testing.T) {
 		assert := assert.New(t)
 		s := &service{
 			r: &mockRepository{
@@ -250,8 +251,8 @@ func TestUpdateTask(t *testing.T) {
 	})
 }
 
-func TestDeleteTask(t *testing.T) {
-	t.Run("DeleteTaskSuccess", func(t *testing.T) {
+func TestServiceDeleteTask(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		s := service{
 			r: &mockRepository{
 				err: nil,
@@ -263,7 +264,7 @@ func TestDeleteTask(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("DeleteTaskFailMissingFieldTaskID", func(t *testing.T) {
+	t.Run("FailMissingFieldTaskID", func(t *testing.T) {
 		// I didn't include an id because it never gets that far
 		s := service{
 			r: &mockRepository{
@@ -279,7 +280,7 @@ func TestDeleteTask(t *testing.T) {
 		}
 	})
 
-	t.Run("DeleteTaskFailTaskNotFound", func(t *testing.T) {
+	t.Run("FailTaskNotFound", func(t *testing.T) {
 		assert := assert.New(t)
 		s := service{
 			r: &mockRepository{

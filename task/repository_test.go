@@ -71,7 +71,7 @@ func createOneTask() NewTask {
 }
 
 func TestRepositoryCreateTask(t *testing.T) {
-	t.Run("CreateTaskSuccess", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		r, teardown := setupRepo(t)
 		defer teardown(t)
 		assert := assert.New(t)
@@ -92,7 +92,7 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
 
-	t.Run("GetTaskSuccess", func(t *testing.T) {
+	t.Run("SuccessGetTask", func(t *testing.T) {
 		assert := assert.New(t)
 
 		task := createOneTask()
@@ -115,7 +115,7 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 		}
 	})
 
-	t.Run("GetTaskFail", func(t *testing.T) {
+	t.Run("FailGetTask", func(t *testing.T) {
 		assert := assert.New(t)
 		taskID := primitive.NewObjectID().Hex()
 
@@ -130,7 +130,7 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 func TestRepositoryUpdateTask(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
-	t.Run("UpdateTaskSuccess", func(t *testing.T) {
+	t.Run("SuccessUpdateTask", func(t *testing.T) {
 		assert := assert.New(t)
 		newTask := createOneTask()
 		taskID, err := r.CreateTask(context.Background(), &newTask)
@@ -158,7 +158,7 @@ func TestRepositoryUpdateTask(t *testing.T) {
 		}
 	})
 
-	t.Run("UpdateTaskFail", func(t *testing.T) {
+	t.Run("FailUpdateTask", func(t *testing.T) {
 		assert := assert.New(t)
 		taskID := primitive.NewObjectID().Hex()
 		updatePayload := Task{
@@ -178,7 +178,7 @@ func TestDeleteTaskByID(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
 
-	t.Run("DeleteTaskByIDSuccess", func(t *testing.T) {
+	t.Run("SuccessDeleteTaskByID", func(t *testing.T) {
 		assert := assert.New(t)
 		newTask := createOneTask()
 		taskID, err := r.CreateTask(context.Background(), &newTask)
@@ -188,7 +188,7 @@ func TestDeleteTaskByID(t *testing.T) {
 		assert.NoError(err)
 	})
 
-	t.Run("DeleteTaskByIDFailDocumentNotFound", func(t *testing.T) {
+	t.Run("FailDeleteTaskDocumentNotFound", func(t *testing.T) {
 		assert := assert.New(t)
 
 		taskID := primitive.NewObjectID().Hex()

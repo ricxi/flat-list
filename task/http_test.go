@@ -16,51 +16,55 @@ import (
 )
 
 func TestHandleCreateTask(t *testing.T) {
-	assert := assert.New(t)
-	expectedTaskID := primitive.NewObjectID().Hex()
-	s := &mockService{
-		taskID: expectedTaskID,
-		err:    nil,
-	}
-	h := NewHTTPHandler(s)
+	t.Run("Success", func(t *testing.T) {
 
-	nt := NewTask{
-		UserID:   primitive.NewObjectID().Hex(),
-		Name:     "Laundry",
-		Details:  "tumble low and dry",
-		Priority: "low",
-		Category: "chores",
-	}
+		assert := assert.New(t)
+		expectedTaskID := primitive.NewObjectID().Hex()
+		s := &mockService{
+			taskID: expectedTaskID,
+			err:    nil,
+		}
+		h := NewHTTPHandler(s)
 
-	w := httptest.NewRecorder()
+		nt := NewTask{
+			UserID:   primitive.NewObjectID().Hex(),
+			Name:     "Laundry",
+			Details:  "tumble low and dry",
+			Priority: "low",
+			Category: "chores",
+		}
 
-	var body bytes.Buffer
-	if err := json.NewEncoder(&body).Encode(&nt); err != nil {
-		t.Fatal(err)
-	}
+		w := httptest.NewRecorder()
 
-	// method and endpoint do not matter
-	r, err := http.NewRequest(http.MethodPost, "v1/task/create", &body)
-	require.NoError(t, err)
+		var body bytes.Buffer
+		if err := json.NewEncoder(&body).Encode(&nt); err != nil {
+			t.Fatal(err)
+		}
 
-	h.ServeHTTP(w, r)
+		// method and endpoint do not matter
+		r, err := http.NewRequest(http.MethodPost, "v1/task/create", &body)
+		require.NoError(t, err)
 
-	result := w.Result()
-	assert.Equal(result.StatusCode, http.StatusCreated)
+		h.ServeHTTP(w, r)
 
-	rBody := struct {
-		Success bool   `json:"success"`
-		TaskID  string `json:"taskId"`
-	}{}
-	if err := json.NewDecoder(result.Body).Decode(&rBody); err != nil {
-		t.Fatal(err)
-	}
-	defer result.Body.Close()
+		result := w.Result()
+		assert.Equal(result.StatusCode, http.StatusCreated)
 
-	if assert.NotEmpty(rBody) {
-		assert.Equal(expectedTaskID, rBody.TaskID)
-		assert.Equal(true, rBody.Success)
-	}
+		rBody := struct {
+			Success bool   `json:"success"`
+			TaskID  string `json:"taskId"`
+		}{}
+		if err := json.NewDecoder(result.Body).Decode(&rBody); err != nil {
+			t.Fatal(err)
+		}
+		defer result.Body.Close()
+
+		if assert.NotEmpty(rBody) {
+			assert.Equal(expectedTaskID, rBody.TaskID)
+			assert.Equal(true, rBody.Success)
+		}
+
+	})
 }
 
 func createTaskForHTTPTests() Task {
@@ -78,7 +82,7 @@ func createTaskForHTTPTests() Task {
 }
 
 func TestHandleGetTask(t *testing.T) {
-	t.Run("GetTaskSuccess", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
 		expectedTask := createTaskForHTTPTests()
 		h := httpHandler{
