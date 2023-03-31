@@ -282,3 +282,31 @@ func TestHandleUpdateTask(t *testing.T) {
 		}
 	})
 }
+
+func TestHandleDeleteTask(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+
+		expected := `{"success":true}`
+		h := NewHTTPHandler(
+			&mockService{
+				err: nil,
+			},
+		)
+
+		rr := httptest.NewRecorder()
+
+		r, err := http.NewRequest(http.MethodDelete, "/v1/task/"+primitive.NewObjectID().Hex(), nil)
+		require.NoError(err)
+
+		h.ServeHTTP(rr, r)
+
+		assert.Equal(http.StatusOK, rr.Code)
+
+		actual := strings.TrimSpace(rr.Body.String())
+		if assert.NotEmpty(actual) {
+			assert.Equal(expected, actual)
+		}
+	})
+}
