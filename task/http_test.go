@@ -2,6 +2,7 @@ package task
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -56,7 +57,7 @@ func TestHandleGetTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
 		require := require.New(t)
-		expectedTask := createTaskForHTTPTests()
+		expectedTask := createExpectedTask()
 		h := NewHTTPHandler(
 			&mockService{
 				task: &expectedTask,
@@ -155,7 +156,7 @@ func TestHandleUpdateTask(t *testing.T) {
 		assert := assert.New(t)
 		require := require.New(t)
 
-		expectedTask := createTaskForHTTPTests()
+		expectedTask := createExpectedTask()
 		h := NewHTTPHandler(
 			&mockService{
 				task: &expectedTask,
@@ -196,6 +197,88 @@ func TestHandleUpdateTask(t *testing.T) {
 			assert.Equal(expectedTask.Priority, actualTask.Priority)
 			assert.WithinDuration(*expectedTask.CreatedAt, *actualTask.CreatedAt, time.Second)
 			assert.WithinDuration(*expectedTask.UpdatedAt, *actualTask.UpdatedAt, time.Second)
+		}
+	})
+
+	t.Run("FailMissingIDField", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+
+		expected := `{"message":"missing field is required: taskId","success":false}`
+		h := NewHTTPHandler(
+			&mockService{
+				err: fmt.Errorf("%w: taskId", ErrMissingField),
+			},
+		)
+
+		rr := httptest.NewRecorder()
+
+		// task is just placeholder to avoid nil pointer dereference by decoder?
+		body := toJSON(t, struct{}{})
+		r, err := http.NewRequest(http.MethodPut, "/v1/task", body)
+		require.NoError(err)
+
+		h.ServeHTTP(rr, r)
+
+		assert.Equal(http.StatusBadRequest, rr.Code)
+
+		actual := strings.TrimSpace(rr.Body.String())
+		if assert.NotEmpty(actual) {
+			assert.Equal(expected, actual)
+		}
+	})
+
+	t.Run("FailMissingUserIDField", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+
+		expected := `{"message":"missing field is required: userId","success":false}`
+		h := NewHTTPHandler(
+			&mockService{
+				err: fmt.Errorf("%w: userId", ErrMissingField),
+			},
+		)
+
+		rr := httptest.NewRecorder()
+
+		body := toJSON(t, struct{}{})
+		r, err := http.NewRequest(http.MethodPut, "/v1/task", body)
+		require.NoError(err)
+
+		h.ServeHTTP(rr, r)
+
+		assert.Equal(http.StatusBadRequest, rr.Code)
+
+		actual := strings.TrimSpace(rr.Body.String())
+		if assert.NotEmpty(actual) {
+			assert.Equal(expected, actual)
+		}
+	})
+
+	t.Run("FailMissingNameField", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+
+		expected := `{"message":"missing field is required: name","success":false}`
+		h := NewHTTPHandler(
+			&mockService{
+				err: fmt.Errorf("%w: name", ErrMissingField),
+			},
+		)
+
+		rr := httptest.NewRecorder()
+
+		body := toJSON(t, struct{}{})
+		r, err := http.NewRequest(http.MethodPut, "/v1/task", body)
+		require.NoError(err)
+
+		h.ServeHTTP(rr, r)
+
+		assert.Equal(http.StatusBadRequest, rr.Code)
+
+		actual := strings.TrimSpace(rr.Body.String())
+		if assert.NotEmpty(actual) {
+			assert.Equal(expected, actual)
 		}
 	})
 }

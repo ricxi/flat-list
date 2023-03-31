@@ -58,8 +58,8 @@ func TestRepositoryCreateTask(t *testing.T) {
 		defer teardown(t)
 		assert := assert.New(t)
 
-		task := createNewTask()
-		gotTaskID, err := r.CreateTask(context.Background(), &task)
+		nt := createNewTaskForRepo()
+		gotTaskID, err := r.CreateTask(context.Background(), &nt)
 
 		assert.NoError(err)
 		if assert.NotEmpty(gotTaskID) {
@@ -77,23 +77,24 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 	t.Run("SuccessGetTask", func(t *testing.T) {
 		assert := assert.New(t)
 
-		task := createNewTask()
-		taskID, err := r.CreateTask(context.Background(), &task)
+		nt := createNewTaskForRepo()
+		taskID, err := r.CreateTask(context.Background(), &nt)
 		require.NoError(t, err)
 		require.NotEmpty(t, taskID)
+		expectedTask := createExpectedTaskFromNew(taskID, nt)
 
 		actualTask, err := r.GetTaskByID(context.Background(), taskID)
 		assert.NoError(err)
 
 		if assert.NotNil(actualTask) && assert.NotEmpty(*actualTask) {
-			assert.Equal(taskID, actualTask.ID)
-			assert.Equal(task.UserID, actualTask.UserID)
-			assert.Equal(task.Name, actualTask.Name)
-			assert.Equal(task.Details, actualTask.Details)
-			assert.Equal(task.Priority, actualTask.Priority)
-			assert.Equal(task.Category, actualTask.Category)
-			assert.WithinDuration(*task.CreatedAt, *actualTask.CreatedAt, time.Second)
-			assert.WithinDuration(*task.UpdatedAt, *actualTask.UpdatedAt, time.Second)
+			assert.Equal(expectedTask.ID, actualTask.ID)
+			assert.Equal(expectedTask.UserID, actualTask.UserID)
+			assert.Equal(expectedTask.Name, actualTask.Name)
+			assert.Equal(expectedTask.Details, actualTask.Details)
+			assert.Equal(expectedTask.Priority, actualTask.Priority)
+			assert.Equal(expectedTask.Category, actualTask.Category)
+			assert.WithinDuration(*expectedTask.CreatedAt, *actualTask.CreatedAt, time.Second)
+			assert.WithinDuration(*expectedTask.UpdatedAt, *actualTask.UpdatedAt, time.Second)
 		}
 	})
 
@@ -114,8 +115,8 @@ func TestRepositoryUpdateTask(t *testing.T) {
 	defer teardown(t)
 	t.Run("SuccessUpdateTask", func(t *testing.T) {
 		assert := assert.New(t)
-		newTask := createNewTask()
-		taskID, err := r.CreateTask(context.Background(), &newTask)
+		nt := createNewTaskForRepo()
+		taskID, err := r.CreateTask(context.Background(), &nt)
 		require.NoError(t, err)
 
 		updatePayload := Task{
@@ -126,7 +127,7 @@ func TestRepositoryUpdateTask(t *testing.T) {
 		updatedTask, err := r.UpdateTask(context.Background(), &updatePayload)
 		assert.NoError(err)
 
-		expectedTask := newTask
+		expectedTask := nt
 		expectedTask.Priority = updatePayload.Priority
 		if assert.NotNil(updatedTask) && assert.NotEmpty(*updatedTask) {
 			assert.Equal(taskID, updatedTask.ID)
@@ -162,7 +163,7 @@ func TestDeleteTaskByID(t *testing.T) {
 
 	t.Run("SuccessDeleteTaskByID", func(t *testing.T) {
 		assert := assert.New(t)
-		newTask := createNewTask()
+		newTask := createNewTaskForRepo()
 		taskID, err := r.CreateTask(context.Background(), &newTask)
 		require.NoError(t, err)
 

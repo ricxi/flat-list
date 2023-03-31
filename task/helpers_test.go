@@ -21,9 +21,9 @@ func toJSON(t testing.TB, in any) io.Reader {
 	return &body
 }
 
-// createOneTask is a helper function used to make a task
-// for testing
-func createNewTask() NewTask {
+// createNewTaskForRepo is a helper function used
+// to create a new task for tests in the repository layer
+func createNewTaskForRepo() NewTask {
 	// createdAt := time.Date(2023, time.March, 1, 2, 3, 4, 0, time.UTC)
 	createdAt := time.Now().UTC()
 	task := NewTask{
@@ -39,7 +39,23 @@ func createNewTask() NewTask {
 	return task
 }
 
-func createTaskForHTTPTests() Task {
+// createExpectedTaskFromNew creates an expected task
+// from a new task
+func createExpectedTaskFromNew(id string, nt NewTask) Task {
+	return Task{
+		ID:        id,
+		UserID:    nt.UserID,
+		Name:      nt.Name,
+		Details:   nt.Details,
+		Priority:  nt.Priority,
+		Category:  nt.Category,
+		CreatedAt: nt.CreatedAt,
+		UpdatedAt: nt.UpdatedAt,
+	}
+}
+
+// createExpectedTask creates an expected task for tests
+func createExpectedTask() Task {
 	createdAt := time.Now().UTC()
 	return Task{
 		ID:        primitive.NewObjectID().Hex(),
