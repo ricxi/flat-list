@@ -43,8 +43,7 @@ func TestHandleCreateTask(t *testing.T) {
 
 		h.ServeHTTP(rr, r)
 
-		result := rr.Result()
-		assert.Equal(http.StatusCreated, result.StatusCode)
+		assert.Equal(http.StatusCreated, rr.Code)
 
 		actual := strings.TrimSpace(rr.Body.String())
 		if assert.NotEmpty(actual) {
@@ -116,8 +115,7 @@ func TestHandleGetTask(t *testing.T) {
 
 		h.ServeHTTP(rr, r)
 
-		result := rr.Result()
-		require.Equal(http.StatusBadRequest, result.StatusCode)
+		require.Equal(http.StatusBadRequest, rr.Code)
 
 		actual := strings.TrimSpace(rr.Body.String())
 		if assert.NotEmpty(actual) {
@@ -143,8 +141,7 @@ func TestHandleGetTask(t *testing.T) {
 
 		h.ServeHTTP(rr, r)
 
-		result := rr.Result()
-		assert.Equal(http.StatusBadRequest, result.StatusCode)
+		assert.Equal(http.StatusBadRequest, rr.Code)
 
 		actual := strings.TrimSpace(rr.Body.String())
 		if assert.NotEmpty(actual) {
@@ -157,25 +154,48 @@ func TestHandleUpdateTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
 		require := require.New(t)
-		// task does not matter
-		task := createTaskForHTTPTests()
-		h := httpHandler{
-			s: &mockService{
-				task: &task,
+
+		expectedTask := createTaskForHTTPTests()
+		h := NewHTTPHandler(
+			&mockService{
+				task: &expectedTask,
 				err:  nil,
 			},
-		}
+		)
 
-		w := httptest.NewRecorder()
+		rr := httptest.NewRecorder()
 
 		// nothing matters here except for the task
-		body := toJSON(t, &task)
+		body := toJSON(t, &expectedTask)
 		r, err := http.NewRequest(http.MethodPut, "/v1/task", body)
 		require.NoError(err)
 
-		h.handleUpdateTask(w, r)
+		h.ServeHTTP(rr, r)
 
-		result := w.Result()
+		result := rr.Result()
 		assert.Equal(http.StatusOK, result.StatusCode)
+
+		resBody := struct {
+			Success bool `json:"success"`
+			Task    Task `json:"task"`
+		}{}
+		if err := json.NewDecoder(result.Body).Decode(&resBody); err != nil {
+			t.Fatal(err)
+		}
+		defer result.Body.Close()
+
+		assert.Equal(true, resBody.Success)
+
+		actualTask := resBody.Task
+		if assert.NotEmpty(resBody) {
+			assert.Equal(expectedTask.ID, actualTask.ID)
+			assert.Equal(expectedTask.Name, actualTask.Name)
+			assert.Equal(expectedTask.UserID, actualTask.UserID)
+			assert.Equal(expectedTask.Details, actualTask.Details)
+			assert.Equal(expectedTask.Category, actualTask.Category)
+			assert.Equal(expectedTask.Priority, actualTask.Priority)
+			assert.WithinDuration(*expectedTask.CreatedAt, *actualTask.CreatedAt, time.Second)
+			assert.WithinDuration(*expectedTask.UpdatedAt, *actualTask.UpdatedAt, time.Second)
+		}
 	})
 }
