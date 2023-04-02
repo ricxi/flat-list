@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/ricxi/flat-list/shared/config"
@@ -17,6 +18,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("unable to connect to db", err)
 	}
+	defer client.Disconnect(context.Background())
 
 	r := task.NewRepository(client, envs["MONGODB_NAME"])
 	s := task.NewService(r)

@@ -10,3 +10,8 @@ run/dev:
 test:
 	@echo "testing app"
 	go test -cover
+
+.PHONY: test/e2e
+test/e2e:
+	@echo "e2e test"
+	go test -v ./cmd/http
