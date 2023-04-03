@@ -52,22 +52,32 @@ func NewMongoClient(uri string, timeout int64) (*mongo.Client, error) {
 	return client, nil
 }
 
-func (r *repository) CreateTask(ctx context.Context, task *NewTask) (string, error) {
-	uOID, err := primitive.ObjectIDFromHex(task.UserID)
+func (r *repository) CreateTask(ctx context.Context, newTask *NewTask) (string, error) {
+	uOID, err := primitive.ObjectIDFromHex(newTask.UserID)
 	if err != nil {
 		return "", err
 	}
 
-	doc := bson.M{
-		"name":      task.Name,
-		"userId":    uOID,
-		"details":   task.Details,
-		"priority":  task.Priority,
-		"category":  task.Category,
-		"createdAt": task.CreatedAt,
-		"updatedAt": task.UpdatedAt,
+	// doc := bson.M{
+	// 	"name":      task.Name,
+	// 	"userId":    uOID,
+	// 	"details":   task.Details,
+	// 	"priority":  task.Priority,
+	// 	"category":  task.Category,
+	// 	"createdAt": task.CreatedAt,
+	// 	"updatedAt": task.UpdatedAt,
+	// }
+
+	newTaskDoc := NewTaskDocument{
+		UserID:    uOID,
+		Name:      newTask.Name,
+		Details:   newTask.Details,
+		Priority:  newTask.Priority,
+		Category:  newTask.Category,
+		CreatedAt: newTask.CreatedAt,
+		UpdatedAt: newTask.UpdatedAt,
 	}
-	result, err := r.coll.InsertOne(ctx, doc)
+	result, err := r.coll.InsertOne(ctx, &newTaskDoc)
 	if err != nil {
 		return "", err
 	}
@@ -82,8 +92,8 @@ func (r *repository) GetTaskByID(ctx context.Context, id string) (*Task, error) 
 	}
 
 	filter := bson.M{"_id": oID}
-	var taskDocument TaskDocument
-	if err := r.coll.FindOne(ctx, &filter).Decode(&taskDocument); err != nil {
+	var taskDoc TaskDocument
+	if err := r.coll.FindOne(ctx, &filter).Decode(&taskDoc); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, ErrTaskNotFound
 		}
@@ -91,14 +101,14 @@ func (r *repository) GetTaskByID(ctx context.Context, id string) (*Task, error) 
 	}
 
 	return &Task{
-		ID:        taskDocument.ID.Hex(),
-		UserID:    taskDocument.UserID.Hex(),
-		Name:      taskDocument.Name,
-		Details:   taskDocument.Details,
-		Priority:  taskDocument.Priority,
-		Category:  taskDocument.Category,
-		CreatedAt: taskDocument.CreatedAt,
-		UpdatedAt: taskDocument.UpdatedAt,
+		ID:        taskDoc.ID.Hex(),
+		UserID:    taskDoc.UserID.Hex(),
+		Name:      taskDoc.Name,
+		Details:   taskDoc.Details,
+		Priority:  taskDoc.Priority,
+		Category:  taskDoc.Category,
+		CreatedAt: taskDoc.CreatedAt,
+		UpdatedAt: taskDoc.UpdatedAt,
 	}, nil
 }
 

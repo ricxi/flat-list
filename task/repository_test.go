@@ -74,15 +74,15 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
 
-	t.Run("SuccessGetTask", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
 
-		nt := createNewTaskForRepo()
-		taskID, err := r.CreateTask(context.Background(), &nt)
+		newTask := createNewTaskForRepo()
+		taskID, err := r.CreateTask(context.Background(), &newTask)
 		require.NoError(t, err)
 		require.NotEmpty(t, taskID)
-		expectedTask := createExpectedTaskFromNew(taskID, nt)
 
+		expectedTask := createExpectedTaskFromNew(taskID, newTask)
 		actualTask, err := r.GetTaskByID(context.Background(), taskID)
 		assert.NoError(err)
 
