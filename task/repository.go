@@ -58,16 +58,6 @@ func (r *repository) CreateTask(ctx context.Context, newTask *NewTask) (string, 
 		return "", err
 	}
 
-	// doc := bson.M{
-	// 	"name":      task.Name,
-	// 	"userId":    uOID,
-	// 	"details":   task.Details,
-	// 	"priority":  task.Priority,
-	// 	"category":  task.Category,
-	// 	"createdAt": task.CreatedAt,
-	// 	"updatedAt": task.UpdatedAt,
-	// }
-
 	newTaskDoc := NewTaskDocument{
 		UserID:    uOID,
 		Name:      newTask.Name,
