@@ -21,6 +21,17 @@ func toJSON(t testing.TB, in any) io.Reader {
 	return &body
 }
 
+// from json is used to convert json responses
+// into a native go type. Ensure that a pointer
+// is passed for out
+func fromJSON(t testing.TB, r io.Reader, out any) {
+	t.Helper()
+
+	if err := json.NewDecoder(r).Decode(&out); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // createNewTaskForRepo is a helper function used
 // to create a new task for tests in the repository layer
 func createNewTaskForRepo() NewTask {

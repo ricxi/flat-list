@@ -14,6 +14,7 @@ import (
 func TestServiceCreateTask(t *testing.T) {
 	t.Run("SuccessCreateTask", func(t *testing.T) {
 		assert := assert.New(t)
+
 		s := &service{
 			r: &mockRepository{
 				taskID: primitive.NewObjectID().Hex(),
