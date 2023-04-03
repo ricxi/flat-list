@@ -65,6 +65,7 @@ func (h *httpHandler) handleGetTask(w http.ResponseWriter, r *http.Request) {
 
 	t, err := h.s.GetTaskByID(r.Context(), taskID)
 	if err != nil {
+		// check for ErrTaskNotFound and return a status not found
 		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
