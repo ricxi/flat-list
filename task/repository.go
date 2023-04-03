@@ -82,37 +82,23 @@ func (r *repository) GetTaskByID(ctx context.Context, id string) (*Task, error) 
 	}
 
 	filter := bson.M{"_id": oID}
-	taskDoc := struct {
-		ID        string     `bson:"_id,omitempty"`
-		UserID    string     `bson:"userId,omitempty"`
-		Name      string     `bson:"name"`
-		Details   string     `bson:"details,omitempty"`
-		Priority  string     `bson:"priority,omitempty"`
-		Category  string     `bson:"category,omitempty"`
-		CreatedAt *time.Time `bson:"createdAt,omitempty"`
-		UpdatedAt *time.Time `bson:"updatedAt,omitempty"`
-	}{}
-	if err := r.coll.FindOne(ctx, &filter).Decode(&taskDoc); err != nil {
+	var taskDocument TaskDocument
+	if err := r.coll.FindOne(ctx, &filter).Decode(&taskDocument); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, ErrTaskNotFound
 		}
 		return nil, err
 	}
 
-	// Checking the result for an error, then running the line below causes a nil pointer runtime error if no document is found
-	// if err := result.Decode(&task); err != nil {
-	// 	return nil, err
-	// }
-
 	return &Task{
-		ID:        taskDoc.ID,
-		UserID:    taskDoc.UserID,
-		Name:      taskDoc.Name,
-		Details:   taskDoc.Details,
-		Priority:  taskDoc.Priority,
-		Category:  taskDoc.Category,
-		CreatedAt: taskDoc.CreatedAt,
-		UpdatedAt: taskDoc.UpdatedAt,
+		ID:        taskDocument.ID.Hex(),
+		UserID:    taskDocument.UserID.Hex(),
+		Name:      taskDocument.Name,
+		Details:   taskDocument.Details,
+		Priority:  taskDocument.Priority,
+		Category:  taskDocument.Category,
+		CreatedAt: taskDocument.CreatedAt,
+		UpdatedAt: taskDocument.UpdatedAt,
 	}, nil
 }
 
