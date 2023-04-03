@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/ricxi/flat-list/shared/config"
@@ -46,7 +47,28 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-const createTaskPayload = `
+type Task struct {
+	ID        string     `json:"taskId,omitempty"`
+	UserID    string     `json:"userId,omitempty"`
+	Name      string     `json:"name"`
+	Details   string     `json:"details,omitempty"`
+	Priority  string     `json:"priority,omitempty"`
+	Category  string     `json:"category,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+}
+
+type createTaskResponse struct {
+	Success bool   `json:"success"`
+	TaskID  string `json:"taskId,omitempty"`
+}
+
+type getTaskResponse struct {
+	Success bool `json:"success"`
+	Task    Task `json:"task"`
+}
+
+const createTaskPayloadStr = `
 {
 	"userId"   :"507f1f77bcf86cd799439011",
 	"name"     :"laundry",
@@ -63,7 +85,7 @@ func TestCreateTask(t *testing.T) {
 	defer ts.Close()
 
 	createEndpoint := ts.URL + "/v1/task"
-	body := strings.NewReader(createTaskPayload)
+	body := strings.NewReader(createTaskPayloadStr)
 	response, err := ts.Client().Post(createEndpoint, "application/json", body)
 	if err != nil {
 		t.Fatal(err)
@@ -71,41 +93,39 @@ func TestCreateTask(t *testing.T) {
 
 	require.Equal(http.StatusCreated, response.StatusCode)
 
-	actualBody := struct {
-		Success bool   `json:"success"`
-		TaskID  string `json:"taskId"`
-	}{}
+	var actual createTaskResponse
 	defer response.Body.Close()
-	fromJSON(t, response.Body, &actualBody)
+	fromJSON(t, response.Body, &actual)
 
-	if assert.NotEmpty(actualBody) {
-		assert.True(primitive.IsValidObjectID(actualBody.TaskID))
-		assert.True(actualBody.Success)
+	if assert.NotEmpty(actual) {
+		assert.True(primitive.IsValidObjectID(actual.TaskID))
+		assert.True(actual.Success)
 	}
 }
 
 func TestCreateThenGetTask(t *testing.T) {
 	require := require.New(t)
-	// assert := assert.New(t)
+	assert := assert.New(t)
 	h := task.NewHTTPHandler(service)
 	ts := httptest.NewTLSServer(h)
 	defer ts.Close()
 
+	// create a new task
 	createEndpoint := ts.URL + "/v1/task"
-	body := strings.NewReader(createTaskPayload)
+	body := strings.NewReader(createTaskPayloadStr)
 	response, err := ts.Client().Post(createEndpoint, "application/json", body)
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	// if the task was successfully created, get its id
+	// and use it to make a call and retreive it
 	require.Equal(http.StatusCreated, response.StatusCode)
 
-	respBody := struct {
-		Success bool   `json:"success"`
-		TaskID  string `json:"taskId"`
-	}{}
+	var respBody createTaskResponse
 	defer response.Body.Close()
 	fromJSON(t, response.Body, &respBody)
+	require.True(primitive.IsValidObjectID(respBody.TaskID))
 
 	getEndpoint := ts.URL + "/v1/task/" + respBody.TaskID
 	response, err = ts.Client().Get(getEndpoint)
@@ -113,6 +133,29 @@ func TestCreateThenGetTask(t *testing.T) {
 		t.Fatal(err)
 	}
 	require.Equal(http.StatusOK, response.StatusCode)
+
+	var getTaskResp getTaskResponse
+	defer response.Body.Close()
+	fromJSON(t, response.Body, &getTaskResp)
+
+	expectedTask := Task{
+		ID:       respBody.TaskID,
+		UserID:   "507f1f77bcf86cd799439011",
+		Name:     "laundry",
+		Details:  "quickly",
+		Priority: "high",
+		Category: "chores",
+	}
+
+	actualTask := getTaskResp.Task
+	if assert.NotEmpty(getTaskResp) {
+		assert.Equal(expectedTask.ID, actualTask.ID)
+		assert.Equal(expectedTask.UserID, actualTask.UserID)
+		assert.Equal(expectedTask.Name, actualTask.Name)
+		assert.Equal(expectedTask.Details, actualTask.Details)
+		assert.Equal(expectedTask.Priority, actualTask.Priority)
+		assert.Equal(expectedTask.Category, actualTask.Category)
+	}
 }
 
 func fromJSON(t testing.TB, r io.Reader, out any) {
