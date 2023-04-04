@@ -127,20 +127,20 @@ func (r *repository) UpdateTask(ctx context.Context, task *Task) (*Task, error) 
 		return nil, err
 	}
 
-	var td TaskDocument
-	if err := result.Decode(&td); err != nil {
+	var taskDoc TaskDocument
+	if err := result.Decode(&taskDoc); err != nil {
 		return nil, err
 	}
 
 	return &Task{
-		ID:        td.ID.Hex(),
-		UserID:    td.UserID.Hex(),
-		Name:      td.Name,
-		Details:   td.Details,
-		Priority:  td.Priority,
-		Category:  td.Category,
-		CreatedAt: td.CreatedAt,
-		UpdatedAt: td.UpdatedAt,
+		ID:        taskDoc.ID.Hex(),
+		UserID:    taskDoc.UserID.Hex(),
+		Name:      taskDoc.Name,
+		Details:   taskDoc.Details,
+		Priority:  taskDoc.Priority,
+		Category:  taskDoc.Category,
+		CreatedAt: taskDoc.CreatedAt,
+		UpdatedAt: taskDoc.UpdatedAt,
 	}, nil
 }
 
@@ -155,7 +155,7 @@ func (r *repository) DeleteTaskByID(ctx context.Context, id string) error {
 		return err
 	}
 
-	// This will be 0 if the document is not found (a 'mongo.ErrNoDocuments' error is not returned)
+	// This will be 0 if the document is not found (a 'mongo.ErrNoDocuments' error will not be returned)
 	deletedCount := result.DeletedCount
 	if deletedCount == 0 {
 		return ErrTaskNotFound
