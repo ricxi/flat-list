@@ -52,6 +52,7 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 		return "", err
 	}
 
+	// This line makes a grpc call to an external api
 	activationToken, err := s.tc.CreateActivationToken(context.Background(), userID)
 	if err != nil {
 		log.Println(err)
@@ -69,7 +70,7 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 }
 
 func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, error) {
-	if err := s.v.ValidateLogin(u); err != nil {
+	if err := s.validate.Login(u); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +87,7 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 		return nil, ErrUserNotActivated
 	}
 
-	if err := s.passwordManager.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
+	if err := s.password.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return nil, ErrInvalidPassword
 		}
@@ -139,7 +140,7 @@ func (s *service) ActivateUser(ctx context.Context, activationToken string) erro
 // It is a route that is accessed by users who did receive a valid activation token or email due
 // to unforseen or other cirumstances.
 func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error {
-	if err := s.v.ValidateLogin(u); err != nil {
+	if err := s.validate.Login(u); err != nil {
 		return err
 	}
 
@@ -152,7 +153,7 @@ func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error
 		return err
 	}
 
-	if err := s.passwordManager.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
+	if err := s.password.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return ErrInvalidPassword
 		}

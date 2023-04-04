@@ -23,6 +23,10 @@ func (m *mockRepository) GetUserByEmail(ctx context.Context, email string) (*use
 	return m.user, m.err
 }
 
+func (m *mockRepository) UpdateUserByID(ctx context.Context, u *user.UserInfo) error {
+	return m.err
+}
+
 // PasswordManager mock
 type mockPasswordManager struct {
 	password string
@@ -53,10 +57,10 @@ type mockValidator struct {
 	err error
 }
 
-func (m mockValidator) ValidateRegistration(u *user.UserRegistrationInfo) error {
+func (m mockValidator) Registration(u *user.UserRegistrationInfo) error {
 	return m.err
 }
 
-func (m mockValidator) ValidateLogin(u *user.UserLoginInfo) error {
+func (m mockValidator) Login(u *user.UserLoginInfo) error {
 	return m.err
 }

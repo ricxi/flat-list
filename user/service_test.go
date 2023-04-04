@@ -56,7 +56,12 @@ func TestRegisterUser(t *testing.T) {
 			userID: tc.inputRepoUserID,
 			err:    tc.inputRepoErr,
 		}
-		service := user.NewService(&mockRepo, &mockMailerClient{}, &mockPasswordManager{}, &mockValidator{})
+		service := user.NewServiceBuilder().
+			Repository(&mockRepo).
+			Client(&mockMailerClient{}).
+			PasswordManager(&mockPasswordManager{}).
+			Validator(&mockValidator{}).
+			Build()
 
 		userID, err := service.RegisterUser(context.Background(), &tc.uRegistrationInfo)
 		t.Run(tc.name, func(t *testing.T) {
@@ -146,7 +151,15 @@ func TestLoginUser(t *testing.T) {
 			user: tc.inputRepoUserInfo,
 			err:  tc.inputRepoErr,
 		}
-		service := user.NewService(&mockRepo, &mockMailerClient{}, &mockPasswordManager{err: tc.inputPasswordErr}, &mockValidator{})
+		mockPasswordManager := mockPasswordManager{
+			err: tc.inputPasswordErr,
+		}
+		service := user.NewServiceBuilder().
+			Repository(&mockRepo).
+			Client(&mockMailerClient{}).
+			PasswordManager(&mockPasswordManager).
+			Validator(&mockValidator{}).
+			Build()
 
 		uInfo, err := service.LoginUser(context.Background(), tc.uLoginInfo)
 		t.Run(tc.name, func(t *testing.T) {

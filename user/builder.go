@@ -48,10 +48,10 @@ func (sb *serviceBuilder) Build() Service {
 	}
 
 	return &service{
-		repository:      sb.repository,
-		client:          sb.client,
-		passwordManager: sb.passwordManager,
-		v:               sb.validator,
-		tc:              tc,
+		repository: sb.repository,
+		client:     sb.client,
+		password:   sb.passwordManager,
+		validate:   sb.validator,
+		tc:         tc,
 	}
 }
