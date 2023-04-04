@@ -11,12 +11,11 @@ import (
 
 	"github.com/ricxi/flat-list/mailer"
 	"github.com/ricxi/flat-list/mailer/pb"
-	tservice "github.com/ricxi/flat-list/token/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-const ACTIVATION_PAGE_LINK string = "http://localhost:5173/activate?token="
+const ActivationPageLink string = "http://localhost:5173/activate?token="
 
 // Client is used by Service to make
 // http or grpc calls to other services
@@ -57,7 +56,7 @@ func newGrpcClient(port string) (grpcClient, error) {
 // SendActivationEmail makes a remote procedure call to the mailer service,
 // which sends an account activation email to a newly registered user
 func (g grpcClient) SendActivationEmail(email, name, activationToken string) error {
-	activationHyperlink := ACTIVATION_PAGE_LINK + activationToken
+	activationHyperlink := ActivationPageLink + activationToken
 	in := pb.Request{
 		From:                "the.team@flat-list.com",
 		To:                  email,
@@ -77,7 +76,7 @@ type httpClient struct {
 }
 
 func (h httpClient) SendActivationEmail(email, name, activationToken string) error {
-	activationHyperlink := ACTIVATION_PAGE_LINK + activationToken
+	activationHyperlink := ActivationPageLink + activationToken
 
 	data := mailer.EmailActivationData{
 		From:                "the.team@flat-list.com",
@@ -106,42 +105,4 @@ func (h httpClient) SendActivationEmail(email, name, activationToken string) err
 	}
 
 	return nil
-}
-
-// tokenClient contains methods to call
-// the token service
-type tokenClient struct {
-	c tservice.TokenClient
-}
-
-func NewTokenClient(port string) (*tokenClient, error) {
-	cc, err := grpc.Dial(":"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, err
-	}
-
-	c := tservice.NewTokenClient(cc)
-	return &tokenClient{
-		c: c,
-	}, nil
-}
-
-func (tc *tokenClient) CreateActivationToken(ctx context.Context, userID string) (string, error) {
-	in := tservice.CreateTokenRequest{UserId: userID}
-	out, err := tc.c.CreateActivationToken(ctx, &in)
-	if err != nil {
-		return "", err
-	}
-
-	return out.ActivationToken, nil
-}
-
-func (tc *tokenClient) ValidateActivationToken(ctx context.Context, activationToken string) (string, error) {
-	in := tservice.ValidateTokenRequest{ActivationToken: activationToken}
-	out, err := tc.c.ValidateActivationToken(context.Background(), &in)
-	if err != nil {
-		return "", err
-	}
-
-	return out.UserId, nil
 }

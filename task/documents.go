@@ -6,6 +6,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// NewTaskDocument is an intermediary that is
+// used by a repository layer that impements mongo
+// to communicate with the mongodb driver API.
+type NewTaskDocument struct {
+	UserID    primitive.ObjectID `bson:"userId,omitempty"`
+	Name      string             `bson:"name"`
+	Details   string             `bson:"details,omitempty"`
+	Priority  string             `bson:"priority,omitempty"`
+	Category  string             `bson:"category,omitempty"`
+	CreatedAt *time.Time         `bson:"createdAt,omitempty"`
+	UpdatedAt *time.Time         `bson:"updatedAt,omitempty"`
+}
+
 // TaskDocument is a data type used by
 // a repository layer that implements mongo
 // to communicate with the mongo API.

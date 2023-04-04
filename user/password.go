@@ -23,7 +23,6 @@ func NewPasswordManager(cost int) PasswordManager {
 
 // GenerateHash creates a hash for a given password
 func (ps *passwordManager) GenerateHash(password string) (string, error) {
-
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), ps.cost)
 	if err != nil {
 		return "", err

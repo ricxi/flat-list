@@ -52,22 +52,22 @@ func NewMongoClient(uri string, timeout int64) (*mongo.Client, error) {
 	return client, nil
 }
 
-func (r *repository) CreateTask(ctx context.Context, task *NewTask) (string, error) {
-	uOID, err := primitive.ObjectIDFromHex(task.UserID)
+func (r *repository) CreateTask(ctx context.Context, newTask *NewTask) (string, error) {
+	uOID, err := primitive.ObjectIDFromHex(newTask.UserID)
 	if err != nil {
 		return "", err
 	}
 
-	doc := bson.M{
-		"name":      task.Name,
-		"userId":    uOID,
-		"details":   task.Details,
-		"priority":  task.Priority,
-		"category":  task.Category,
-		"createdAt": task.CreatedAt,
-		"updatedAt": task.UpdatedAt,
+	newTaskDoc := NewTaskDocument{
+		UserID:    uOID,
+		Name:      newTask.Name,
+		Details:   newTask.Details,
+		Priority:  newTask.Priority,
+		Category:  newTask.Category,
+		CreatedAt: newTask.CreatedAt,
+		UpdatedAt: newTask.UpdatedAt,
 	}
-	result, err := r.coll.InsertOne(ctx, doc)
+	result, err := r.coll.InsertOne(ctx, &newTaskDoc)
 	if err != nil {
 		return "", err
 	}
@@ -82,16 +82,7 @@ func (r *repository) GetTaskByID(ctx context.Context, id string) (*Task, error) 
 	}
 
 	filter := bson.M{"_id": oID}
-	taskDoc := struct {
-		ID        string     `bson:"_id,omitempty"`
-		UserID    string     `bson:"userId,omitempty"`
-		Name      string     `bson:"name"`
-		Details   string     `bson:"details,omitempty"`
-		Priority  string     `bson:"priority,omitempty"`
-		Category  string     `bson:"category,omitempty"`
-		CreatedAt *time.Time `bson:"createdAt,omitempty"`
-		UpdatedAt *time.Time `bson:"updatedAt,omitempty"`
-	}{}
+	var taskDoc TaskDocument
 	if err := r.coll.FindOne(ctx, &filter).Decode(&taskDoc); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, ErrTaskNotFound
@@ -99,14 +90,9 @@ func (r *repository) GetTaskByID(ctx context.Context, id string) (*Task, error) 
 		return nil, err
 	}
 
-	// Checking the result for an error, then running the line below causes a nil pointer runtime error if no document is found
-	// if err := result.Decode(&task); err != nil {
-	// 	return nil, err
-	// }
-
 	return &Task{
-		ID:        taskDoc.ID,
-		UserID:    taskDoc.UserID,
+		ID:        taskDoc.ID.Hex(),
+		UserID:    taskDoc.UserID.Hex(),
 		Name:      taskDoc.Name,
 		Details:   taskDoc.Details,
 		Priority:  taskDoc.Priority,
@@ -141,20 +127,20 @@ func (r *repository) UpdateTask(ctx context.Context, task *Task) (*Task, error) 
 		return nil, err
 	}
 
-	var td TaskDocument
-	if err := result.Decode(&td); err != nil {
+	var taskDoc TaskDocument
+	if err := result.Decode(&taskDoc); err != nil {
 		return nil, err
 	}
 
 	return &Task{
-		ID:        td.ID.Hex(),
-		UserID:    td.UserID.Hex(),
-		Name:      td.Name,
-		Details:   td.Details,
-		Priority:  td.Priority,
-		Category:  td.Category,
-		CreatedAt: td.CreatedAt,
-		UpdatedAt: td.UpdatedAt,
+		ID:        taskDoc.ID.Hex(),
+		UserID:    taskDoc.UserID.Hex(),
+		Name:      taskDoc.Name,
+		Details:   taskDoc.Details,
+		Priority:  taskDoc.Priority,
+		Category:  taskDoc.Category,
+		CreatedAt: taskDoc.CreatedAt,
+		UpdatedAt: taskDoc.UpdatedAt,
 	}, nil
 }
 
@@ -169,7 +155,7 @@ func (r *repository) DeleteTaskByID(ctx context.Context, id string) error {
 		return err
 	}
 
-	// This will be 0 if the document is not found (a 'mongo.ErrNoDocuments' error is not returned)
+	// This will be 0 if the document is not found (a 'mongo.ErrNoDocuments' error will not be returned)
 	deletedCount := result.DeletedCount
 	if deletedCount == 0 {
 		return ErrTaskNotFound

@@ -20,30 +20,30 @@ type Service interface {
 
 // service is instantiated using a builder (see builder.go file)
 type service struct {
-	repository      Repository
-	client          Client
-	passwordManager PasswordManager
-	v               Validator
-	tc              *tokenClient
+	repository Repository
+	client     Client
+	password   PasswordManager
+	validate   Validator
+	token      TokenClient
 }
 
 func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
-	if err := s.v.ValidateRegistration(u); err != nil {
+	if err := s.validate.Registration(u); err != nil {
 		return "", err
 	}
 
-	hashedPassword, err := s.passwordManager.GenerateHash(u.Password)
+	hashedPassword, err := s.password.GenerateHash(u.Password)
 	if err != nil {
 		log.Println(err)
 		return "", err
 	}
-
-	createdAt := time.Now().In(time.UTC)
-
 	u.Password = ""
 	u.HashedPassword = string(hashedPassword)
+
+	createdAt := time.Now().In(time.UTC)
 	u.CreatedAt = &createdAt
 	u.UpdatedAt = &createdAt
+
 	u.Activated = false
 
 	userID, err := s.repository.CreateUser(ctx, u)
@@ -52,7 +52,8 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 		return "", err
 	}
 
-	activationToken, err := s.tc.CreateActivationToken(context.Background(), userID)
+	// This line makes a grpc call to an external api
+	activationToken, err := s.token.CreateActivationToken(context.Background(), userID)
 	if err != nil {
 		log.Println(err)
 		return "", err
@@ -69,7 +70,7 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 }
 
 func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, error) {
-	if err := s.v.ValidateLogin(u); err != nil {
+	if err := s.validate.Login(u); err != nil {
 		return nil, err
 	}
 
@@ -86,11 +87,10 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 		return nil, ErrUserNotActivated
 	}
 
-	if err := s.passwordManager.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
+	if err := s.password.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return nil, ErrInvalidPassword
 		}
-
 		log.Println(err)
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 }
 
 func (s *service) ActivateUser(ctx context.Context, activationToken string) error {
-	userID, err := s.tc.ValidateActivationToken(context.Background(), activationToken)
+	userID, err := s.token.ValidateActivationToken(context.Background(), activationToken)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -139,7 +139,7 @@ func (s *service) ActivateUser(ctx context.Context, activationToken string) erro
 // It is a route that is accessed by users who did receive a valid activation token or email due
 // to unforseen or other cirumstances.
 func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error {
-	if err := s.v.ValidateLogin(u); err != nil {
+	if err := s.validate.Login(u); err != nil {
 		return err
 	}
 
@@ -152,7 +152,7 @@ func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error
 		return err
 	}
 
-	if err := s.passwordManager.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
+	if err := s.password.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return ErrInvalidPassword
 		}
@@ -161,7 +161,7 @@ func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error
 		return err
 	}
 
-	activationToken, err := s.tc.CreateActivationToken(context.Background(), uInfo.ID)
+	activationToken, err := s.token.CreateActivationToken(context.Background(), uInfo.ID)
 	if err != nil {
 		log.Println(err)
 		return err

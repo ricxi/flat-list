@@ -74,15 +74,17 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
 
-	t.Run("SuccessGetTask", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
+		require := require.New(t)
 
-		nt := createNewTaskForRepo()
-		taskID, err := r.CreateTask(context.Background(), &nt)
-		require.NoError(t, err)
-		require.NotEmpty(t, taskID)
-		expectedTask := createExpectedTaskFromNew(taskID, nt)
+		newTask := createNewTaskForRepo()
+		taskID, err := r.CreateTask(context.Background(), &newTask)
+		require.NoError(err)
+		require.NotEmpty(taskID)
+		require.True(primitive.IsValidObjectID(taskID))
 
+		expectedTask := createExpectedTaskFromNew(taskID, newTask)
 		actualTask, err := r.GetTaskByID(context.Background(), taskID)
 		assert.NoError(err)
 
@@ -98,7 +100,7 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 		}
 	})
 
-	t.Run("FailGetTask", func(t *testing.T) {
+	t.Run("Fail", func(t *testing.T) {
 		assert := assert.New(t)
 		taskID := primitive.NewObjectID().Hex()
 
@@ -113,11 +115,17 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 func TestRepositoryUpdateTask(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
-	t.Run("SuccessUpdateTask", func(t *testing.T) {
+
+	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
-		nt := createNewTaskForRepo()
-		taskID, err := r.CreateTask(context.Background(), &nt)
-		require.NoError(t, err)
+		require := require.New(t)
+
+		newTask := createNewTaskForRepo()
+		taskID, err := r.CreateTask(context.Background(), &newTask)
+		require.NoError(err)
+		if assert.NotEmpty(taskID) {
+			assert.True(primitive.IsValidObjectID(taskID))
+		}
 
 		updatePayload := Task{
 			ID:       taskID,
@@ -127,7 +135,7 @@ func TestRepositoryUpdateTask(t *testing.T) {
 		updatedTask, err := r.UpdateTask(context.Background(), &updatePayload)
 		assert.NoError(err)
 
-		expectedTask := nt
+		expectedTask := newTask
 		expectedTask.Priority = updatePayload.Priority
 		if assert.NotNil(updatedTask) && assert.NotEmpty(*updatedTask) {
 			assert.Equal(taskID, updatedTask.ID)
@@ -161,17 +169,22 @@ func TestDeleteTaskByID(t *testing.T) {
 	r, teardown := setupRepo(t)
 	defer teardown(t)
 
-	t.Run("SuccessDeleteTaskByID", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
+		require := require.New(t)
+
 		newTask := createNewTaskForRepo()
 		taskID, err := r.CreateTask(context.Background(), &newTask)
-		require.NoError(t, err)
+		require.NoError(err)
+		if assert.NotEmpty(taskID) {
+			require.True(primitive.IsValidObjectID(taskID))
+		}
 
 		err = r.DeleteTaskByID(context.Background(), taskID)
 		assert.NoError(err)
 	})
 
-	t.Run("FailDeleteTaskDocumentNotFound", func(t *testing.T) {
+	t.Run("FailTaskNotFound", func(t *testing.T) {
 		assert := assert.New(t)
 
 		taskID := primitive.NewObjectID().Hex()
