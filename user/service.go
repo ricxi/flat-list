@@ -20,30 +20,30 @@ type Service interface {
 
 // service is instantiated using a builder (see builder.go file)
 type service struct {
-	repository      Repository
-	client          Client
-	passwordManager PasswordManager
-	v               Validator
-	tc              *tokenClient
+	repository Repository
+	client     Client
+	password   PasswordManager
+	validate   Validator
+	tc         *tokenClient
 }
 
 func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
-	if err := s.v.ValidateRegistration(u); err != nil {
+	if err := s.validate.Registration(u); err != nil {
 		return "", err
 	}
 
-	hashedPassword, err := s.passwordManager.GenerateHash(u.Password)
+	hashedPassword, err := s.password.GenerateHash(u.Password)
 	if err != nil {
 		log.Println(err)
 		return "", err
 	}
-
-	createdAt := time.Now().In(time.UTC)
-
 	u.Password = ""
 	u.HashedPassword = string(hashedPassword)
+
+	createdAt := time.Now().In(time.UTC)
 	u.CreatedAt = &createdAt
 	u.UpdatedAt = &createdAt
+
 	u.Activated = false
 
 	userID, err := s.repository.CreateUser(ctx, u)
