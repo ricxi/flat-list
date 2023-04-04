@@ -6,8 +6,11 @@ require (
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-chi/cors v1.2.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/google/uuid v1.3.0
 	github.com/ricxi/flat-list/mailer v0.0.0-20230317045119-60100e35d983
+	github.com/ricxi/flat-list/shared v0.0.0-20230403230130-032fc7cf08d9
 	github.com/ricxi/flat-list/token v0.0.0-20230319105441-36e92f865b8c
+	github.com/stretchr/testify v1.7.2
 	go.mongodb.org/mongo-driver v1.11.2
 	golang.org/x/crypto v0.7.0
 	google.golang.org/grpc v1.53.0
@@ -15,11 +18,13 @@ require (
 
 require (
 	github.com/aws/aws-lambda-go v1.38.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.16.3 // indirect
 	github.com/montanaflynn/stats v0.7.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
@@ -32,4 +37,5 @@ require (
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

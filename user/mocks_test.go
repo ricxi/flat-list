@@ -64,3 +64,17 @@ func (m mockValidator) Registration(u *user.UserRegistrationInfo) error {
 func (m mockValidator) Login(u *user.UserLoginInfo) error {
 	return m.err
 }
+
+type mockTokenClient struct {
+	mockActivationToken string
+	mockUserID          string
+	err                 error
+}
+
+func (m *mockTokenClient) CreateActivationToken(ctx context.Context, userID string) (string, error) {
+	return m.mockActivationToken, m.err
+}
+
+func (m *mockTokenClient) ValidateActivationToken(ctx context.Context, activationToken string) (string, error) {
+	return m.mockUserID, m.err
+}

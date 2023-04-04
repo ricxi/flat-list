@@ -59,6 +59,7 @@ func TestRegisterUser(t *testing.T) {
 		service := user.NewServiceBuilder().
 			Repository(&mockRepo).
 			Client(&mockMailerClient{}).
+			TokenClient(&mockTokenClient{}).
 			PasswordManager(&mockPasswordManager{}).
 			Validator(&mockValidator{}).
 			Build()
@@ -157,6 +158,7 @@ func TestLoginUser(t *testing.T) {
 		service := user.NewServiceBuilder().
 			Repository(&mockRepo).
 			Client(&mockMailerClient{}).
+			TokenClient(&mockTokenClient{}).
 			PasswordManager(&mockPasswordManager).
 			Validator(&mockValidator{}).
 			Build()

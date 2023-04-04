@@ -15,6 +15,11 @@ test/user/service:
 	@echo "TEST: user service layer"
 	cd ./user && go test -v mocks_test.go service_test.go
 
+.PHONY: test/user/e2e
+test/user/e2e:
+	@echo "TEST: running e2e tests for user service"
+	cd ./user/cmd/http && go test -v
+
 .PHONY: build/user
 build/user:
 	@echo "building binary..."

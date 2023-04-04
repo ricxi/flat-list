@@ -24,7 +24,7 @@ type service struct {
 	client     Client
 	password   PasswordManager
 	validate   Validator
-	tc         *tokenClient
+	token      TokenClient
 }
 
 func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
@@ -53,7 +53,7 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 	}
 
 	// This line makes a grpc call to an external api
-	activationToken, err := s.tc.CreateActivationToken(context.Background(), userID)
+	activationToken, err := s.token.CreateActivationToken(context.Background(), userID)
 	if err != nil {
 		log.Println(err)
 		return "", err
@@ -91,7 +91,6 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return nil, ErrInvalidPassword
 		}
-
 		log.Println(err)
 		return nil, err
 	}
@@ -114,7 +113,7 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 }
 
 func (s *service) ActivateUser(ctx context.Context, activationToken string) error {
-	userID, err := s.tc.ValidateActivationToken(context.Background(), activationToken)
+	userID, err := s.token.ValidateActivationToken(context.Background(), activationToken)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -162,7 +161,7 @@ func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error
 		return err
 	}
 
-	activationToken, err := s.tc.CreateActivationToken(context.Background(), uInfo.ID)
+	activationToken, err := s.token.CreateActivationToken(context.Background(), uInfo.ID)
 	if err != nil {
 		log.Println(err)
 		return err

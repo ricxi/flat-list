@@ -20,7 +20,7 @@ func main() {
 	}
 	defer client.Disconnect(context.Background())
 
-	mongoRepository := user.NewMongoRepository(client, envs.mongoDBName, envs.mongoTimeout)
+	mongoRepository := user.NewRepository(client, envs.mongoDBName, envs.mongoTimeout)
 	service, err := buildService(mongoRepository)
 	if err != nil {
 		log.Fatal(err)
@@ -40,11 +40,17 @@ func buildService(repository user.Repository) (user.Service, error) {
 		return nil, err
 	}
 
+	tokenClient, err := user.NewTokenClient("5003")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	service := user.
 		NewServiceBuilder().
 		Repository(repository).
 		PasswordManager(passwordManager).
 		Client(grpcClient).
+		TokenClient(tokenClient).
 		Validator(validator).
 		Build()
 

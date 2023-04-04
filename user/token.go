@@ -8,13 +8,18 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+type TokenClient interface {
+	CreateActivationToken(ctx context.Context, userID string) (string, error)
+	ValidateActivationToken(ctx context.Context, activationToken string) (string, error)
+}
+
 // tokenClient contains methods to call
-// the token service
+// the token service to generate an activation token
 type tokenClient struct {
 	c tservice.TokenClient
 }
 
-func NewTokenClient(port string) (*tokenClient, error) {
+func NewTokenClient(port string) (TokenClient, error) {
 	cc, err := grpc.Dial(":"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err

@@ -46,7 +46,7 @@ func NewMongoClient(uri string, timeout int) (*mongo.Client, error) {
 }
 
 // Create a new user repository with the mongo client and database name
-func NewMongoRepository(client *mongo.Client, database string, timeout int) Repository {
+func NewRepository(client *mongo.Client, database string, timeout int) Repository {
 	usersCollection := client.Database(database).Collection("users")
 
 	m := mongoRepository{
