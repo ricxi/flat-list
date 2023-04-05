@@ -23,7 +23,7 @@ func (r *writeHeaderRecorder) WriteHeader(statusCode int) {
 	r.ResponseRecorder.WriteHeader(statusCode)
 }
 
-func TestMustSendAsJSON(t *testing.T) {
+func TestMustSendJSON(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		require := require.New(t)
 		assert := assert.New(t)
@@ -38,7 +38,7 @@ func TestMustSendAsJSON(t *testing.T) {
 			"id":      "abcdefghijkl",
 		}
 
-		response.MustSendAsJSON(rr, payload, http.StatusOK, nil)
+		response.MustSendJSON(rr, payload, http.StatusOK, nil)
 
 		require.Equal(expWriteHeaderCalls, rr.Count)
 		assert.Equal(http.StatusOK, rr.Code)
@@ -68,7 +68,7 @@ func TestMustSendAsJSON(t *testing.T) {
 			"Content-Type": "application/json",
 		}
 
-		response.MustSendAsJSON(rr, payload, http.StatusOK, headers)
+		response.MustSendJSON(rr, payload, http.StatusOK, headers)
 
 		require.Equal(expWriteHeaderCalls, rr.Count)
 		assert.Equal(http.StatusOK, rr.Code)
@@ -97,11 +97,11 @@ func TestMustSendAsJSON(t *testing.T) {
 
 		invalidPayload := make(chan string)
 
-		response.MustSendAsJSON(rr, invalidPayload, http.StatusOK, nil)
+		response.MustSendJSON(rr, invalidPayload, http.StatusOK, nil)
 	})
 }
 
-func TestSendAsJSON(t *testing.T) {
+func TestSendJSON(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		require := require.New(t)
 		assert := assert.New(t)
@@ -116,7 +116,7 @@ func TestSendAsJSON(t *testing.T) {
 			"id":      "abcdefghijkl",
 		}
 
-		response.SendAsJSON(rr, payload, http.StatusOK, nil)
+		response.SendJSON(rr, payload, http.StatusOK, nil)
 
 		require.Equal(expWriteHeaderCalls, rr.Count)
 		assert.Equal(http.StatusOK, rr.Code)
@@ -146,7 +146,7 @@ func TestSendAsJSON(t *testing.T) {
 			"Content-Type": "application/json",
 		}
 
-		response.SendAsJSON(rr, payload, http.StatusOK, headers)
+		response.SendJSON(rr, payload, http.StatusOK, headers)
 		require.Equal(expWriteHeaderCalls, rr.Count)
 		assert.Equal(http.StatusOK, rr.Code)
 		assert.Equal(expHeaders, rr.Header())
@@ -167,7 +167,7 @@ func TestSendAsJSON(t *testing.T) {
 
 		invalidPayload := make(chan string)
 
-		response.SendAsJSON(rr, invalidPayload, http.StatusOK, nil)
+		response.SendJSON(rr, invalidPayload, http.StatusOK, nil)
 		require.Equal(expWriteHeaderCalls, rr.Count)
 
 		assert.Equal(http.StatusInternalServerError, rr.Code)
@@ -186,7 +186,7 @@ func TestSendAsJSON(t *testing.T) {
 
 		invalidPayload := make(chan string)
 
-		response.SendAsJSON(rr, invalidPayload, http.StatusOK, nil)
+		response.SendJSON(rr, invalidPayload, http.StatusOK, nil)
 
 		assert.Equal(http.StatusInternalServerError, rr.Code)
 		assert.Equal(expWriteHeaderCalls, rr.Count, "got more than one WriteHeader calls, but expected one")
@@ -229,7 +229,7 @@ func TestSendInternalServerErrorAsJSON(t *testing.T) {
 	})
 }
 
-func BenchmarkSendAsJSON(b *testing.B) {
+func BenchmarkSendJSON(b *testing.B) {
 	rr := httptest.NewRecorder()
 
 	payload := map[string]any{
@@ -238,11 +238,11 @@ func BenchmarkSendAsJSON(b *testing.B) {
 	}
 
 	for n := 0; n < b.N; n++ {
-		response.SendAsJSON(rr, payload, http.StatusOK, nil)
+		response.SendJSON(rr, payload, http.StatusOK, nil)
 	}
 }
 
-func BenchmarkMustSendAsJSON(b *testing.B) {
+func BenchmarkMustSendJSON(b *testing.B) {
 	rr := httptest.NewRecorder()
 
 	payload := map[string]any{
@@ -251,6 +251,6 @@ func BenchmarkMustSendAsJSON(b *testing.B) {
 	}
 
 	for n := 0; n < b.N; n++ {
-		response.MustSendAsJSON(rr, payload, http.StatusOK, nil)
+		response.MustSendJSON(rr, payload, http.StatusOK, nil)
 	}
 }

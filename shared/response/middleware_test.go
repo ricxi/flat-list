@@ -32,11 +32,11 @@ func TestHandlePanic(t *testing.T) {
 		}
 	})
 
-	t.Run("handlePanicFromMustSendAsJSON", func(t *testing.T) {
+	t.Run("handlePanicFromMustSendJSON", func(t *testing.T) {
 		assert := assert.New(t)
 
 		panicker := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			response.MustSendAsJSON(w, make(chan string), http.StatusInternalServerError, nil)
+			response.MustSendJSON(w, make(chan string), http.StatusInternalServerError, nil)
 		})
 		handlePanic := response.HandlePanic(panicker)
 

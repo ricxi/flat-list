@@ -6,11 +6,11 @@ import (
 	"net/http"
 )
 
-// MustSendAsJSON is generally called as a last resort to send a well-formatted JSON response.
+// MustSendJSON is generally called as a last resort to send a well-formatted JSON response.
 // If an error occurs while encoding the JSON payload or writing to the http.ResponseWriter,
 // it will panic and set the status code to whatever was passed as an argument to the statusCode parameter.
 // The caller is expected to recover from the panic, and set the appropriate status code among other things.
-func MustSendAsJSON(w http.ResponseWriter, payload any, statusCode int, headers map[string]string) {
+func MustSendJSON(w http.ResponseWriter, payload any, statusCode int, headers map[string]string) {
 	if len(headers) > 0 {
 		for k, v := range headers {
 			w.Header().Set(k, v)
@@ -29,11 +29,11 @@ func MustSendAsJSON(w http.ResponseWriter, payload any, statusCode int, headers 
 	}
 }
 
-// SendAsJSON can be called to write a JSON payload to the http.ResponseWriter.
+// SendJSON can be called to write a JSON payload to the http.ResponseWriter.
 // It can be wrapped by other functions to send more customized responses.
 // If an error occurs while encoding the JSON payload or writing to the http.ResponseWriter,
 // it calls SendInternalServerError to try to deliver a JSON-formatted error response.
-func SendAsJSON(w http.ResponseWriter, payload any, statusCode int, headers map[string]string) {
+func SendJSON(w http.ResponseWriter, payload any, statusCode int, headers map[string]string) {
 	if len(headers) > 0 {
 		for k, v := range headers {
 			w.Header().Set(k, v)
@@ -59,10 +59,10 @@ func SendAsJSON(w http.ResponseWriter, payload any, statusCode int, headers map[
 
 // SendInternalServerErrorAsJSON makes one last attempt to send
 // an internal server error as a JSON-formatted response. It calls
-// MustSendAsJSON to do this, which will panic if there are any
+// MustSendJSON to do this, which will panic if there are any
 // issues encoding or writing the message into a response.
 func SendInternalServerErrorAsJSON(w http.ResponseWriter, message string) {
 	msg := map[string]string{"error": message}
 
-	MustSendAsJSON(w, msg, http.StatusInternalServerError, nil)
+	MustSendJSON(w, msg, http.StatusInternalServerError, nil)
 }
