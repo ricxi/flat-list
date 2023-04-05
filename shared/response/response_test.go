@@ -228,3 +228,29 @@ func TestSendInternalServerErrorAsJSON(t *testing.T) {
 		assert.Equal(expWriteHeaderCalls, rr.Count, "got more than one WriteHeader calls, but expected one")
 	})
 }
+
+func BenchmarkSendAsJSON(b *testing.B) {
+	rr := httptest.NewRecorder()
+
+	payload := map[string]any{
+		"success": true,
+		"id":      "abcdefghijkl",
+	}
+
+	for n := 0; n < b.N; n++ {
+		response.SendAsJSON(rr, payload, http.StatusOK, nil)
+	}
+}
+
+func BenchmarkMustSendAsJSON(b *testing.B) {
+	rr := httptest.NewRecorder()
+
+	payload := map[string]any{
+		"success": true,
+		"id":      "abcdefghijkl",
+	}
+
+	for n := 0; n < b.N; n++ {
+		response.MustSendAsJSON(rr, payload, http.StatusOK, nil)
+	}
+}

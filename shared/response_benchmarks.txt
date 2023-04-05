@@ -1,0 +1,16 @@
+goos: linux
+goarch: amd64
+pkg: github.com/ricxi/flat-list/shared/response
+cpu: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
+BenchmarkSendAsJSON-4       	 3806785	      1775 ns/op	     693 B/op	      12 allocs/op
+BenchmarkSendAsJSON-4       	 3660366	      1701 ns/op	     698 B/op	      12 allocs/op
+BenchmarkSendAsJSON-4       	 3559389	      1582 ns/op	     627 B/op	      12 allocs/op
+BenchmarkSendAsJSON-4       	 3695691	      1621 ns/op	     697 B/op	      12 allocs/op
+BenchmarkSendAsJSON-4       	 3726259	      1583 ns/op	     696 B/op	      12 allocs/op
+BenchmarkMustSendAsJSON-4   	 3857173	      1456 ns/op	     579 B/op	      10 allocs/op
+BenchmarkMustSendAsJSON-4   	 3687978	      1473 ns/op	     585 B/op	      10 allocs/op
+BenchmarkMustSendAsJSON-4   	 4109520	      1458 ns/op	     570 B/op	      10 allocs/op
+BenchmarkMustSendAsJSON-4   	 4075312	      1454 ns/op	     571 B/op	      10 allocs/op
+BenchmarkMustSendAsJSON-4   	 4004317	      1491 ns/op	     574 B/op	      10 allocs/op
+PASS
+ok  	github.com/ricxi/flat-list/shared/response	75.525s

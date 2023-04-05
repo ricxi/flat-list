@@ -1,0 +1,11 @@
+goos: linux
+goarch: amd64
+pkg: github.com/ricxi/flat-list/shared/request
+cpu: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
+BenchmarkParseJSON-4   	11050844	       590.8 ns/op	     864 B/op	       4 allocs/op
+BenchmarkParseJSON-4   	10875187	       583.8 ns/op	     864 B/op	       4 allocs/op
+BenchmarkParseJSON-4   	10291558	       585.0 ns/op	     864 B/op	       4 allocs/op
+BenchmarkParseJSON-4   	11111929	       580.1 ns/op	     864 B/op	       4 allocs/op
+BenchmarkParseJSON-4   	 9395911	       584.2 ns/op	     864 B/op	       4 allocs/op
+PASS
+ok  	github.com/ricxi/flat-list/shared/request	33.745s

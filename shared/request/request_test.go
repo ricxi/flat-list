@@ -76,3 +76,16 @@ func TestParseJSON(t *testing.T) {
 		assert.Equal(io.ErrUnexpectedEOF, err)
 	})
 }
+
+func BenchmarkParseJSON(b *testing.B) {
+	input := `{"message":"an apple a day"}`
+
+	r := httptest.NewRequest("", "/", strings.NewReader(input))
+
+	r.Header.Set("Content-Type", "application/json")
+
+	for n := 0; n < b.N; n++ {
+		var actualOutput output
+		_ = request.ParseJSON(r, &actualOutput)
+	}
+}
