@@ -19,12 +19,12 @@ const ActivationPageLink string = "http://localhost:5173/activate?token="
 
 // Client is used by Service to make
 // http or grpc calls to other services
-type Client interface {
+type MailerClient interface {
 	SendActivationEmail(email, name, activationToken string) error
 }
 
 // NewMailerClient can be called to create a grpc or http mailer client
-func NewMailerClient(clientType, port string) (Client, error) {
+func NewMailerClient(clientType, port string) (MailerClient, error) {
 	if clientType == "http" {
 		return httpClient{}, nil
 	}

@@ -21,7 +21,7 @@ type Service interface {
 // service is instantiated using a builder (see builder.go file)
 type service struct {
 	repository Repository
-	client     Client
+	mailer     MailerClient
 	password   PasswordManager
 	validate   Validator
 	token      TokenClient
@@ -61,7 +61,7 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 
 	go func() {
 		// send an activation email if a token is successfully generated
-		if err := s.client.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
+		if err := s.mailer.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
 			log.Println(err)
 		}
 	}()
@@ -168,7 +168,7 @@ func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error
 	}
 
 	go func() {
-		if err := s.client.SendActivationEmail(uInfo.Email, uInfo.FirstName, activationToken); err != nil {
+		if err := s.mailer.SendActivationEmail(uInfo.Email, uInfo.FirstName, activationToken); err != nil {
 			log.Println(err)
 		}
 	}()

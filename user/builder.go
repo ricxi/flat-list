@@ -2,7 +2,7 @@ package user
 
 type ServiceBuilder interface {
 	Repository(repository Repository) ServiceBuilder
-	Client(client Client) ServiceBuilder
+	Client(client MailerClient) ServiceBuilder
 	TokenClient(token TokenClient) ServiceBuilder
 	PasswordManager(passwordManager PasswordManager) ServiceBuilder
 	Validator(validator Validator) ServiceBuilder
@@ -15,7 +15,7 @@ func NewServiceBuilder() ServiceBuilder {
 
 type serviceBuilder struct {
 	repository      Repository
-	client          Client
+	mailer          MailerClient
 	token           TokenClient
 	passwordManager PasswordManager
 	validator       Validator
@@ -26,8 +26,8 @@ func (sb *serviceBuilder) Repository(repository Repository) ServiceBuilder {
 	return sb
 }
 
-func (sb *serviceBuilder) Client(client Client) ServiceBuilder {
-	sb.client = client
+func (sb *serviceBuilder) Client(client MailerClient) ServiceBuilder {
+	sb.mailer = client
 	return sb
 }
 
@@ -49,7 +49,7 @@ func (sb *serviceBuilder) Validator(validator Validator) ServiceBuilder {
 func (sb *serviceBuilder) Build() Service {
 	return &service{
 		repository: sb.repository,
-		client:     sb.client,
+		mailer:     sb.mailer,
 		password:   sb.passwordManager,
 		validate:   sb.validator,
 		token:      sb.token,
