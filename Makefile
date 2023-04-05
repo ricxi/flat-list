@@ -42,3 +42,8 @@ run/dev/react/email:
 run/dev/tokendb:
 	@echo "starting a postgres container instance for token service"
 	cd dev_scripts && ./start_postgres.sh ${PSQL_DSN}
+
+.PHONY: tidy/user
+tidy/user:
+	@echo "Tidying up user service"
+	cd ./user && go mod tidy

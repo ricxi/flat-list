@@ -10,6 +10,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/ricxi/flat-list/shared/request"
+	"github.com/ricxi/flat-list/shared/response"
 )
 
 type httpHandler struct {
@@ -48,18 +50,18 @@ func (h httpHandler) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
 
 func (h httpHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var u UserRegistrationInfo
-	if err := readFromRequest(w, r, &u); err != nil {
-		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+	if err := request.ParseJSON(r, &u); err != nil {
+		sendJSONError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	id, err := h.service.RegisterUser(r.Context(), &u)
 	if err != nil {
-		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		sendJSONError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	writeToResponse(w, Response{"id": id}, http.StatusCreated)
+	response.SendJSON(w, Response{"id": id}, http.StatusCreated, nil)
 }
 
 func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -153,6 +155,14 @@ func writeToResponse(w http.ResponseWriter, res Response, statusCode int) {
 		// panic and log error to avoid superfluous header warning? Best way to set the error code?
 		panic(err)
 	}
+}
+
+func sendJSONError(w http.ResponseWriter, message string, statusCode int) {
+	payload := map[string]string{
+		"error": message,
+	}
+
+	response.SendJSON(w, payload, statusCode, nil)
 }
 
 func writeErrorToResponse(w http.ResponseWriter, message string, statusCode int) {
