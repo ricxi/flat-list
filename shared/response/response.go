@@ -66,3 +66,11 @@ func SendInternalServerErrorAsJSON(w http.ResponseWriter, message string) {
 
 	MustSendJSON(w, msg, http.StatusInternalServerError, nil)
 }
+
+func SendErrorJSON(w http.ResponseWriter, message string, statusCode int) {
+	payload := map[string]string{
+		"error": message,
+	}
+
+	SendJSON(w, payload, statusCode, nil)
+}
