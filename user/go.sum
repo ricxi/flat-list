@@ -39,6 +39,8 @@ github.com/ricxi/flat-list/mailer v0.0.0-20230317045119-60100e35d983 h1:xuq1DlG3
 github.com/ricxi/flat-list/mailer v0.0.0-20230317045119-60100e35d983/go.mod h1:al23zJoFYs94ZMPuACzlSFVSS/jPXVEwd6hBrUhdzj8=
 github.com/ricxi/flat-list/shared v0.0.0-20230405031959-aae09827bf2a h1:PHn+Nbw/o+/tfvVeEKZ42GJkVZ83HTjlIsn9JNQ4KCM=
 github.com/ricxi/flat-list/shared v0.0.0-20230405031959-aae09827bf2a/go.mod h1:+cTc9ipApqZO6Hblq+UsrCtxpuyRlFPhbw1BXYoamqs=
+github.com/ricxi/flat-list/shared v0.0.0-20230405041120-e5571b0d2a07 h1:S6y7mHNykybwXmE3cNJt9UbqktPY2eHdueJjlRSI68s=
+github.com/ricxi/flat-list/shared v0.0.0-20230405041120-e5571b0d2a07/go.mod h1:+cTc9ipApqZO6Hblq+UsrCtxpuyRlFPhbw1BXYoamqs=
 github.com/ricxi/flat-list/token v0.0.0-20230319105441-36e92f865b8c h1:ynKP/IQFDONy5+YYlxHNy4D9Yf24/kfx6KcJ1REBUs0=
 github.com/ricxi/flat-list/token v0.0.0-20230319105441-36e92f865b8c/go.mod h1:6YdTeI/1gCtIFoh/sdwZXArANFqwTtHArgIiZhc4IOM=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

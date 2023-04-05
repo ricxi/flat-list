@@ -40,20 +40,23 @@ func NewHandler(service Service) http.Handler {
 	return r
 }
 
+// Response is used to wrap user responses
+type Response map[string]any
+
 func (h httpHandler) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
-	response.SendJSON(w, Response{"status": "success", "message": "user service is running"}, http.StatusOK, nil)
+	response.SendJSON(w, Response{"success": true, "message": "user service is running"}, http.StatusOK, nil)
 }
 
 func (h httpHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var u UserRegistrationInfo
 	if err := request.ParseJSON(r, &u); err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+		response.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	id, err := h.service.RegisterUser(r.Context(), &u)
 	if err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+		response.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -63,13 +66,13 @@ func (h httpHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var u UserLoginInfo
 	if err := request.ParseJSON(r, &u); err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+		response.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	uInfo, err := h.service.LoginUser(r.Context(), &u)
 	if err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+		response.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -80,12 +83,12 @@ func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 func (h httpHandler) handleActivate(w http.ResponseWriter, r *http.Request) {
 	activationToken := chi.URLParam(r, "token")
 	if activationToken == "" {
-		sendJSONError(w, "missing activation token parameter", http.StatusBadRequest)
+		response.SendErrorJSON(w, "missing activation token parameter", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.service.ActivateUser(r.Context(), activationToken); err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+		response.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -97,24 +100,14 @@ func (h httpHandler) handleActivate(w http.ResponseWriter, r *http.Request) {
 func (h httpHandler) handleReactivate(w http.ResponseWriter, r *http.Request) {
 	var u UserLoginInfo
 	if err := request.ParseJSON(r, &u); err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+		response.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err := h.service.RestartActivation(r.Context(), &u); err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+		response.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	response.SendJSON(w, Response{"status": "success"}, http.StatusOK, nil)
-}
-
-type Response map[string]any
-
-func sendJSONError(w http.ResponseWriter, message string, statusCode int) {
-	payload := map[string]string{
-		"error": message,
-	}
-
-	response.SendJSON(w, payload, statusCode, nil)
 }
