@@ -5,7 +5,7 @@ import (
 )
 
 type Validator interface {
-	Registration(u *UserRegistrationInfo) error
+	Registration(u UserRegistrationInfo) error
 	Login(u *UserLoginInfo) error
 }
 
@@ -15,7 +15,7 @@ func NewValidator() validator {
 
 type validator struct{}
 
-func (v validator) Registration(u *UserRegistrationInfo) error {
+func (v validator) Registration(u UserRegistrationInfo) error {
 	if u.Email == "" {
 		return fmt.Errorf("%w: email", ErrMissingField)
 	}

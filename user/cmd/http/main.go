@@ -49,7 +49,7 @@ func buildService(repository user.Repository) (user.Service, error) {
 		NewServiceBuilder().
 		Repository(repository).
 		PasswordManager(passwordManager).
-		Client(grpcClient).
+		MailerClient(grpcClient).
 		TokenClient(tokenClient).
 		Validator(validator).
 		Build()

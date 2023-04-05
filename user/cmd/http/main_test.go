@@ -40,13 +40,38 @@ func TestMain(m *testing.M) {
 	dbname := uuid.New().String()
 	r := user.NewRepository(client, dbname, 10)
 
-	service, err = buildService(r)
+	service, err = setupService(r)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	exitCode := m.Run()
 	os.Exit(exitCode)
+}
+
+func setupService(repository user.Repository) (user.Service, error) {
+	passwordManager := user.NewPasswordManager(bcrypt.MinCost)
+	validator := user.NewValidator()
+	grpcClient, err := user.NewMailerClient("grpc", "5001")
+	if err != nil {
+		return nil, err
+	}
+
+	tokenClient, err := user.NewTokenClient("5003")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	service := user.
+		NewServiceBuilder().
+		Repository(repository).
+		PasswordManager(passwordManager).
+		MailerClient(grpcClient).
+		TokenClient(tokenClient).
+		Validator(validator).
+		Build()
+
+	return service, nil
 }
 
 const registerUserPayload string = `
@@ -88,29 +113,4 @@ func fromJSON(t testing.TB, r io.Reader, out any) {
 	if err := json.NewDecoder(r).Decode(&out); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func buildService(repository user.Repository) (user.Service, error) {
-	passwordManager := user.NewPasswordManager(bcrypt.MinCost)
-	validator := user.NewValidator()
-	grpcClient, err := user.NewMailerClient("grpc", "5001")
-	if err != nil {
-		return nil, err
-	}
-
-	tokenClient, err := user.NewTokenClient("5003")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	service := user.
-		NewServiceBuilder().
-		Repository(repository).
-		PasswordManager(passwordManager).
-		Client(grpcClient).
-		TokenClient(tokenClient).
-		Validator(validator).
-		Build()
-
-	return service, nil
 }

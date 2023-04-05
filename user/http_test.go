@@ -1,33 +1,20 @@
 package user
 
-// type mockService struct {
-// 	userID   string
-// 	userInfo *UserInfo
-// 	err      error
-// }
+import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+)
 
-// func (m *mockService) RegisterUser(ctx context.Context, user *UserRegistrationInfo) (string, error) {
-// 	return m.userID, m.err
-// }
+func TestRegisterUser(t *testing.T) {
+	registerPayload := `{"firstName": "Michael", "lastName": "Scott", "email": "michaelscott@dundermifflin.com", "password": "1234"}`
 
-// func (m *mockService) LoginUser(ctx context.Context, user *UserLoginInfo) (*UserInfo, error) {
-// 	return m.userInfo, m.err
-// }
+	req := httptest.NewRequest(http.MethodPost, "/v1/user/register", strings.NewReader(registerPayload))
+	w := httptest.NewRecorder()
 
-// func TestRegisterUser(t *testing.T) {
-// 	var body bytes.Buffer
-// 	jsonStr := `{"firstName": "Michael", "lastName": "Scott", "email": "michaelscott@dundermifflin.com", "password": "1234"}`
+	s := MockService{userID: "abcdefg", err: nil}
+	handler := httpHandler{service: &s}
+	handler.handleLogin(w, req)
 
-// 	if err := json.NewEncoder(&body).Encode(jsonStr); err != nil {
-// 		t.Fatal(err)
-
-// 	}
-
-// 	req := httptest.NewRequest(http.MethodPost, "/v1/user/register", &body)
-// 	w := httptest.NewRecorder()
-
-// 	s := mockService{userID: "abcdefg", err: nil}
-// 	handler := httpHandler{service: &s}
-// 	handler.handleLogin(w, req)
-
-// }
+}

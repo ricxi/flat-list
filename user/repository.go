@@ -15,7 +15,7 @@ import (
 )
 
 type Repository interface {
-	CreateUser(ctx context.Context, user *UserRegistrationInfo) (string, error)
+	CreateUser(ctx context.Context, user UserRegistrationInfo) (string, error)
 	GetUserByEmail(ctx context.Context, email string) (*UserInfo, error)
 	UpdateUserByID(ctx context.Context, u *UserInfo) error
 }
@@ -80,7 +80,7 @@ func (m *mongoRepository) setupIndexes() {
 }
 
 // CreateOne inserts a new user with a unique email into the database.
-func (m *mongoRepository) CreateUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
+func (m *mongoRepository) CreateUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
 	userInfo := bson.M{
 		"firstName":      u.FirstName,
 		"lastName":       u.LastName,

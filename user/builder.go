@@ -2,7 +2,7 @@ package user
 
 type ServiceBuilder interface {
 	Repository(repository Repository) ServiceBuilder
-	Client(client MailerClient) ServiceBuilder
+	MailerClient(client MailerClient) ServiceBuilder
 	TokenClient(token TokenClient) ServiceBuilder
 	PasswordManager(passwordManager PasswordManager) ServiceBuilder
 	Validator(validator Validator) ServiceBuilder
@@ -26,7 +26,7 @@ func (sb *serviceBuilder) Repository(repository Repository) ServiceBuilder {
 	return sb
 }
 
-func (sb *serviceBuilder) Client(client MailerClient) ServiceBuilder {
+func (sb *serviceBuilder) MailerClient(client MailerClient) ServiceBuilder {
 	sb.mailer = client
 	return sb
 }

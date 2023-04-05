@@ -12,25 +12,25 @@ type passwordManager struct {
 }
 
 func NewPasswordManager(cost int) PasswordManager {
-	ps := passwordManager{}
+	pm := passwordManager{}
 
 	if cost == 0 {
-		ps.cost = bcrypt.DefaultCost
+		pm.cost = bcrypt.DefaultCost
 	}
 
-	return &ps
+	return &pm
 }
 
 // GenerateHash creates a hash for a given password
-func (ps *passwordManager) GenerateHash(password string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), ps.cost)
+func (pm *passwordManager) GenerateHash(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), pm.cost)
 	if err != nil {
 		return "", err
 	}
 	return string(hashedPassword), nil
 }
 
-func (ps *passwordManager) CompareHashWith(hashedPassword, password string) error {
+func (pm *passwordManager) CompareHashWith(hashedPassword, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	// this should not happen
 	// if errors.Is(err, bcrypt.ErrHashTooShort) {

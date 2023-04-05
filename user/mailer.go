@@ -26,7 +26,7 @@ type MailerClient interface {
 // NewMailerClient can be called to create a grpc or http mailer client
 func NewMailerClient(clientType, port string) (MailerClient, error) {
 	if clientType == "http" {
-		return httpClient{}, nil
+		return &httpClient{}, nil
 	}
 
 	if clientType == "grpc" {
@@ -40,22 +40,22 @@ type grpcClient struct {
 	c pb.MailerClient
 }
 
-func newGrpcClient(port string) (grpcClient, error) {
+func newGrpcClient(port string) (*grpcClient, error) {
 	cc, err := grpc.Dial(":"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return grpcClient{}, err
+		return nil, err
 	}
 
 	c := pb.NewMailerClient(cc)
 
-	return grpcClient{
+	return &grpcClient{
 		c: c,
 	}, nil
 }
 
 // SendActivationEmail makes a remote procedure call to the mailer service,
 // which sends an account activation email to a newly registered user
-func (g grpcClient) SendActivationEmail(email, name, activationToken string) error {
+func (g *grpcClient) SendActivationEmail(email, name, activationToken string) error {
 	activationHyperlink := ActivationPageLink + activationToken
 	in := pb.Request{
 		From:                "the.team@flat-list.com",
@@ -75,7 +75,7 @@ type httpClient struct {
 	port string
 }
 
-func (h httpClient) SendActivationEmail(email, name, activationToken string) error {
+func (h *httpClient) SendActivationEmail(email, name, activationToken string) error {
 	activationHyperlink := ActivationPageLink + activationToken
 
 	data := mailer.EmailActivationData{

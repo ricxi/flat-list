@@ -1,29 +1,50 @@
-package user_test
+package user
 
 import (
 	"context"
-
-	"github.com/ricxi/flat-list/user"
 )
 
-var _ user.Repository = &mockRepository{}
+var _ Repository = &mockRepository{}
 
 // Repository mock
 type mockRepository struct {
 	userID string
-	user   *user.UserInfo
+	user   *UserInfo
 	err    error
 }
 
-func (m *mockRepository) CreateUser(ctx context.Context, u *user.UserRegistrationInfo) (string, error) {
+func (m *mockRepository) CreateUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
 	return m.userID, m.err
 }
 
-func (m *mockRepository) GetUserByEmail(ctx context.Context, email string) (*user.UserInfo, error) {
+func (m *mockRepository) GetUserByEmail(ctx context.Context, email string) (*UserInfo, error) {
 	return m.user, m.err
 }
 
-func (m *mockRepository) UpdateUserByID(ctx context.Context, u *user.UserInfo) error {
+func (m *mockRepository) UpdateUserByID(ctx context.Context, u *UserInfo) error {
+	return m.err
+}
+
+// Service mock
+type MockService struct {
+	userID   string
+	userInfo *UserInfo
+	err      error
+}
+
+func (m *MockService) RegisterUser(ctx context.Context, user UserRegistrationInfo) (string, error) {
+	return m.userID, m.err
+}
+
+func (m *MockService) LoginUser(ctx context.Context, user *UserLoginInfo) (*UserInfo, error) {
+	return m.userInfo, m.err
+}
+
+func (m *MockService) ActivateUser(ctx context.Context, activationToken string) error {
+	return m.err
+}
+
+func (m *MockService) RestartActivation(ctx context.Context, u *UserLoginInfo) error {
 	return m.err
 }
 
@@ -50,18 +71,18 @@ func (m *mockMailerClient) SendActivationEmail(email, name, activationToken stri
 	return m.err
 }
 
-var _ user.Validator = mockValidator{}
+var _ Validator = mockValidator{}
 
 // Validator mock
 type mockValidator struct {
 	err error
 }
 
-func (m mockValidator) Registration(u *user.UserRegistrationInfo) error {
+func (m mockValidator) Registration(u UserRegistrationInfo) error {
 	return m.err
 }
 
-func (m mockValidator) Login(u *user.UserLoginInfo) error {
+func (m mockValidator) Login(u *UserLoginInfo) error {
 	return m.err
 }
 

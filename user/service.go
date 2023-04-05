@@ -12,7 +12,7 @@ import (
 )
 
 type Service interface {
-	RegisterUser(ctx context.Context, user *UserRegistrationInfo) (string, error)
+	RegisterUser(ctx context.Context, user UserRegistrationInfo) (string, error)
 	LoginUser(ctx context.Context, user *UserLoginInfo) (*UserInfo, error)
 	ActivateUser(ctx context.Context, activationToken string) error
 	RestartActivation(ctx context.Context, u *UserLoginInfo) error
@@ -27,7 +27,7 @@ type service struct {
 	token      TokenClient
 }
 
-func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
+func (s *service) RegisterUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
 	if err := s.validate.Registration(u); err != nil {
 		return "", err
 	}

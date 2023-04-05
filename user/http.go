@@ -54,7 +54,7 @@ func (h httpHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.service.RegisterUser(r.Context(), &u)
+	id, err := h.service.RegisterUser(r.Context(), u)
 	if err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
