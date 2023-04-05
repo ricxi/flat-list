@@ -4,15 +4,17 @@ package user
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 )
 
-// I tried a out a code generator to make these
-// tests this time
+// I used a code generator to create the
+// boilerplate for the table-driven tests
+// this time, but I wrote the tests myself
 func Test_service_RegisterUser(t *testing.T) {
 	type fields struct {
 		repository Repository
@@ -26,31 +28,210 @@ func Test_service_RegisterUser(t *testing.T) {
 		u   UserRegistrationInfo
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantID  string
-		wantErr bool
+		name      string
+		fields    fields
+		args      args
+		expUserID string
+		expErrStr string
 	}{
 		{
-			name: "Success",
+			name: "SuccessPassValidation",
 			fields: fields{
-				repository: &mockRepository{},
-				mailer:     &mockMailerClient{},
-				password:   &mockPasswordManager{},
-				validate:   &mockValidator{},
-				token:      &mockTokenClient{},
+				repository: &mockRepository{
+					userID: "5ef7fdd91c19e3222b41b839",
+				},
+				mailer: &mockMailerClient{
+					// Returning an error does not affect the service at all
+					err: errors.New("dummy error"),
+				},
+				password: &mockPasswordManager{
+					hashedPassword: "does not matter",
+					err:            nil,
+				},
+				// This is not the mock
+				validate: &validator{},
+				token: &mockTokenClient{
+					mockActivationToken: "does not matter",
+					mockUserID:          "does not matter",
+					err:                 nil,
+				},
 			},
 			args: args{
 				ctx: context.Background(),
+				u: UserRegistrationInfo{
+					Email:    "michaelscott@dundermifflin.com",
+					Password: "1234",
+				},
 			},
+		},
+		{
+			name: "SuccessWithAllFields",
+			fields: fields{
+				repository: &mockRepository{
+					userID: "5ef7fdd91c19e3222b41b839",
+				},
+				mailer: &mockMailerClient{
+					// Returning an error does not affect the service at all
+					err: errors.New("dummy error"),
+				},
+				password: &mockPasswordManager{
+					hashedPassword: "does not matter",
+					err:            nil,
+				},
+				// This is not the mock
+				validate: &validator{},
+				token: &mockTokenClient{
+					mockActivationToken: "does not matter",
+					mockUserID:          "does not matter",
+					err:                 nil,
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				u: UserRegistrationInfo{
+					FirstName: "Michael",
+					LastName:  "Scott",
+					Email:     "michaelscott@dundermifflin.com",
+					Password:  "1234",
+				},
+			},
+		},
+		{
+			name: "FailErrMissingFieldEmail",
+			fields: fields{
+				repository: &mockRepository{
+					userID: "5ef7fdd91c19e3222b41b839",
+				},
+				mailer: &mockMailerClient{
+					// Returning an error does not affect the service at all
+					err: errors.New("dummy error"),
+				},
+				password: &mockPasswordManager{
+					hashedPassword: "does not matter",
+					err:            nil,
+				},
+				// This is not the mock
+				validate: &validator{},
+				token: &mockTokenClient{
+					mockActivationToken: "does not matter",
+					mockUserID:          "does not matter",
+					err:                 nil,
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				u: UserRegistrationInfo{
+					FirstName: "Michael",
+					LastName:  "Scott",
+					Password:  "1234",
+				},
+			},
+			expErrStr: "missing field is required: email",
+		},
+		{
+			name: "FailErrMissingFieldPassword",
+			fields: fields{
+				repository: &mockRepository{
+					userID: "5ef7fdd91c19e3222b41b839",
+				},
+				mailer: &mockMailerClient{
+					// Returning an error does not affect the service at all
+					err: errors.New("dummy error"),
+				},
+				password: &mockPasswordManager{
+					hashedPassword: "does not matter",
+					err:            nil,
+				},
+				// This is not the mock
+				validate: &validator{},
+				token: &mockTokenClient{
+					mockActivationToken: "does not matter",
+					mockUserID:          "does not matter",
+					err:                 nil,
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				u: UserRegistrationInfo{
+					FirstName: "Michael",
+					LastName:  "Scott",
+					Email:     "michaelscott@dundermifflin.com",
+				},
+			},
+			expErrStr: "missing field is required: password",
+		},
+		{
+			name: "FailPasswordGenerationError",
+			fields: fields{
+				repository: &mockRepository{
+					// code should not reach here
+					userID: "",
+				},
+				mailer: &mockMailerClient{
+					// Returning an error here does not affect the service at all
+					err: errors.New("dummy error"),
+				},
+				password: &mockPasswordManager{
+					hashedPassword: "does not matter because it will never be exposed outside of service",
+					err:            bcrypt.ErrPasswordTooLong,
+				},
+				// This is not the mock
+				validate: &validator{},
+				token: &mockTokenClient{
+					mockActivationToken: "does not matter",
+					mockUserID:          "does not matter",
+					err:                 nil,
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				u: UserRegistrationInfo{
+					FirstName: "Michael",
+					LastName:  "Scott",
+					Email:     "michaelscott@dundermifflin.com",
+					Password:  "1234",
+				},
+			},
+			expErrStr: "bcrypt: password length exceeds 72 bytes",
+		},
+		{
+			name: "FailDuplicateUser",
+			fields: fields{
+				repository: &mockRepository{
+					userID: "",
+					err:    ErrDuplicateUser,
+				},
+				mailer: &mockMailerClient{
+					// Returning an error here does not affect the service at all
+					err: errors.New("dummy error"),
+				},
+				password: &mockPasswordManager{
+					hashedPassword: "does not matter because it will never be exposed outside of service",
+					err:            nil,
+				},
+				// This is not the mock
+				validate: &validator{},
+				token: &mockTokenClient{
+					mockActivationToken: "does not matter",
+					mockUserID:          "does not matter",
+					err:                 nil,
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				u: UserRegistrationInfo{
+					FirstName: "Michael",
+					LastName:  "Scott",
+					Email:     "michaelscott@dundermifflin.com",
+					Password:  "1234",
+				},
+			},
+			expErrStr: "user already exists",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert := assert.New(t)
-			// require := require.New(t)
-
 			s := &service{
 				repository: tt.fields.repository,
 				mailer:     tt.fields.mailer,
@@ -60,18 +241,14 @@ func Test_service_RegisterUser(t *testing.T) {
 			}
 
 			actualID, err := s.RegisterUser(tt.args.ctx, tt.args.u)
-			if assert.NoError(err) {
-				assert.True(primitive.IsValidObjectID(actualID))
+			if err != nil {
+				assert.Error(err, "expected an error")
+				assert.Empty(actualID, "got a ID but did not expect one")
+				assert.EqualError(err, tt.expErrStr)
 			} else {
-				fmt.Println("no error cases yet")
+				assert.NoError(err)
+				assert.True(primitive.IsValidObjectID(actualID), "user id returned is not a valid mongo id")
 			}
-			// if (err != nil) != tt.wantErr {
-			// 	t.Errorf("service.RegisterUser() error = %v, wantErr %v", err, tt.wantErr)
-			// 	return
-			// }
-			// if got != tt.want {
-			// 	t.Errorf("service.RegisterUser() = %v, want %v", got, tt.want)
-			// }
 		})
 	}
 }

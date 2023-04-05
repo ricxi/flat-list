@@ -50,12 +50,12 @@ func (m *MockService) RestartActivation(ctx context.Context, u *UserLoginInfo) e
 
 // PasswordManager mock
 type mockPasswordManager struct {
-	password string
-	err      error
+	hashedPassword string
+	err            error
 }
 
 func (m *mockPasswordManager) GenerateHash(password string) (string, error) {
-	return m.password, m.err
+	return m.hashedPassword, m.err
 }
 
 func (m *mockPasswordManager) CompareHashWith(hashedPassword, password string) error {
