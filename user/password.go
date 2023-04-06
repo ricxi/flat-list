@@ -1,6 +1,10 @@
 package user
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"errors"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 type PasswordManager interface {
 	GenerateHash(password string) (string, error)
@@ -31,9 +35,10 @@ func (pm *passwordManager) GenerateHash(password string) (string, error) {
 }
 
 func (pm *passwordManager) CompareHashWith(hashedPassword, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-	// this should not happen
-	// if errors.Is(err, bcrypt.ErrHashTooShort) {
-	// 	return nil, err
-	// }
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+		return ErrInvalidPassword
+	}
+
+	return nil
 }

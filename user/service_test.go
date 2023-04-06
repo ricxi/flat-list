@@ -1,5 +1,3 @@
-// ! I kept a commented version of my old tests
-// ! as a reference to see if I get better at testing
 package user
 
 import (
@@ -268,17 +266,17 @@ func Test_service_LoginUser(t *testing.T) {
 		u   UserLoginInfo
 	}
 	tests := []struct {
-		name     string
-		fields   fields
-		args     args
-		wantUser UserInfo
-		wantErr  bool
+		name      string
+		fields    fields
+		args      args
+		expUser   UserInfo
+		expErrStr string
 	}{
 		{
 			name: "Success",
 			fields: fields{
 				repository: &mockRepository{
-					user: UserInfo{
+					user: &UserInfo{
 						ID:        "5ef7fdd91c19e3222b41b839",
 						FirstName: "Michael",
 						LastName:  "Scott",
@@ -288,19 +286,13 @@ func Test_service_LoginUser(t *testing.T) {
 						Activated: true,
 					},
 				},
-				mailer: &mockMailerClient{
-					// Returning an error does not affect the service at all because it is used in a separate go routine
-					// err: errors.New("dummy error"),
-				},
+				mailer: &mockMailerClient{}, // LoginUser does not use any methods defined on this type
 				password: &mockPasswordManager{
-					// hashedPassword: "does not matter",
-					// err:            nil,
+					hashedPassword: "",
+					err:            nil,
 				},
-				// This is not the mock
-				validate: &validator{},
-				token:    &mockTokenClient{
-					// LoginUser method does not use any methods from the token client
-				},
+				validate: &validator{},       // This is not the mock
+				token:    &mockTokenClient{}, // LoginUser method does not use any methods from the token client
 			},
 			args: args{
 				ctx: context.Background(),
@@ -309,12 +301,157 @@ func Test_service_LoginUser(t *testing.T) {
 					Password: "1234",
 				},
 			},
-			wantUser: UserInfo{
+			expUser: UserInfo{
 				ID:        "5ef7fdd91c19e3222b41b839",
 				FirstName: "Michael",
 				LastName:  "Scott",
 				Email:     "michaelscott@dundermifflin.com",
 			},
+			expErrStr: "",
+		},
+		{
+			// This test will pass regardless of the email used
+			// because the mockRepository simulates an ErrUserNotFound error,
+			// which the service layer will catch and return an ErrInvalidEmail error.
+			// Perhaps I should rethink and refactor, or write an integration test
+			name: "FailUserNotFoundForEmail",
+			fields: fields{
+				repository: &mockRepository{
+					user: nil,
+					err:  ErrUserNotFound,
+				},
+				mailer: &mockMailerClient{}, // LoginUser does not use any methods defined on this type
+				password: &mockPasswordManager{
+					hashedPassword: "",
+					err:            nil,
+				},
+				validate: &validator{},       // This is not the mock
+				token:    &mockTokenClient{}, // LoginUser method does not use any methods from the token client
+			},
+			args: args{
+				ctx: context.Background(),
+				u: UserLoginInfo{
+					Email:    "michaelscott@dundermifflin.com",
+					Password: "1234",
+				},
+			},
+			expUser: UserInfo{
+				ID:        "5ef7fdd91c19e3222b41b839",
+				FirstName: "Michael",
+				LastName:  "Scott",
+				Email:     "michaelscott@dundermifflin.com",
+			},
+			expErrStr: "user with this email was not found",
+		},
+		{
+			name: "FailUserNotActivated",
+			fields: fields{
+				repository: &mockRepository{
+					user: &UserInfo{
+						ID:        "5ef7fdd91c19e3222b41b839",
+						FirstName: "Michael",
+						LastName:  "Scott",
+						Email:     "michaelscott@dundermifflin.com",
+						// CreatedAt: ,
+						// UpdatedAt: ,
+						Activated: false,
+					},
+				},
+				mailer: &mockMailerClient{}, // LoginUser does not use any methods defined on this type
+				password: &mockPasswordManager{
+					hashedPassword: "",
+					err:            nil,
+				},
+				validate: &validator{},       // This is not the mock
+				token:    &mockTokenClient{}, // LoginUser method does not use any methods from the token client
+			},
+			args: args{
+				ctx: context.Background(),
+				u: UserLoginInfo{
+					Email:    "michaelscott@dundermifflin.com",
+					Password: "1234",
+				},
+			},
+			expUser: UserInfo{
+				ID:        "5ef7fdd91c19e3222b41b839",
+				FirstName: "Michael",
+				LastName:  "Scott",
+				Email:     "michaelscott@dundermifflin.com",
+			},
+			expErrStr: "user has not activated their account",
+		},
+		{
+			name: "FailWrongPassword",
+			fields: fields{
+				repository: &mockRepository{
+					user: &UserInfo{
+						ID:        "5ef7fdd91c19e3222b41b839",
+						FirstName: "Michael",
+						LastName:  "Scott",
+						Email:     "michaelscott@dundermifflin.com",
+						// CreatedAt: ,
+						// UpdatedAt: ,
+						Activated: true,
+					},
+				},
+				mailer: &mockMailerClient{}, // LoginUser does not use any methods defined on this type
+				password: &mockPasswordManager{
+					hashedPassword: "",
+					err:            ErrInvalidPassword,
+				},
+				validate: &validator{},       // This is not the mock
+				token:    &mockTokenClient{}, // LoginUser method does not use any methods from the token client
+			},
+			args: args{
+				ctx: context.Background(),
+				u: UserLoginInfo{
+					Email:    "michaelscott@dundermifflin.com",
+					Password: "1234",
+				},
+			},
+			expUser: UserInfo{
+				ID:        "5ef7fdd91c19e3222b41b839",
+				FirstName: "Michael",
+				LastName:  "Scott",
+				Email:     "michaelscott@dundermifflin.com",
+			},
+			expErrStr: "invalid password provided",
+		},
+		{
+			name: "FailMissingEmailField",
+			fields: fields{
+				repository: &mockRepository{userID: "", user: nil, err: nil},
+				mailer:     &mockMailerClient{}, // LoginUser does not use any methods defined on this type
+				password:   &mockPasswordManager{hashedPassword: "", err: nil},
+				validate:   &validator{},       // This is not the mock
+				token:      &mockTokenClient{}, // LoginUser method does not use any methods from the token client
+			},
+			args: args{
+				ctx: context.Background(),
+				u: UserLoginInfo{
+					Password: "1234",
+				},
+			},
+			expUser:   UserInfo{},
+			expErrStr: "missing field is required: email",
+		},
+		{
+			name: "FailMissingPasswordField",
+			fields: fields{
+				repository: &mockRepository{userID: "", user: nil, err: nil},
+				mailer:     &mockMailerClient{}, // LoginUser does not use any methods defined on this type
+				password:   &mockPasswordManager{hashedPassword: "", err: nil},
+				validate:   &validator{},       // This is not the mock
+				token:      &mockTokenClient{}, // LoginUser method does not use any methods from the token client
+			},
+			args: args{
+				ctx: context.Background(),
+				u: UserLoginInfo{
+					Email: "michaelscott@dundermifflin.com",
+				},
+			},
+			expUser:   UserInfo{},
+			expErrStr: "missing field is required: password",
 		},
 	}
 
@@ -333,196 +470,21 @@ func Test_service_LoginUser(t *testing.T) {
 
 			actualUser, err := s.LoginUser(tt.args.ctx, tt.args.u)
 			if err != nil {
+				assert.Error(err)
+				assert.Nil(actualUser)
+				assert.EqualError(err, tt.expErrStr)
 			} else {
 				assert.NoError(err)
-				assert.Equal(tt.wantUser.ID, actualUser.ID)
-				assert.Equal(tt.wantUser.FirstName, actualUser.FirstName)
-				assert.Equal(tt.wantUser.LastName, actualUser.LastName)
-				assert.Equal(tt.wantUser.Email, actualUser.Email)
+				assert.Equal(tt.expUser.ID, actualUser.ID)
+				assert.Equal(tt.expUser.FirstName, actualUser.FirstName)
+				assert.Equal(tt.expUser.LastName, actualUser.LastName)
+				assert.Equal(tt.expUser.Email, actualUser.Email)
 				// assert.WithinDuration(*tt.wantUser.CreatedAt, *actualUser.CreatedAt, time.Second)
 				// assert.WithinDuration(*tt.wantUser.UpdatedAt, *actualUser.UpdatedAt, time.Second)
+
+				// Only checks that the jwt token field is not empty
 				assert.NotEmpty(actualUser.Token)
 			}
 		})
 	}
 }
-
-// func TestServiceRegisterUser(t *testing.T) {
-// 	testCases := []struct {
-// 		name              string
-// 		uRegistrationInfo UserRegistrationInfo
-// 		expectedUserID    string
-// 		inputRepoUserID   string
-// 		inputRepoErr      error
-// 		expectedError     error
-// 	}{
-// 		{
-// 			// hard code the id for determinism?
-// 			name: "Success",
-// 			uRegistrationInfo: UserRegistrationInfo{
-// 				FirstName: "Michael",
-// 				LastName:  "Scott",
-// 				Email:     "michaelscott@dundermifflin.com",
-// 				Password:  "1234",
-// 			},
-// 			inputRepoUserID: "5ef7fdd91c19e3222b41b839",
-// 			inputRepoErr:    nil,
-// 			expectedUserID:  "5ef7fdd91c19e3222b41b839",
-// 			expectedError:   nil,
-// 		},
-// 		{
-// 			// unit tests might not be the best for this?
-// 			name: "FailDuplicateUser",
-// 			uRegistrationInfo: UserRegistrationInfo{
-// 				FirstName: "Michael",
-// 				LastName:  "Scott",
-// 				Email:     "michaelscott@dundermifflin.com",
-// 				Password:  "1234",
-// 			},
-// 			inputRepoUserID: "5ef7fdd91c19e3222b41b839",
-// 			inputRepoErr:    ErrDuplicateUser,
-// 			expectedUserID:  "",
-// 			expectedError:   ErrDuplicateUser,
-// 		},
-// 	}
-
-// 	for _, tc := range testCases {
-// 		mockRepo := mockRepository{
-// 			userID: tc.inputRepoUserID,
-// 			err:    tc.inputRepoErr,
-// 		}
-// 		service := NewServiceBuilder().
-// 			Repository(&mockRepo).
-// 			MailerClient(&mockMailerClient{}).
-// 			TokenClient(&mockTokenClient{}).
-// 			PasswordManager(&mockPasswordManager{}).
-// 			Validator(&mockValidator{}).
-// 			Build()
-
-// 		userID, err := service.RegisterUser(context.Background(), &tc.uRegistrationInfo)
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			if err != tc.expectedError {
-// 				t.Errorf("expected %v, but got %v", err, tc.expectedError)
-// 			}
-
-// 			if userID != tc.expectedUserID {
-// 				t.Errorf("expected %s, but got %s", tc.expectedUserID, userID)
-// 			}
-// 		})
-// 	}
-// }
-
-// // Does not test JWT features yet
-// func TestServiceLoginUser(t *testing.T) {
-// 	testCases := []struct {
-// 		name              string
-// 		uLoginInfo        *UserLoginInfo
-// 		inputRepoUserInfo *UserInfo
-// 		inputRepoErr      error
-// 		inputPasswordErr  error
-// 		expectedUserInfo  *UserInfo
-// 		expectedErr       error
-// 	}{
-// 		{
-// 			name: "Success",
-// 			uLoginInfo: &UserLoginInfo{
-// 				Email:    "michaelscott@dundermifflin.com",
-// 				Password: "1234",
-// 			},
-// 			inputRepoUserInfo: &UserInfo{
-// 				ID:        "5ef7fdd91c19e3222b41b839",
-// 				FirstName: "Michael",
-// 				LastName:  "Scott",
-// 				Email:     "michaelscott@dundermifflin.com",
-// 				Token:     "",
-// 			},
-// 			inputRepoErr:     nil,
-// 			inputPasswordErr: nil,
-// 			expectedUserInfo: &UserInfo{
-// 				ID:        "5ef7fdd91c19e3222b41b839",
-// 				FirstName: "Michael",
-// 				LastName:  "Scott",
-// 				Email:     "michaelscott@dundermifflin.com",
-// 				Token:     "",
-// 			},
-// 			expectedErr: nil,
-// 		},
-// 		{
-// 			name: "FailedInvalidEmail",
-// 			uLoginInfo: &UserLoginInfo{
-// 				Email:    "michaelscott@dundermifflin.com",
-// 				Password: "1234",
-// 			},
-// 			inputRepoUserInfo: &UserInfo{},
-// 			inputRepoErr:      ErrUserNotFound,
-// 			inputPasswordErr:  nil,
-// 			expectedUserInfo:  &UserInfo{},
-// 			expectedErr:       ErrInvalidEmail,
-// 		},
-// 		{
-// 			name: "FailedWrongPassword",
-// 			uLoginInfo: &UserLoginInfo{
-// 				Email:    "michaelscott@dundermifflin.com",
-// 				Password: "1234",
-// 			},
-// 			inputRepoUserInfo: &UserInfo{
-// 				ID:             "5ef7fdd91c19e3222b41b839",
-// 				FirstName:      "Michael",
-// 				LastName:       "Scott",
-// 				Email:          "michaelscott@dundermifflin.com",
-// 				HashedPassword: "doesntmatterwhatiputhere",
-// 				Activated:      true,
-// 			},
-// 			inputRepoErr:     nil,
-// 			inputPasswordErr: bcrypt.ErrMismatchedHashAndPassword,
-// 			expectedUserInfo: &UserInfo{},
-// 			expectedErr:      ErrInvalidPassword,
-// 		},
-// 	}
-
-// 	// setup environment variables
-// 	t.Setenv("JWT_SECRET_KEY", "testsecrets")
-
-// 	for _, tc := range testCases {
-// 		mockRepo := mockRepository{
-// 			user: tc.inputRepoUserInfo,
-// 			err:  tc.inputRepoErr,
-// 		}
-// 		mockPasswordManager := mockPasswordManager{
-// 			err: tc.inputPasswordErr,
-// 		}
-// 		service := NewServiceBuilder().
-// 			Repository(&mockRepo).
-// 			MailerClient(&mockMailerClient{err: nil}).
-// 			TokenClient(&mockTokenClient{}).
-// 			PasswordManager(&mockPasswordManager).
-// 			Validator(&mockValidator{}).
-// 			Build()
-
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			uInfo, err := service.LoginUser(context.Background(), tc.uLoginInfo)
-// 			if err != nil {
-// 				if tc.expectedErr != nil && tc.expectedErr != err {
-// 					t.Errorf("expected error %q, but got error %q", tc.expectedErr.Error(), err.Error())
-// 				}
-// 				// if nil != uInfo {
-// 				// 	t.Errorf("did not expect user info, but got %v", uInfo)
-// 				// }
-// 			} else {
-// 				if uInfo.ID != tc.expectedUserInfo.ID {
-// 					t.Errorf("expected %s, but got %s", uInfo.ID, tc.expectedUserInfo.ID)
-// 				}
-// 				// if uInfo.FirstName != tc.expectedUserInfo.FirstName {
-// 				// 	t.Errorf("expected %s, but got %s", uInfo.FirstName, tc.expectedUserInfo.FirstName)
-// 				// }
-// 				// if uInfo.LastName != tc.expectedUserInfo.LastName {
-// 				// 	t.Errorf("expected %s, but got %s", uInfo.LastName, tc.expectedUserInfo.LastName)
-// 				// }
-
-// 				// if uInfo.Email != tc.expectedUserInfo.Email {
-// 				// 	t.Errorf("expected %s, but got %s", uInfo.Email, tc.expectedUserInfo.Email)
-// 				// }
-// 			}
-// 		})
-// 	}
-// }

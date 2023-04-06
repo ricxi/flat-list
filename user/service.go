@@ -88,10 +88,6 @@ func (s *service) LoginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, er
 	}
 
 	if err := s.password.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
-		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return nil, ErrInvalidPassword
-		}
-		log.Println(err)
 		return nil, err
 	}
 

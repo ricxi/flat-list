@@ -9,7 +9,7 @@ var _ Repository = &mockRepository{}
 // Repository mock
 type mockRepository struct {
 	userID string
-	user   UserInfo
+	user   *UserInfo
 	err    error
 }
 
@@ -18,7 +18,7 @@ func (m *mockRepository) CreateUser(ctx context.Context, u UserRegistrationInfo)
 }
 
 func (m *mockRepository) GetUserByEmail(ctx context.Context, email string) (*UserInfo, error) {
-	return &m.user, m.err
+	return m.user, m.err
 }
 
 func (m *mockRepository) UpdateUserByID(ctx context.Context, u UserInfo) error {
