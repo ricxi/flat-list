@@ -7,7 +7,6 @@ import (
 
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -87,6 +86,7 @@ func (s *service) LoginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, er
 		return nil, ErrUserNotActivated
 	}
 
+	// Should I compare the password before checking if the user has activated their account?
 	if err := s.password.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
 		return nil, err
 	}
@@ -94,11 +94,7 @@ func (s *service) LoginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, er
 	uInfo.Password = ""
 	uInfo.HashedPassword = ""
 
-	token, err := generateJWT(jwt.MapClaims{
-		"user_id": uInfo.ID,
-		"email":   uInfo.Email,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(),
-	})
+	token, err := generateUserJWT(uInfo.ID)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -170,4 +166,8 @@ func (s *service) RestartActivation(ctx context.Context, u UserLoginInfo) error 
 	}()
 
 	return nil
+}
+
+func (s *service) Authenticate(ctx context.Context, signedJWT string) {
+
 }
