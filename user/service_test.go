@@ -15,6 +15,7 @@ import (
 // this time, but I wrote the tests myself.
 // Note, the logger will log to the terminal
 // when some of these tests are run for error cases.
+// ! No tests are written for create activation token
 func Test_service_RegisterUser(t *testing.T) {
 	type fields struct {
 		repository Repository
@@ -39,22 +40,15 @@ func Test_service_RegisterUser(t *testing.T) {
 			fields: fields{
 				repository: &mockRepository{
 					userID: "5ef7fdd91c19e3222b41b839",
+					err:    nil,
 				},
 				mailer: &mockMailerClient{
-					// Returning an error does not affect the service at all
-					err: errors.New("dummy error"),
+					// The mailer's methods are called concurrently, so returning an error will not affect the service at all
+					err: nil,
 				},
-				password: &mockPasswordManager{
-					hashedPassword: "does not matter",
-					err:            nil,
-				},
-				// This is not the mock
-				validate: &validator{},
-				token: &mockTokenClient{
-					mockActivationToken: "does not matter",
-					mockUserID:          "does not matter",
-					err:                 nil,
-				},
+				password: &mockPasswordManager{hashedPassword: "", err: nil},
+				validate: &validator{}, // This is not the mock
+				token:    &mockTokenClient{mockActivationToken: "", mockUserID: "", err: nil},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -69,22 +63,19 @@ func Test_service_RegisterUser(t *testing.T) {
 			fields: fields{
 				repository: &mockRepository{
 					userID: "5ef7fdd91c19e3222b41b839",
+					err:    nil,
 				},
 				mailer: &mockMailerClient{
-					// Returning an error does not affect the service at all
-					err: errors.New("dummy error"),
+					// The mailer's methods are called concurrently, so returning an error will not affect the service at all
+					err: nil,
 				},
 				password: &mockPasswordManager{
-					hashedPassword: "does not matter",
+					hashedPassword: "",
 					err:            nil,
 				},
 				// This is not the mock
 				validate: &validator{},
-				token: &mockTokenClient{
-					mockActivationToken: "does not matter",
-					mockUserID:          "does not matter",
-					err:                 nil,
-				},
+				token:    &mockTokenClient{mockActivationToken: "", mockUserID: "", err: nil},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -101,22 +92,16 @@ func Test_service_RegisterUser(t *testing.T) {
 			fields: fields{
 				repository: &mockRepository{
 					userID: "5ef7fdd91c19e3222b41b839",
+					err:    nil,
 				},
 				mailer: &mockMailerClient{
-					// Returning an error does not affect the service at all
-					err: errors.New("dummy error"),
+					// The mailer's methods are called concurrently, so returning an error will not affect the service at all
+					err: nil,
 				},
-				password: &mockPasswordManager{
-					hashedPassword: "does not matter",
-					err:            nil,
-				},
+				password: &mockPasswordManager{hashedPassword: "", err: nil},
 				// This is not the mock
 				validate: &validator{},
-				token: &mockTokenClient{
-					mockActivationToken: "does not matter",
-					mockUserID:          "does not matter",
-					err:                 nil,
-				},
+				token:    &mockTokenClient{mockActivationToken: "", mockUserID: "", err: nil},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -133,22 +118,16 @@ func Test_service_RegisterUser(t *testing.T) {
 			fields: fields{
 				repository: &mockRepository{
 					userID: "5ef7fdd91c19e3222b41b839",
+					err:    nil,
 				},
 				mailer: &mockMailerClient{
-					// Returning an error does not affect the service at all
+					// The mailer's methods are called concurrently, so returning an error will not affect the service at all
 					err: errors.New("dummy error"),
 				},
-				password: &mockPasswordManager{
-					hashedPassword: "does not matter",
-					err:            nil,
-				},
+				password: &mockPasswordManager{hashedPassword: "", err: nil},
 				// This is not the mock
 				validate: &validator{},
-				token: &mockTokenClient{
-					mockActivationToken: "does not matter",
-					mockUserID:          "does not matter",
-					err:                 nil,
-				},
+				token:    &mockTokenClient{mockActivationToken: "", mockUserID: "", err: nil},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -168,7 +147,7 @@ func Test_service_RegisterUser(t *testing.T) {
 					userID: "",
 				},
 				mailer: &mockMailerClient{
-					// Returning an error here does not affect the service at all
+					// The mailer's methods are called concurrently, so returning an error will not affect the service at all
 					err: errors.New("dummy error"),
 				},
 				password: &mockPasswordManager{
@@ -177,11 +156,7 @@ func Test_service_RegisterUser(t *testing.T) {
 				},
 				// This is not the mock
 				validate: &validator{},
-				token: &mockTokenClient{
-					mockActivationToken: "does not matter",
-					mockUserID:          "does not matter",
-					err:                 nil,
-				},
+				token:    &mockTokenClient{mockActivationToken: "", mockUserID: "", err: nil},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -202,7 +177,7 @@ func Test_service_RegisterUser(t *testing.T) {
 					err:    ErrDuplicateUser,
 				},
 				mailer: &mockMailerClient{
-					// Returning an error here does not affect the service at all
+					// The mailer's methods are called concurrently, so returning an error will not affect the service at all
 					err: errors.New("dummy error"),
 				},
 				password: &mockPasswordManager{
@@ -211,11 +186,7 @@ func Test_service_RegisterUser(t *testing.T) {
 				},
 				// This is not the mock
 				validate: &validator{},
-				token: &mockTokenClient{
-					mockActivationToken: "does not matter",
-					mockUserID:          "does not matter",
-					err:                 nil,
-				},
+				token:    &mockTokenClient{mockActivationToken: "", mockUserID: "", err: nil},
 			},
 			args: args{
 				ctx: context.Background(),
