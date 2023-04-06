@@ -70,7 +70,7 @@ func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uInfo, err := h.service.LoginUser(r.Context(), &u)
+	uInfo, err := h.service.LoginUser(r.Context(), u)
 	if err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
@@ -104,7 +104,7 @@ func (h httpHandler) handleReactivate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.RestartActivation(r.Context(), &u); err != nil {
+	if err := h.service.RestartActivation(r.Context(), u); err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}

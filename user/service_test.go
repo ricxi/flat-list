@@ -14,7 +14,9 @@ import (
 
 // I used a code generator to create the
 // boilerplate for the table-driven tests
-// this time, but I wrote the tests myself
+// this time, but I wrote the tests myself.
+// Note, the logger will log to the terminal
+// when some of these tests are run for error cases.
 func Test_service_RegisterUser(t *testing.T) {
 	type fields struct {
 		repository Repository
@@ -248,6 +250,98 @@ func Test_service_RegisterUser(t *testing.T) {
 			} else {
 				assert.NoError(err)
 				assert.True(primitive.IsValidObjectID(actualID), "user id returned is not a valid mongo id")
+			}
+		})
+	}
+}
+
+func Test_service_LoginUser(t *testing.T) {
+	type fields struct {
+		repository Repository
+		mailer     MailerClient
+		password   PasswordManager
+		validate   Validator
+		token      TokenClient
+	}
+	type args struct {
+		ctx context.Context
+		u   UserLoginInfo
+	}
+	tests := []struct {
+		name     string
+		fields   fields
+		args     args
+		wantUser UserInfo
+		wantErr  bool
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				repository: &mockRepository{
+					user: UserInfo{
+						ID:        "5ef7fdd91c19e3222b41b839",
+						FirstName: "Michael",
+						LastName:  "Scott",
+						Email:     "michaelscott@dundermifflin.com",
+						// CreatedAt: ,
+						// UpdatedAt: ,
+						Activated: true,
+					},
+				},
+				mailer: &mockMailerClient{
+					// Returning an error does not affect the service at all because it is used in a separate go routine
+					// err: errors.New("dummy error"),
+				},
+				password: &mockPasswordManager{
+					// hashedPassword: "does not matter",
+					// err:            nil,
+				},
+				// This is not the mock
+				validate: &validator{},
+				token:    &mockTokenClient{
+					// LoginUser method does not use any methods from the token client
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				u: UserLoginInfo{
+					Email:    "michaelscott@dundermifflin.com",
+					Password: "1234",
+				},
+			},
+			wantUser: UserInfo{
+				ID:        "5ef7fdd91c19e3222b41b839",
+				FirstName: "Michael",
+				LastName:  "Scott",
+				Email:     "michaelscott@dundermifflin.com",
+			},
+		},
+	}
+
+	t.Setenv("JWT_SECRET_KEY", "secrets")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			s := &service{
+				repository: tt.fields.repository,
+				mailer:     tt.fields.mailer,
+				password:   tt.fields.password,
+				validate:   tt.fields.validate,
+				// token:      tt.fields.token,
+			}
+
+			actualUser, err := s.LoginUser(tt.args.ctx, tt.args.u)
+			if err != nil {
+			} else {
+				assert.NoError(err)
+				assert.Equal(tt.wantUser.ID, actualUser.ID)
+				assert.Equal(tt.wantUser.FirstName, actualUser.FirstName)
+				assert.Equal(tt.wantUser.LastName, actualUser.LastName)
+				assert.Equal(tt.wantUser.Email, actualUser.Email)
+				// assert.WithinDuration(*tt.wantUser.CreatedAt, *actualUser.CreatedAt, time.Second)
+				// assert.WithinDuration(*tt.wantUser.UpdatedAt, *actualUser.UpdatedAt, time.Second)
+				assert.NotEmpty(actualUser.Token)
 			}
 		})
 	}

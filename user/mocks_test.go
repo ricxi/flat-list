@@ -9,7 +9,7 @@ var _ Repository = &mockRepository{}
 // Repository mock
 type mockRepository struct {
 	userID string
-	user   *UserInfo
+	user   UserInfo
 	err    error
 }
 
@@ -18,10 +18,10 @@ func (m *mockRepository) CreateUser(ctx context.Context, u UserRegistrationInfo)
 }
 
 func (m *mockRepository) GetUserByEmail(ctx context.Context, email string) (*UserInfo, error) {
-	return m.user, m.err
+	return &m.user, m.err
 }
 
-func (m *mockRepository) UpdateUserByID(ctx context.Context, u *UserInfo) error {
+func (m *mockRepository) UpdateUserByID(ctx context.Context, u UserInfo) error {
 	return m.err
 }
 
@@ -71,18 +71,18 @@ func (m *mockMailerClient) SendActivationEmail(email, name, activationToken stri
 	return m.err
 }
 
-var _ Validator = mockValidator{}
+var _ Validator = &mockValidator{}
 
 // Validator mock
 type mockValidator struct {
 	err error
 }
 
-func (m mockValidator) Registration(u UserRegistrationInfo) error {
+func (m *mockValidator) Registration(u UserRegistrationInfo) error {
 	return m.err
 }
 
-func (m mockValidator) Login(u *UserLoginInfo) error {
+func (m *mockValidator) Login(u UserLoginInfo) error {
 	return m.err
 }
 
