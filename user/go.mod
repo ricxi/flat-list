@@ -8,7 +8,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.0
 	github.com/ricxi/flat-list/mailer v0.0.0-20230317045119-60100e35d983
-	github.com/ricxi/flat-list/shared v0.0.0-20230405031959-aae09827bf2a
+	github.com/ricxi/flat-list/shared v0.0.0-20230405041120-e5571b0d2a07
 	github.com/ricxi/flat-list/token v0.0.0-20230319105441-36e92f865b8c
 	github.com/stretchr/testify v1.8.2
 	go.mongodb.org/mongo-driver v1.11.2

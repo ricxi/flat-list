@@ -15,9 +15,9 @@ import (
 )
 
 type Repository interface {
-	CreateUser(ctx context.Context, user *UserRegistrationInfo) (string, error)
+	CreateUser(ctx context.Context, user UserRegistrationInfo) (string, error)
 	GetUserByEmail(ctx context.Context, email string) (*UserInfo, error)
-	UpdateUserByID(ctx context.Context, u *UserInfo) error
+	UpdateUserByID(ctx context.Context, u UserInfo) error
 }
 
 // mongoRepository implements Repository interface
@@ -80,7 +80,7 @@ func (m *mongoRepository) setupIndexes() {
 }
 
 // CreateOne inserts a new user with a unique email into the database.
-func (m *mongoRepository) CreateUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
+func (m *mongoRepository) CreateUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
 	userInfo := bson.M{
 		"firstName":      u.FirstName,
 		"lastName":       u.LastName,
@@ -137,7 +137,7 @@ func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*Us
 
 // UpdateUserByID updates a user's info based on their id
 // ! It's currently only set up to update a user's activation status, but this will change
-func (m *mongoRepository) UpdateUserByID(ctx context.Context, u *UserInfo) error {
+func (m *mongoRepository) UpdateUserByID(ctx context.Context, u UserInfo) error {
 	userOID, err := primitive.ObjectIDFromHex(u.ID)
 	if err != nil {
 		return err

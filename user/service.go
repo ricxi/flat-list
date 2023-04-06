@@ -12,22 +12,22 @@ import (
 )
 
 type Service interface {
-	RegisterUser(ctx context.Context, user *UserRegistrationInfo) (string, error)
-	LoginUser(ctx context.Context, user *UserLoginInfo) (*UserInfo, error)
+	RegisterUser(ctx context.Context, user UserRegistrationInfo) (string, error)
+	LoginUser(ctx context.Context, user UserLoginInfo) (*UserInfo, error)
 	ActivateUser(ctx context.Context, activationToken string) error
-	RestartActivation(ctx context.Context, u *UserLoginInfo) error
+	RestartActivation(ctx context.Context, u UserLoginInfo) error
 }
 
 // service is instantiated using a builder (see builder.go file)
 type service struct {
 	repository Repository
-	client     Client
+	mailer     MailerClient
 	password   PasswordManager
 	validate   Validator
 	token      TokenClient
 }
 
-func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (string, error) {
+func (s *service) RegisterUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
 	if err := s.validate.Registration(u); err != nil {
 		return "", err
 	}
@@ -61,7 +61,7 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 
 	go func() {
 		// send an activation email if a token is successfully generated
-		if err := s.client.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
+		if err := s.mailer.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
 			log.Println(err)
 		}
 	}()
@@ -69,7 +69,7 @@ func (s *service) RegisterUser(ctx context.Context, u *UserRegistrationInfo) (st
 	return userID, nil
 }
 
-func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, error) {
+func (s *service) LoginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, error) {
 	if err := s.validate.Login(u); err != nil {
 		return nil, err
 	}
@@ -88,10 +88,6 @@ func (s *service) LoginUser(ctx context.Context, u *UserLoginInfo) (*UserInfo, e
 	}
 
 	if err := s.password.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
-		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return nil, ErrInvalidPassword
-		}
-		log.Println(err)
 		return nil, err
 	}
 
@@ -126,7 +122,7 @@ func (s *service) ActivateUser(ctx context.Context, activationToken string) erro
 	userUpdate.Activated = true
 	userUpdate.UpdatedAt = &updateTime
 
-	if err := s.repository.UpdateUserByID(ctx, &userUpdate); err != nil {
+	if err := s.repository.UpdateUserByID(ctx, userUpdate); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -138,7 +134,7 @@ func (s *service) ActivateUser(ctx context.Context, activationToken string) erro
 // so long as they provide their email and a valid password (basically their login info).
 // It is a route that is accessed by users who did receive a valid activation token or email due
 // to unforseen or other cirumstances.
-func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error {
+func (s *service) RestartActivation(ctx context.Context, u UserLoginInfo) error {
 	if err := s.validate.Login(u); err != nil {
 		return err
 	}
@@ -168,7 +164,7 @@ func (s *service) RestartActivation(ctx context.Context, u *UserLoginInfo) error
 	}
 
 	go func() {
-		if err := s.client.SendActivationEmail(uInfo.Email, uInfo.FirstName, activationToken); err != nil {
+		if err := s.mailer.SendActivationEmail(uInfo.Email, uInfo.FirstName, activationToken); err != nil {
 			log.Println(err)
 		}
 	}()

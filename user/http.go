@@ -6,8 +6,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/ricxi/flat-list/shared/request"
-	"github.com/ricxi/flat-list/shared/response"
+	req "github.com/ricxi/flat-list/shared/request"
+	res "github.com/ricxi/flat-list/shared/response"
 )
 
 type httpHandler struct {
@@ -40,81 +40,74 @@ func NewHandler(service Service) http.Handler {
 	return r
 }
 
+// Response is used to wrap user responses
+type Response map[string]any
+
 func (h httpHandler) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
-	response.SendJSON(w, Response{"status": "success", "message": "user service is running"}, http.StatusOK, nil)
+	res.SendJSON(w, Response{"success": true, "message": "user service is running"}, http.StatusOK, nil)
 }
 
 func (h httpHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var u UserRegistrationInfo
-	if err := request.ParseJSON(r, &u); err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+	if err := req.ParseJSON(r, &u); err != nil {
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	id, err := h.service.RegisterUser(r.Context(), &u)
+	id, err := h.service.RegisterUser(r.Context(), u)
 	if err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	response.SendJSON(w, Response{"id": id}, http.StatusCreated, nil)
+	res.SendJSON(w, Response{"id": id}, http.StatusCreated, nil)
 }
 
 func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var u UserLoginInfo
-	if err := request.ParseJSON(r, &u); err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+	if err := req.ParseJSON(r, &u); err != nil {
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	uInfo, err := h.service.LoginUser(r.Context(), &u)
+	uInfo, err := h.service.LoginUser(r.Context(), u)
 	if err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	response.SendJSON(w, Response{"user": uInfo}, http.StatusOK, nil)
+	res.SendJSON(w, Response{"user": uInfo}, http.StatusOK, nil)
 }
 
 // handleActivate is called to activate a newly registered user's account
 func (h httpHandler) handleActivate(w http.ResponseWriter, r *http.Request) {
 	activationToken := chi.URLParam(r, "token")
 	if activationToken == "" {
-		sendJSONError(w, "missing activation token parameter", http.StatusBadRequest)
+		res.SendErrorJSON(w, "missing activation token parameter", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.service.ActivateUser(r.Context(), activationToken); err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	response.SendJSON(w, Response{"status": "success"}, http.StatusOK, nil)
+	res.SendJSON(w, Response{"status": "success"}, http.StatusOK, nil)
 }
 
 // handleReactivate is called to generate a new activation token and resend a new activation email to a user
 // TODO: Test this method
 func (h httpHandler) handleReactivate(w http.ResponseWriter, r *http.Request) {
 	var u UserLoginInfo
-	if err := request.ParseJSON(r, &u); err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+	if err := req.ParseJSON(r, &u); err != nil {
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := h.service.RestartActivation(r.Context(), &u); err != nil {
-		sendJSONError(w, err.Error(), http.StatusBadRequest)
+	if err := h.service.RestartActivation(r.Context(), u); err != nil {
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	response.SendJSON(w, Response{"status": "success"}, http.StatusOK, nil)
-}
-
-type Response map[string]any
-
-func sendJSONError(w http.ResponseWriter, message string, statusCode int) {
-	payload := map[string]string{
-		"error": message,
-	}
-
-	response.SendJSON(w, payload, statusCode, nil)
+	res.SendJSON(w, Response{"status": "success"}, http.StatusOK, nil)
 }
