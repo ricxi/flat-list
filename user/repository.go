@@ -135,6 +135,29 @@ func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*Us
 	}, nil
 }
 
+func (m *mongoRepository) FindUserByID(ctx context.Context, id string) (*UserInfo, error) {
+	userOID, err := primitive.ObjectIDFromHex(u.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	type UserDoc struct {
+		OID            primitive.ObjectID `bson:"_id,omitempty"`
+		FirstName      string             `bson:"firstName"`
+		LastName       string             `bson:"lastName"`
+		Email          string             `bson:"email"`
+		HashedPassword string             `bson:"hashedPassword"`
+		Activated      bool               `bson:"activated"`
+		CreatedAt      *time.Time         `bson:"createdAt"`
+		UpdatedAt      *time.Time         `bson:"updatedAt"`
+	}
+
+	var userDoc UserDoc
+	if err := m.coll.FindOne(ctx, bson.M{"_id": userOID}).Decode(&userDoc); err != nil {
+		return nil, err
+	}
+}
+
 // UpdateUserByID updates a user's info based on their id
 // ! It's currently only set up to update a user's activation status, but this will change
 func (m *mongoRepository) UpdateUserByID(ctx context.Context, u UserInfo) error {

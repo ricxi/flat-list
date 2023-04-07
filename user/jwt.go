@@ -30,7 +30,9 @@ func generateUserJWT(userID string) (string, error) {
 	return generateJWT(userClaims)
 }
 
-func generateJWT(claims UserClaims) (string, error) {
+// generateJWT creates a signed jwt and receives any type
+// that embeds a struct that implements the jwt.Claims interface
+func generateJWT(claims jwt.Claims) (string, error) {
 	secretKey, found := os.LookupEnv("JWT_SECRET_KEY")
 	if !found {
 		return "", ErrMissingEnvs

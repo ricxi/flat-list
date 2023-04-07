@@ -168,6 +168,11 @@ func (s *service) RestartActivation(ctx context.Context, u UserLoginInfo) error 
 	return nil
 }
 
-func (s *service) Authenticate(ctx context.Context, signedJWT string) {
+func (s *service) Authenticate(ctx context.Context, signedJWT string) (string, error) {
+	var userClaims UserClaims
+	if err := verifyUserJWT(signedJWT, &userClaims); err != nil {
+		return "", err
+	}
 
+	// s.repository.GetUserByEmail()
 }
