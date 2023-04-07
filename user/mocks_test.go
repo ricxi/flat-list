@@ -21,6 +21,10 @@ func (m *mockRepository) GetUserByEmail(ctx context.Context, email string) (*Use
 	return m.user, m.err
 }
 
+func (m *mockRepository) GetUserByID(ctx context.Context, id string) (*UserInfo, error) {
+	return m.user, m.err
+}
+
 func (m *mockRepository) UpdateUserByID(ctx context.Context, u UserInfo) error {
 	return m.err
 }

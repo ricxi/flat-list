@@ -15,6 +15,7 @@ type Service interface {
 	LoginUser(ctx context.Context, user UserLoginInfo) (*UserInfo, error)
 	ActivateUser(ctx context.Context, activationToken string) error
 	RestartActivation(ctx context.Context, u UserLoginInfo) error
+	Authenticate(ctx context.Context, signedJWT string) error
 }
 
 // service is instantiated using a builder (see builder.go file)
@@ -168,11 +169,15 @@ func (s *service) RestartActivation(ctx context.Context, u UserLoginInfo) error 
 	return nil
 }
 
-func (s *service) Authenticate(ctx context.Context, signedJWT string) (string, error) {
+func (s *service) Authenticate(ctx context.Context, signedJWT string) error {
 	var userClaims UserClaims
 	if err := verifyUserJWT(signedJWT, &userClaims); err != nil {
-		return "", err
+		return err
 	}
 
-	// s.repository.GetUserByEmail()
+	if _, err := s.repository.GetUserByID(ctx, userClaims.UserID); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -14,10 +14,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+// ! I'm not sure where to convert a UserInfo type to a UserDocument type
+// ! in the repository or service layer
 type Repository interface {
 	CreateUser(ctx context.Context, user UserRegistrationInfo) (string, error)
 	GetUserByEmail(ctx context.Context, email string) (*UserInfo, error)
 	UpdateUserByID(ctx context.Context, u UserInfo) error
+	GetUserByID(ctx context.Context, id string) (*UserInfo, error)
 }
 
 // mongoRepository implements Repository interface
@@ -135,7 +138,7 @@ func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*Us
 	}, nil
 }
 
-func (m *mongoRepository) findUserByID(ctx context.Context, id string) (*UserInfo, error) {
+func (m *mongoRepository) GetUserByID(ctx context.Context, id string) (*UserInfo, error) {
 	userOID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
