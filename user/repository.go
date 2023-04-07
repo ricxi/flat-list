@@ -135,27 +135,30 @@ func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*Us
 	}, nil
 }
 
-func (m *mongoRepository) FindUserByID(ctx context.Context, id string) (*UserInfo, error) {
-	userOID, err := primitive.ObjectIDFromHex(u.ID)
+func (m *mongoRepository) findUserByID(ctx context.Context, id string) (*UserInfo, error) {
+	userOID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
 
-	type UserDoc struct {
-		OID            primitive.ObjectID `bson:"_id,omitempty"`
-		FirstName      string             `bson:"firstName"`
-		LastName       string             `bson:"lastName"`
-		Email          string             `bson:"email"`
-		HashedPassword string             `bson:"hashedPassword"`
-		Activated      bool               `bson:"activated"`
-		CreatedAt      *time.Time         `bson:"createdAt"`
-		UpdatedAt      *time.Time         `bson:"updatedAt"`
-	}
-
-	var userDoc UserDoc
-	if err := m.coll.FindOne(ctx, bson.M{"_id": userOID}).Decode(&userDoc); err != nil {
+	var userDocument UserDocument
+	if err := m.coll.FindOne(ctx, bson.M{"_id": userOID}).Decode(&userDocument); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, fmt.Errorf("%w by email", ErrUserNotFound)
+		}
 		return nil, err
 	}
+
+	return &UserInfo{
+		ID:             userDocument.OID.Hex(),
+		FirstName:      userDocument.FirstName,
+		LastName:       userDocument.LastName,
+		Email:          userDocument.Email,
+		HashedPassword: userDocument.HashedPassword,
+		Activated:      userDocument.Activated,
+		CreatedAt:      userDocument.CreatedAt,
+		UpdatedAt:      userDocument.UpdatedAt,
+	}, nil
 }
 
 // UpdateUserByID updates a user's info based on their id
