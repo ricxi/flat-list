@@ -14,17 +14,23 @@ var (
 	ErrInvalidJWTSignature = errors.New("invalid jwt signature")
 )
 
-// generateUserJWT creates a signed jwt with the user's ID.
-func generateUserJWT(userID string) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(),
-	}
-
-	return generateJWT(claims)
+type UserClaims struct {
+	jwt.MapClaims
+	UserID string
 }
 
-func generateJWT(claims jwt.Claims) (string, error) {
+// generateUserJWT creates a signed jwt with the user's ID.
+func generateUserJWT(userID string) (string, error) {
+	userClaims := UserClaims{
+		UserID: userID,
+		MapClaims: jwt.MapClaims{
+			"exp": time.Now().Add(time.Hour * 24).Unix(),
+		},
+	}
+	return generateJWT(userClaims)
+}
+
+func generateJWT(claims UserClaims) (string, error) {
 	secretKey, found := os.LookupEnv("JWT_SECRET_KEY")
 	if !found {
 		return "", ErrMissingEnvs
@@ -40,16 +46,15 @@ func generateJWT(claims jwt.Claims) (string, error) {
 	return signedJWT, nil
 }
 
-func verifyJWT(signedJWT string) error {
+func verifyUserJWT(signedJWT string, userClaims *UserClaims) error {
 	secretKey, found := os.LookupEnv("JWT_SECRET_KEY")
 	if !found {
 		return ErrMissingEnvs
 	}
 
-	claims := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(
 		signedJWT,
-		claims,
+		userClaims,
 		func(t *jwt.Token) (interface{}, error) {
 			return []byte(secretKey), nil
 		},
