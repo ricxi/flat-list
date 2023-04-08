@@ -52,15 +52,26 @@ func (s *service) RegisterUser(ctx context.Context, u UserRegistrationInfo) (str
 		return "", err
 	}
 
-	// This line makes a grpc call to an external api
-	activationToken, err := s.token.CreateActivationToken(context.Background(), userID)
-	if err != nil {
-		log.Println(err)
-		return "", err
+	type ActivationTokenData struct {
+		token string
+		err   error
 	}
+	aDataChan := make(chan ActivationTokenData)
+	go func() {
+		// This line makes a grpc call to an external api
+		activationToken, err := s.token.CreateActivationToken(context.Background(), userID)
+		if err != nil {
+			log.Println(err)
+		}
+		aDataChan <- ActivationTokenData{
+			token: activationToken,
+			err:   err,
+		}
+	}()
 
 	go func() {
 		// send an activation email if a token is successfully generated
+		activationToken := <-activationTokenChan
 		if err := s.mailer.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
 			log.Println(err)
 		}
