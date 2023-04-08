@@ -90,6 +90,10 @@ func (m *mockValidator) Login(u UserLoginInfo) error {
 	return m.err
 }
 
+func (m *mockValidator) NonEmptyString(name, field string) error {
+	return m.err
+}
+
 type mockTokenClient struct {
 	mockActivationToken string
 	mockUserID          string

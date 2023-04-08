@@ -15,7 +15,7 @@ type Service interface {
 	LoginUser(ctx context.Context, user UserLoginInfo) (*UserInfo, error)
 	ActivateUser(ctx context.Context, activationToken string) error
 	RestartActivation(ctx context.Context, u UserLoginInfo) error
-	Authenticate(ctx context.Context, signedJWT string) error
+	Authenticate(ctx context.Context, signedJWT string) (string, error)
 }
 
 // service is instantiated using a builder (see builder.go file)
@@ -169,15 +169,28 @@ func (s *service) RestartActivation(ctx context.Context, u UserLoginInfo) error 
 	return nil
 }
 
-func (s *service) Authenticate(ctx context.Context, signedJWT string) error {
+// Authenticate receives a signed jwt, extracts user data from it, verifies the
+// jwt, then checks that the user exists in the database and if their account
+// has been activated. It returns the user's ID if everything is successful.
+func (s *service) Authenticate(ctx context.Context, signedJWT string) (string, error) {
+	if err := s.validate.NonEmptyString("jwt", signedJWT); err != nil {
+		return "", err
+	}
+
+	// Should I add validation for UserClaims?
 	var userClaims UserClaims
 	if err := verifyUserJWT(signedJWT, &userClaims); err != nil {
-		return err
+		return "", err
 	}
 
-	if _, err := s.repository.GetUserByID(ctx, userClaims.UserID); err != nil {
-		return err
+	uInfo, err := s.repository.GetUserByID(ctx, userClaims.UserID)
+	if err != nil {
+		return "", err
 	}
 
-	return nil
+	if !uInfo.Activated {
+		return "", ErrUserNotActivated
+	}
+
+	return uInfo.ID, nil
 }
