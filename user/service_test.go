@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,7 +17,7 @@ import (
 // Note, the logger will log to the terminal
 // when some of these tests are run for error cases.
 // ! No tests are written for create activation token
-func Test_service_RegisterUser(t *testing.T) {
+func Test_Service_RegisterUser(t *testing.T) {
 	type fields struct {
 		repository Repository
 		mailer     MailerClient
@@ -224,7 +225,7 @@ func Test_service_RegisterUser(t *testing.T) {
 	}
 }
 
-func Test_service_LoginUser(t *testing.T) {
+func Test_Service_LoginUser(t *testing.T) {
 	type fields struct {
 		repository Repository
 		mailer     MailerClient
@@ -455,6 +456,138 @@ func Test_service_LoginUser(t *testing.T) {
 
 				// Only checks that the jwt token field is not empty
 				assert.NotEmpty(actualUser.Token)
+			}
+		})
+	}
+}
+
+// The following depedencies are not used by this method:
+// mailer     MailerClient
+// password   PasswordManager
+// validate   Validator
+// token      TokenClient
+func Test_Service_Authenticate(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		userID string
+	}
+	tests := []struct {
+		name            string
+		repository      Repository
+		validate        Validator
+		args            args
+		generateUserJWT func(userID string) (string, error)
+		expUserID       string
+		expErr          string
+	}{
+		{
+			name: "Success",
+			repository: &mockRepository{
+				user: &UserInfo{
+					ID:        "5ef7fdd91c19e3222b41b839",
+					Activated: true,
+				},
+			},
+			generateUserJWT: func(userID string) (string, error) {
+				return generateUserJWT(userID)
+			},
+			args: args{
+				userID: "5ef7fdd91c19e3222b41b839",
+				ctx:    context.Background(),
+			},
+			expUserID: "5ef7fdd91c19e3222b41b839",
+		},
+		{
+			name: "FailUserNotActivated",
+			repository: &mockRepository{
+				user: &UserInfo{
+					ID:        "5ef7fdd91c19e3222b41b839",
+					Activated: false,
+				},
+			},
+			generateUserJWT: func(userID string) (string, error) {
+				return generateUserJWT(userID)
+			},
+			args: args{
+				userID: "5ef7fdd91c19e3222b41b839",
+				ctx:    context.Background(),
+			},
+			expUserID: "5ef7fdd91c19e3222b41b839",
+			expErr:    "user has not activated their account",
+		},
+		{
+			name: "FailInvalidJWT",
+			repository: &mockRepository{
+				user: &UserInfo{
+					ID:        "5ef7fdd91c19e3222b41b839",
+					Activated: false,
+				},
+			},
+			generateUserJWT: func(userID string) (string, error) {
+				signedJWT, err := generateUserJWT(userID)
+				return signedJWT + "tamperedWith", err
+			},
+			args: args{
+				userID: "5ef7fdd91c19e3222b41b839",
+				ctx:    context.Background(),
+			},
+			expUserID: "5ef7fdd91c19e3222b41b839",
+			expErr:    "invalid jwt",
+		},
+		{
+			name: "FailUserNotFound",
+			repository: &mockRepository{
+				user: nil,
+				err:  ErrUserNotFound,
+			},
+			generateUserJWT: func(userID string) (string, error) {
+				return generateUserJWT(userID)
+			},
+			args: args{
+				userID: "5ef7fdd91c19e3222b41b839",
+				ctx:    context.Background(),
+			},
+			expUserID: "",
+			expErr:    "user not found",
+		},
+		{
+			name: "FailNoJWTEmptyString",
+			repository: &mockRepository{
+				user: nil,
+				err:  ErrUserNotFound,
+			},
+			generateUserJWT: func(userID string) (string, error) {
+				return "", nil
+			},
+			args: args{
+				userID: "5ef7fdd91c19e3222b41b839",
+				ctx:    context.Background(),
+			},
+			expUserID: "",
+			expErr:    "missing field is required: jwt",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require := require.New(t)
+			assert := assert.New(t)
+
+			s := &service{
+				validate:   &validator{},
+				repository: tt.repository,
+			}
+
+			signedJWT, err := tt.generateUserJWT(tt.args.userID)
+			require.NoError(err)
+
+			actualUserID, err := s.Authenticate(tt.args.ctx, signedJWT)
+			if err != nil {
+				require.Error(err)
+				assert.EqualError(err, tt.expErr)
+			} else {
+				require.NoError(err)
+				assert.Equal(tt.expUserID, actualUserID)
 			}
 		})
 	}

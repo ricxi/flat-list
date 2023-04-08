@@ -21,6 +21,10 @@ func (m *mockRepository) GetUserByEmail(ctx context.Context, email string) (*Use
 	return m.user, m.err
 }
 
+func (m *mockRepository) GetUserByID(ctx context.Context, id string) (*UserInfo, error) {
+	return m.user, m.err
+}
+
 func (m *mockRepository) UpdateUserByID(ctx context.Context, u UserInfo) error {
 	return m.err
 }
@@ -83,6 +87,10 @@ func (m *mockValidator) Registration(u UserRegistrationInfo) error {
 }
 
 func (m *mockValidator) Login(u UserLoginInfo) error {
+	return m.err
+}
+
+func (m *mockValidator) NonEmptyString(name, field string) error {
 	return m.err
 }
 

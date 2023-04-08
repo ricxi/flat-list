@@ -7,7 +7,6 @@ import (
 
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,6 +15,7 @@ type Service interface {
 	LoginUser(ctx context.Context, user UserLoginInfo) (*UserInfo, error)
 	ActivateUser(ctx context.Context, activationToken string) error
 	RestartActivation(ctx context.Context, u UserLoginInfo) error
+	Authenticate(ctx context.Context, signedJWT string) (string, error)
 }
 
 // service is instantiated using a builder (see builder.go file)
@@ -87,6 +87,7 @@ func (s *service) LoginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, er
 		return nil, ErrUserNotActivated
 	}
 
+	// Should I compare the password before checking if the user has activated their account?
 	if err := s.password.CompareHashWith(uInfo.HashedPassword, u.Password); err != nil {
 		return nil, err
 	}
@@ -94,11 +95,7 @@ func (s *service) LoginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, er
 	uInfo.Password = ""
 	uInfo.HashedPassword = ""
 
-	token, err := generateJWT(jwt.MapClaims{
-		"user_id": uInfo.ID,
-		"email":   uInfo.Email,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(),
-	})
+	token, err := generateUserJWT(uInfo.ID)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -170,4 +167,30 @@ func (s *service) RestartActivation(ctx context.Context, u UserLoginInfo) error 
 	}()
 
 	return nil
+}
+
+// Authenticate receives a signed jwt, extracts user data from it, verifies the
+// jwt, then checks that the user exists in the database and if their account
+// has been activated. It returns the user's ID if everything is successful.
+func (s *service) Authenticate(ctx context.Context, signedJWT string) (string, error) {
+	if err := s.validate.NonEmptyString("jwt", signedJWT); err != nil {
+		return "", err
+	}
+
+	// Should I add validation for UserClaims?
+	var userClaims UserClaims
+	if err := verifyUserJWT(signedJWT, &userClaims); err != nil {
+		return "", err
+	}
+
+	uInfo, err := s.repository.GetUserByID(ctx, userClaims.UserID)
+	if err != nil {
+		return "", err
+	}
+
+	if !uInfo.Activated {
+		return "", ErrUserNotActivated
+	}
+
+	return uInfo.ID, nil
 }

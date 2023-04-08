@@ -14,10 +14,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+// ! I'm not sure where to convert a UserInfo type to a UserDocument type
+// ! in the repository or service layer
 type Repository interface {
 	CreateUser(ctx context.Context, user UserRegistrationInfo) (string, error)
 	GetUserByEmail(ctx context.Context, email string) (*UserInfo, error)
 	UpdateUserByID(ctx context.Context, u UserInfo) error
+	GetUserByID(ctx context.Context, id string) (*UserInfo, error)
 }
 
 // mongoRepository implements Repository interface
@@ -132,6 +135,32 @@ func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*Us
 		Activated:      userDoc.Activated,
 		CreatedAt:      userDoc.CreatedAt,
 		UpdatedAt:      userDoc.UpdatedAt,
+	}, nil
+}
+
+func (m *mongoRepository) GetUserByID(ctx context.Context, id string) (*UserInfo, error) {
+	userOID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var userDocument UserDocument
+	if err := m.coll.FindOne(ctx, bson.M{"_id": userOID}).Decode(&userDocument); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, fmt.Errorf("%w by email", ErrUserNotFound)
+		}
+		return nil, err
+	}
+
+	return &UserInfo{
+		ID:             userDocument.OID.Hex(),
+		FirstName:      userDocument.FirstName,
+		LastName:       userDocument.LastName,
+		Email:          userDocument.Email,
+		HashedPassword: userDocument.HashedPassword,
+		Activated:      userDocument.Activated,
+		CreatedAt:      userDocument.CreatedAt,
+		UpdatedAt:      userDocument.UpdatedAt,
 	}, nil
 }
 

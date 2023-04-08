@@ -13,7 +13,7 @@ run/dev/user:
 .PHONY: test/user/service
 test/user/service:
 	@echo "TEST: user service layer"
-	cd ./user && go test -v mocks_test.go service_test.go
+	cd ./user && go test -v -run Test_Service
 
 .PHONY: test/user/e2e
 test/user/e2e:
