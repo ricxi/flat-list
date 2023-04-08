@@ -7,7 +7,7 @@ USER_BINARY=userService
 .PHONY: run/dev/user
 run/dev/user: 
 	@echo "DEV: starting user service on port ${PORT}..."
-	cd ./user && go run ./cmd/http/
+	cd ./user && go run ./cmd/http/ 
 
 # test service layer of user service
 .PHONY: test/user/service

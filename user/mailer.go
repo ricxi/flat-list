@@ -63,7 +63,6 @@ func (g *grpcClient) SendActivationEmail(email, name, activationToken string) er
 		Name:                name,
 		ActivationHyperlink: activationHyperlink,
 	}
-	// maybe recompile the grpc to return a boolean?
 	if _, err := g.c.SendActivationEmail(context.Background(), &in); err != nil {
 		return err
 	}
@@ -72,6 +71,7 @@ func (g *grpcClient) SendActivationEmail(email, name, activationToken string) er
 }
 
 type httpClient struct {
+	// I know how this works now
 	port string
 }
 

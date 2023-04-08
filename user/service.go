@@ -52,32 +52,47 @@ func (s *service) RegisterUser(ctx context.Context, u UserRegistrationInfo) (str
 		return "", err
 	}
 
-	type ActivationTokenData struct {
-		token string
-		err   error
-	}
-	aDataChan := make(chan ActivationTokenData)
+	activationTokenChan := make(chan string)
+	errChan := make(chan error)
+	done := make(chan bool)
+
+	defer close(activationTokenChan)
+	defer close(errChan)
+	defer close(done)
+
 	go func() {
-		// This line makes a grpc call to an external api
+		// Make a grpc call to generate an activation token and store it in a database
 		activationToken, err := s.token.CreateActivationToken(context.Background(), userID)
 		if err != nil {
 			log.Println(err)
+			errChan <- err
+			return
 		}
-		aDataChan <- ActivationTokenData{
-			token: activationToken,
-			err:   err,
-		}
+
+		activationTokenChan <- activationToken
 	}()
 
 	go func() {
 		// send an activation email if a token is successfully generated
 		activationToken := <-activationTokenChan
+
 		if err := s.mailer.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
 			log.Println(err)
+			errChan <- err
+			return
 		}
+
+		done <- true
 	}()
 
-	return userID, nil
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case err := <-errChan:
+		return "", err
+	case <-done:
+		return userID, nil
+	}
 }
 
 func (s *service) LoginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, error) {
