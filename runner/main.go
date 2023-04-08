@@ -40,6 +40,7 @@ func main() {
 
 	var wg sync.WaitGroup
 	wg.Add(2)
+
 	go httpTokenSvc.run(&wg)
 	go grpcTokenSvc.run(&wg)
 
