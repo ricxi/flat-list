@@ -7,23 +7,38 @@ import (
 	"sync"
 )
 
-// var wg sync.WaitGroup
-// wg.Add(2)
+// ServiceVars stores a slice of
+// configuration variables for
+// each service that is run
+type ServiceVars struct {
+	TokenVars  []string `mapstructure:"token"`
+	MailerVars []string `mapstructure:"mailer"`
+	UserVars   []string `mapstructure:"user"`
+}
+
+type config struct {
+	ServiceVars `mapstructure:"services"`
+}
+
 func main() {
+	var c config
+	filename := "config"
+	if err := LoadTOMLConfig("", filename, &c); err != nil {
+		log.Fatalln(err)
+	}
+
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// This should be a flag
 	tokenDirGRPC := filepath.Join(wd, "../token/cmd/grpc")
 	tokenDirHTTP := filepath.Join(wd, "../token/cmd/http")
 
-	tokenEnvs := os.Environ()
-	tokenEnvs = append(
-		tokenEnvs,
-		"DATABASE_URL=postgres://postgres:password@127.0.0.1:5433/tokens",
-		"HTTP_PORT=5002",
-		"GRPC_PORT=5003",
+	tokenEnvs := append(
+		os.Environ(),
+		c.TokenVars...,
 	)
 
 	httpTokenSvc := goService{
@@ -41,6 +56,7 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
+	// These errors aren't being caught
 	go httpTokenSvc.run(&wg)
 	go grpcTokenSvc.run(&wg)
 

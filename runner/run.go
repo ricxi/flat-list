@@ -15,8 +15,7 @@ type goService struct {
 	envs    []string
 }
 
-// run takes the filepath to the working directory of
-// where you want to run the service
+// run starts an instance of a go routine
 func (gs *goService) run(wg *sync.WaitGroup) error {
 	defer wg.Done()
 
