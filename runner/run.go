@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -35,4 +37,22 @@ func (gs *goService) run(wg *sync.WaitGroup) error {
 	log.Printf("%s service PID: %d\n", gs.name, cmd.Process.Pid)
 
 	return cmd.Wait()
+}
+
+// runSH runs a shell or bash script.
+// Pass it the script's name as the first argument,
+// and then pass in additional parameters.
+func runSH(args ...string) error {
+	if len(args) == 0 {
+		return errors.New("must pass in at least one argument")
+	}
+
+	cmd := exec.Command("/bin/sh", args...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("container: %s\n", output)
+	return nil
 }

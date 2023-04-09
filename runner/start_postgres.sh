@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# get dsn for postgres connection
+# get dsn for postgres connection to run  migrations
 psql_dsn=$1
 if [ -z "$psql_dsn" ]; then
     echo "please enter postgres connection string as command-line argument"
@@ -11,7 +11,7 @@ fi
 docker run -d \
     --name postgres-instance \
     --publish 127.0.0.1:5433:5432 \
-    --env-file=.postgres.env \
+    --env-file=postgres.env \
     postgres:15.2-alpine
 
 # make 3ish attempts to check if postgres is ready to accept connections

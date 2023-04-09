@@ -16,8 +16,13 @@ type ServiceVars struct {
 	UserVars   []string `mapstructure:"user"`
 }
 
+type DBVars struct {
+	PsqlDSN string `mapstructure:"PSQL_DSN"`
+}
+
 type config struct {
 	ServiceVars `mapstructure:"services"`
+	DBVars      `mapstructure:"databases"`
 }
 
 func main() {
@@ -26,6 +31,24 @@ func main() {
 	if err := LoadTOMLConfig("", filename, &c); err != nil {
 		log.Fatalln("cannot start services without configuration variables", err)
 	}
+
+	scripts := [][]string{
+		{"./start_mongo.sh"},
+		{"./start_postgres.sh", c.PsqlDSN},
+	}
+	// scriptErr := make(chan error)
+	var wgs sync.WaitGroup
+	wgs.Add(len(scripts))
+	for _, script := range scripts {
+		go func(script ...string) {
+			defer wgs.Done()
+			if err := runSH(script...); err != nil {
+				// scriptErr <- err
+				log.Println(err)
+			}
+		}(script...)
+	}
+	wgs.Wait()
 
 	wd, err := os.Getwd()
 	if err != nil {
