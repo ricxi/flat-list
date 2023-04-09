@@ -24,7 +24,7 @@ func main() {
 	var c config
 	filename := "config"
 	if err := LoadTOMLConfig("", filename, &c); err != nil {
-		log.Fatalln(err)
+		log.Fatalln("cannot start services without configuration variables", err)
 	}
 
 	wd, err := os.Getwd()
