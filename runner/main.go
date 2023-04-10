@@ -32,30 +32,14 @@ func main() {
 		log.Fatalln("cannot start services without configuration variables", err)
 	}
 
-	scripts := [][]string{
-		{"./start_mongo.sh"},
-		{"./start_postgres.sh", c.PsqlDSN},
-	}
-	// scriptErr := make(chan error)
-	var wgs sync.WaitGroup
-	wgs.Add(len(scripts))
-	for _, script := range scripts {
-		go func(script ...string) {
-			defer wgs.Done()
-			if err := runSH(script...); err != nil {
-				// scriptErr <- err
-				log.Println(err)
-			}
-		}(script...)
-	}
-	wgs.Wait()
-
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// This should be a flag
+	// I should put the setup for the token service into its
+	// own function and use command-line flags to give the
+	// option of setting up either one or both services
 	tokenDirGRPC := filepath.Join(wd, "../token/cmd/grpc")
 	tokenDirHTTP := filepath.Join(wd, "../token/cmd/http")
 
@@ -64,6 +48,7 @@ func main() {
 		c.TokenVars...,
 	)
 
+	// scripts that should be run before
 	httpTokenSvc := goService{
 		name:    "http token",
 		workDir: tokenDirHTTP,
@@ -76,12 +61,27 @@ func main() {
 		envs:    tokenEnvs,
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(2)
+	errChan := runInitScripts("./start_postgres.sh", c.PsqlDSN)
+	err = <-errChan
+	if err != nil {
+		log.Println()
+		os.Exit(1)
+	} else {
+		var wg sync.WaitGroup
+		wg.Add(3)
 
-	// These errors aren't being caught
-	go httpTokenSvc.run(&wg)
-	go grpcTokenSvc.run(&wg)
+		go httpTokenSvc.run(&wg)
+		go grpcTokenSvc.run(&wg)
 
-	wg.Wait()
+		// run scripts to initialize the mongo user database
+		go func() {
+			defer wg.Done()
+
+			if err := runSH("./start_mongo.sh"); err != nil {
+				log.Println(err)
+				return
+			}
+		}()
+		wg.Wait()
+	}
 }

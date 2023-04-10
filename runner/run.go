@@ -11,6 +11,7 @@ import (
 	"sync"
 )
 
+// Should I include a field for bootstrap scripts?
 type goService struct {
 	name    string
 	workDir string
@@ -55,4 +56,20 @@ func runSH(args ...string) error {
 
 	fmt.Printf("container: %s\n", output)
 	return nil
+}
+
+func runInitScripts(args ...string) <-chan error {
+	errChan := make(chan error)
+
+	go func() {
+		cmd := exec.Command("/bin/sh", args...)
+
+		containerID, err := cmd.CombinedOutput()
+		errChan <- err
+		fmt.Println(string(containerID))
+
+		close(errChan)
+	}()
+
+	return errChan
 }
