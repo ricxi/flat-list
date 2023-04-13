@@ -1,43 +1,105 @@
 package main
 
 import (
-	"bytes"
+	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
-	"sync"
+	"path/filepath"
+	"strings"
+	"syscall"
 )
 
-// Should I include a field for bootstrap scripts?
-type goService struct {
-	name    string
-	workDir string
-	envs    []string
+// serviceRunner stores all the
+// data needed to run a go service
+type serviceRunner struct {
+	name        string
+	workDir     string
+	envs        []string
+	initScripts []string
+}
+
+// newServiceRunner creates a new serviceRunner
+func newServiceRunner(s Service) (serviceRunner, error) {
+	var (
+		workDir string
+		envs    []string
+	)
+
+	if s.Dir != "" {
+		wd, err := os.Getwd()
+		if err != nil {
+			return serviceRunner{}, nil
+		}
+		workDir = filepath.Join(wd, s.Dir)
+	}
+
+	if len(s.Envs) > 0 {
+		envs = append(
+			os.Environ(),
+			s.Envs...,
+		)
+	}
+
+	return serviceRunner{
+		name:        s.Name,
+		workDir:     workDir,
+		envs:        envs,
+		initScripts: s.InitScripts,
+	}, nil
 }
 
 // run starts an instance of a go routine
-func (gs *goService) run(wg *sync.WaitGroup) error {
-	defer wg.Done()
+func (sr *serviceRunner) run(ctx context.Context) error {
+	cmd := exec.Command("go", "run", sr.workDir)
+	cmd.Dir = sr.workDir
+	cmd.Env = sr.envs
 
-	cmd := exec.Command("go", "run", gs.workDir)
-	cmd.Dir = gs.workDir
-	cmd.Env = gs.envs
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = io.MultiWriter(os.Stdout, &stdout)
-	cmd.Stderr = io.MultiWriter(os.Stderr, &stderr)
+	prefix := fmt.Sprintf("%s service: ", sr.name)
+	cmd.Stdout = &prefixer{prefix: prefix, w: os.Stdout}
+	cmd.Stderr = &prefixer{prefix: prefix, w: os.Stderr}
 
 	if err := cmd.Start(); err != nil {
-		log.Printf("problem starting %s service: %v\n", gs.name, err)
+		log.Printf("ERROR starting %s service: %v\n", sr.name, err)
 		return err
 	}
 
-	log.Printf("%s service PID: %d\n", gs.name, cmd.Process.Pid)
+	log.Printf("%s service PID: %d\n", sr.name, cmd.Process.Pid)
+
+	go func() {
+		<-ctx.Done()
+		// Now I need something to catch the output from
+		// the rest of the go service to make sure it gracefully shuts down? Because I don't get Stdout or Stderr aftewards
+		if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+			log.Printf("ERROR signaling %s service for graceful shutdown: %s \n", sr.name, err.Error())
+		}
+
+		if err := ctx.Err(); err != nil {
+			if !errors.Is(ctx.Err(), context.Canceled) {
+				log.Printf("CONTEXT ERROR: %s service: %s\n", sr.name, err)
+			}
+		}
+	}()
 
 	return cmd.Wait()
+}
+
+// intialize runs all the init scripts for
+// a service before running the service
+func (sr *serviceRunner) initialize() error {
+	if len(sr.initScripts) == 0 {
+		return nil
+	}
+
+	for _, script := range sr.initScripts {
+		if err := runSH(script); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // runSH runs a shell or bash script.
@@ -49,27 +111,66 @@ func runSH(args ...string) error {
 	}
 
 	cmd := exec.Command("/bin/sh", args...)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
+
+	prefix := fmt.Sprintf("SH %s: ", args[0])
+	cmd.Stdout = &prefixer{prefix: prefix, w: os.Stdout}
+	cmd.Stderr = &prefixer{prefix: prefix, w: os.Stderr}
+
+	// This doesn't always catch the scripts error
+	// if the script doesn't return an exit code > 0?
+	if err := cmd.Run(); err != nil {
 		return err
 	}
-
-	fmt.Printf("container: %s\n", output)
 	return nil
 }
 
-func runInitScripts(args ...string) <-chan error {
-	errChan := make(chan error)
+// result is used to store the results
+// of running a script in a channel
+type result struct {
+	output string
+	err    error
+}
+
+func runInitScripts(args ...string) <-chan result {
+	resChan := make(chan result)
 
 	go func() {
 		cmd := exec.Command("/bin/sh", args...)
 
-		containerID, err := cmd.CombinedOutput()
-		errChan <- err
-		fmt.Println(string(containerID))
+		// I don't think this will error if the script fails,
+		// so it has no impact on the functions that depend
+		// on this script running successfully.
+		// Maybe I'll get the stdout and stderr, and use the stderr to return an error
+		// A script with an exit code 1 might trigger an error
+		output, err := cmd.CombinedOutput()
+		resChan <- result{
+			output: string(output),
+			err:    err,
+		}
 
-		close(errChan)
+		close(resChan)
 	}()
 
-	return errChan
+	return resChan
+}
+
+type stopContainer func() error
+
+// startContainer is calls a script to start a docker container,
+// and returns a function that is used to clean up the docker container.
+func startContainer(args ...string) (stopContainer, error) {
+	resChan := runInitScripts(args...)
+
+	result := <-resChan
+	if err := result.err; err != nil {
+		return nil, err
+	}
+
+	containerID := strings.TrimSpace(result.output)
+
+	log.Println("received container id:", containerID)
+
+	return func() error {
+		return runSH("./teardown_container.sh", containerID)
+	}, nil
 }

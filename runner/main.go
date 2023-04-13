@@ -1,28 +1,33 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log"
 	"os"
-	"path/filepath"
+	"os/exec"
+	"os/signal"
 	"sync"
+	"syscall"
 )
 
-// ServiceVars stores a slice of
-// configuration variables for
-// each service that is run
-type ServiceVars struct {
-	TokenVars  []string `mapstructure:"token"`
-	MailerVars []string `mapstructure:"mailer"`
-	UserVars   []string `mapstructure:"user"`
+type Service struct {
+	Name        string   `mapstructure:"name"`
+	Dir         string   `mapstructure:"dir"`
+	Envs        []string `mapstructure:"envs"`
+	InitScripts []string `mapstructure:"init_scripts"`
 }
 
-type DBVars struct {
-	PsqlDSN string `mapstructure:"PSQL_DSN"`
+// Services stores the configuration settings
+// for each service that will be run.
+type Services struct {
+	Token  Service `mapstructure:"token"`
+	Mailer Service `mapstructure:"mailer"`
+	User   Service `mapstructure:"user"`
 }
 
 type config struct {
-	ServiceVars `mapstructure:"services"`
-	DBVars      `mapstructure:"databases"`
+	Services `mapstructure:"services"`
 }
 
 func main() {
@@ -32,56 +37,50 @@ func main() {
 		log.Fatalln("cannot start services without configuration variables", err)
 	}
 
-	wd, err := os.Getwd()
+	mailerSvc, err := newServiceRunner(c.Mailer)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
-
-	// I should put the setup for the token service into its
-	// own function and use command-line flags to give the
-	// option of setting up either one or both services
-	tokenDirGRPC := filepath.Join(wd, "../token/cmd/grpc")
-	tokenDirHTTP := filepath.Join(wd, "../token/cmd/http")
-
-	tokenEnvs := append(
-		os.Environ(),
-		c.TokenVars...,
-	)
-
-	// scripts that should be run before
-	httpTokenSvc := goService{
-		name:    "http token",
-		workDir: tokenDirHTTP,
-		envs:    tokenEnvs,
-	}
-
-	grpcTokenSvc := goService{
-		name:    "grpc token",
-		workDir: tokenDirGRPC,
-		envs:    tokenEnvs,
-	}
-
-	errChan := runInitScripts("./start_postgres.sh", c.PsqlDSN)
-	err = <-errChan
+	tokenSvc, err := newServiceRunner(c.Token)
 	if err != nil {
-		log.Println()
-		os.Exit(1)
-	} else {
-		var wg sync.WaitGroup
-		wg.Add(3)
+		log.Fatalln(err)
+	}
+	userSvc, err := newServiceRunner(c.User)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-		go httpTokenSvc.run(&wg)
-		go grpcTokenSvc.run(&wg)
-
-		// run scripts to initialize the mongo user database
-		go func() {
+	services := []serviceRunner{
+		mailerSvc,
+		tokenSvc,
+		userSvc,
+	}
+	// This is used to cancel all the services.
+	// It's cancel function is called as soon as a signal is received on the signal channel (see below)
+	ctx, cancel := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+	wg.Add(len(services))
+	for _, svc := range services {
+		go func(svc serviceRunner) {
 			defer wg.Done()
-
-			if err := runSH("./start_mongo.sh"); err != nil {
-				log.Println(err)
+			if err := svc.initialize(); err != nil {
 				return
 			}
-		}()
-		wg.Wait()
+
+			// this should block if successful
+			if err := svc.run(ctx); err != nil {
+				if !errors.As(err, new(*exec.ExitError)) {
+					log.Println("unexpected error ", err)
+				}
+				return
+			}
+		}(svc)
 	}
+
+	sChan := make(chan os.Signal, 1)
+	signal.Notify(sChan, os.Interrupt, syscall.SIGTERM)
+	log.Println("Exiting with signal: ", <-sChan)
+	cancel()
+
+	wg.Wait()
 }
