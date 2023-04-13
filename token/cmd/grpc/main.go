@@ -13,7 +13,7 @@ import (
 func main() {
 	envs, err := token.LoadEnvs()
 	if err != nil {
-		log.Fatalln("problem loading configuation: ", err)
+		log.Fatalln("problem loading configuration: ", err)
 	}
 
 	db, err := token.Connect(envs.DatabaseURL)
