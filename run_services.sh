@@ -8,7 +8,7 @@ load_env_file() {
 }
 
 cleanup() {
-    echo -e "\ncleaning up"
+    echo -e "\ncleaning up..."
 }
 
 trap cleanup SIGINT
@@ -16,7 +16,8 @@ trap cleanup SIGINT
 (
     # start the token service
     load_env_file token.env &&
-    # ./dev_scripts/start_postgres.sh postgresql://postgres:password@127.0.0.1:5433/tokens?sslmode=disable &&
+    ./dev_scripts/db/run_tokendb.sh &&
+    ./dev_scripts/db/run_tokendb_migrations.sh &&
     cd token &&
     go run ./cmd/grpc
 ) &
@@ -39,13 +40,13 @@ echo "$!"
 (
     # start the user service
     load_env_file user.env &&
-    # ./dev_scripts/start_mongo.sh &&
+    ./dev_scripts/db/run_userdb.sh &&
     cd user &&
     go run ./cmd/http
 ) &
 echo "$!"
 
-# do not remove wait:
-# allows time for our go services to clean up and gracefully shutdown
-# also needed if I want to run a trap
+# do not remove wait because:
+# it allows time for our go services to clean up and gracefully shutdown
+# it is also needed if I want to run a trap
 wait
