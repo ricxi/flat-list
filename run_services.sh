@@ -28,6 +28,7 @@ echo "$!"
     load_env_file mailer.env &&
     cd mailer &&
     go run ./cmd/grpc
+    # go run ./cmd/http
 ) &
 echo "$!"
 
