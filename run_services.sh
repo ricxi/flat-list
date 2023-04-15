@@ -16,8 +16,8 @@ trap cleanup SIGINT
 (
     # start the token service
     load_env_file token.env &&
-    # ./dev_scripts/db/run_tokendb.sh &&
-    # ./dev_scripts/db/run_tokendb_migrations.sh &&
+    ./dev_scripts/db/run_tokendb.sh &&
+    ./dev_scripts/db/run_tokendb_migrations.sh &&
     cd token &&
     go run ./cmd/grpc
 	# go run ./cmd/http
@@ -42,7 +42,7 @@ echo "$!"
 (
     # start the user service
     load_env_file user.env &&
-    # ./dev_scripts/db/run_userdb.sh &&
+    ./dev_scripts/db/run_userdb.sh &&
     cd user &&
     go run ./cmd/http
 ) &

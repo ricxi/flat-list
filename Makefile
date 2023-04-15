@@ -23,4 +23,3 @@ tidy/user:
 build/user:
 	@echo "building binary..."
 	cd ./user && go build -o bin/${USER_BINARY} ./cmd/http/
-
