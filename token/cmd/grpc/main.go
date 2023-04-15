@@ -34,7 +34,7 @@ func main() {
 
 	pb.RegisterTokenServer(grpcServer, srv)
 
-	log.Println("starting grpc token server on ", lis.Addr())
+	log.Println("starting grpc token server on", lis.Addr())
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalln("failed to start grpc server ", err)

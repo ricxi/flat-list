@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd "$(dirname "$0")"
 # get dsn for postgres connection
 psql_dsn=$1
 if [ -z "$psql_dsn" ]; then

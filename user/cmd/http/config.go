@@ -25,6 +25,9 @@ func (m *MissingEnvErr) hasErrors() bool {
 	return len(m.missingEnvs) != 0
 }
 
+type Envs struct {
+}
+
 type envs struct {
 	port         string
 	mongoURI     string

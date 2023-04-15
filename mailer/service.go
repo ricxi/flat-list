@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"path/filepath"
 )
 
 const (
 	// Subject line for the user activation email
 	ACTIVATION_EMAIL_SUBJECT string = "Please activate your account"
 	// Path to the HTML template used to generate the body of the user activation email
-	ACTIVATION_HTML_TMPL string = "./templates/useractivation.html"
+	// activationHtmlTmpl string = "./templates/useractivation.html"
 )
 
 // MailerService defines methods that receive email data inputs,
@@ -18,18 +19,21 @@ const (
 // methods from the Mailer type to send that data out in an email.
 // It can be implemented by any infrastructure to send emails.
 type MailerService struct {
-	mailer *Mailer
+	mailer            *Mailer
+	emailTemplatesDir string
 }
 
-func NewMailerService(mailer *Mailer) *MailerService {
+func NewMailerService(mailer *Mailer, emailTemplatesDir string) *MailerService {
 	return &MailerService{
-		mailer: mailer,
+		mailer:            mailer,
+		emailTemplatesDir: emailTemplatesDir,
 	}
 }
 
 // SendActivationEmail validates email data, then generates all the
 // necessary templates and inputs necessary, before sending an
 // activation email to a user.
+// TODO: Add validation
 func (s *MailerService) SendActivationEmail(data EmailActivationData) error {
 	if data.From == "" {
 		return fmt.Errorf("field cannot be empty: from ")
@@ -47,7 +51,8 @@ func (s *MailerService) SendActivationEmail(data EmailActivationData) error {
 		return fmt.Errorf("field cannot be empty: hyperlink ")
 	}
 
-	t, err := template.ParseFiles(ACTIVATION_HTML_TMPL)
+	activationEmailTmpl := filepath.Join(s.emailTemplatesDir, "useractivation.html")
+	t, err := template.ParseFiles(activationEmailTmpl)
 	if err != nil {
 		return err
 	}

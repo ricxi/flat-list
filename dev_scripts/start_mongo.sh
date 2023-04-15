@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# If container keeps stopping, delete the image and try again.
+cd "$(dirname "$0")"
+
 # a throw-away dev script for starting a mongo container
 docker run -d \
     --name mongo-instance \

@@ -18,7 +18,7 @@ func main() {
 	}
 
 	m := mailer.NewMailer(conf.Username, conf.Password, conf.Host, conf.Port)
-	mailerService := mailer.NewMailerService(m)
+	mailerService := mailer.NewMailerService(m, conf.EmailTemplatesDir)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

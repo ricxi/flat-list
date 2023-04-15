@@ -6,12 +6,13 @@ import (
 )
 
 type config struct {
-	Host     string
-	Port     int
-	Username string
-	Password string
-	HttpPort string
-	GrpcPort string
+	Host              string
+	Port              int
+	Username          string
+	Password          string
+	EmailTemplatesDir string
+	HttpPort          string
+	GrpcPort          string
 }
 
 func SetupConfig() (*config, error) {
@@ -28,6 +29,8 @@ func SetupConfig() (*config, error) {
 
 	conf.Username = os.Getenv("USERNAME")
 	conf.Password = os.Getenv("PASSWORD")
+	conf.EmailTemplatesDir = os.Getenv("EMAIL_TEMPLATES")
+
 	conf.HttpPort = os.Getenv("HTTP_PORT")
 	conf.GrpcPort = os.Getenv("GRPC_PORT")
 
