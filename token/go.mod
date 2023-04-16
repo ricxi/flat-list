@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/julienschmidt/httprouter v1.3.0
+	github.com/ricxi/flat-list/shared v0.0.0-20230413052403-cae6a394988e
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.29.1
 )
