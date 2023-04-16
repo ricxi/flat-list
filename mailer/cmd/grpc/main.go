@@ -28,7 +28,7 @@ func main() {
 
 	pb.RegisterMailerServer(grpcServer, srv)
 
-	log.Println("starting grpc server on port", lis.Addr())
+	log.Println("starting grpc mailer server for on port", lis.Addr())
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal(err)

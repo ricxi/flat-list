@@ -19,7 +19,7 @@ trap cleanup SIGINT
 (
     # start the token service
     load_env_file token.env &&
-    # ./dev_scripts/db/run_tokendb.sh tokendb-instance 2>>errors.txt &&
+    ./dev_scripts/db/run_tokendb.sh tokendb-instance 2>>errors.txt &&
     ./dev_scripts/db/run_tokendb_migrations.sh tokendb-instance 2>>errors.txt
     cd token &&
     go run ./cmd/grpc
@@ -46,10 +46,10 @@ trap cleanup SIGINT
 (
     # list running services
     # update this so I can input the ports dynamically
-    while true; do
-        lsof -i :5000-5003 -i :9000 | awk '{print $1, $2, $5, $8, $9}'
-        sleep 10
-    done
+    # while true; do
+    lsof -i :5000-5003 -i :9000 | awk '{print $1, $2, $5, $8, $9}'
+    sleep 10
+    # done
 ) &
 pid=$!
 

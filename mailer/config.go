@@ -5,6 +5,20 @@ import (
 	"strconv"
 )
 
+type smtp struct {
+	Host     string `mapstructure:"HOST"`
+	Port     int    `mapstructure:"PORT"`
+	Username string `mapstructure:"USERNAME"`
+	Password string `mapstructure:"PASSWORD"`
+}
+
+type envs struct {
+	Smtp              smtp   `mapstructure:"SMTP"`
+	EmailTemplatesDir string `mapstructure:"EMAIL_TEMPLATES"`
+	HttpPort          string `mapstructure:"HTTP_PORT"`
+	GrpcPort          string `mapstructure:"GRPC_PORT"`
+}
+
 type config struct {
 	Host              string
 	Port              int
