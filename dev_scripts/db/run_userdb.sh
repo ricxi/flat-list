@@ -1,8 +1,8 @@
 #!/bin/bash
 # a throw-away dev script for starting a mongo container
-source ./container_checker.sh
-
 cd "$(dirname "$0")"
+
+source ./container_checker.sh
 
 container_name="$1"
 [ -z "$container_name" ] &&
