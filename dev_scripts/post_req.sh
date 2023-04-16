@@ -1,16 +1,15 @@
 #!/bin/bash
 # Make requests to test user service
+cd "$(dirname "$0")"
 
 REGISTER_ENDPOINT="http://localhost:9000/v1/user/register"
 LOGIN_ENDPOINT="http://localhost:9000/v1/user/login"
 REGISTER_JSON="./json_req_data/register.json"
-LOGIN_JSON="./json_req_dta/login.json"
-
-cd "$(dirname "$0")"
+LOGIN_JSON="./json_req_data/login.json"
 
 post_request() {
-   data="$(cat "$1")"
-   endpoint="$2"
+   local data="$(cat "$1")"
+   local endpoint="$2"
 
    curl -X POST \
      -v \
