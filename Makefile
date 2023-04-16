@@ -14,11 +14,6 @@ test/user/e2e:
 	@echo "TEST E2E: user microservice"
 	cd ./user/cmd/http && go test -v
 
-.PHONY: tidy/user
-tidy/user:
-	@echo "Tidying up user service"
-	cd ./user && go mod tidy
-
 .PHONY: build/user
 build/user:
 	@echo "building binary..."

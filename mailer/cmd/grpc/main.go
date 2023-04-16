@@ -3,25 +3,31 @@ package main
 import (
 	"log"
 	"net"
+	"strconv"
 
 	"github.com/ricxi/flat-list/mailer"
 	"github.com/ricxi/flat-list/mailer/pb"
+	"github.com/ricxi/flat-list/shared/config"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	conf, err := mailer.SetupConfig()
+	envs, err := config.LoadEnvs("HOST", "PORT", "USERNAME", "PASSWORD", "EMAIL_TEMPLATES", "GRPC_PORT")
+	if err != nil {
+		log.Fatal(err)
+	}
+	smtpPORT, err := strconv.Atoi(envs["PORT"])
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	lis, err := net.Listen("tcp", ":"+conf.GrpcPort)
+	lis, err := net.Listen("tcp", ":"+envs["GRPC_PORT"])
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	m := mailer.NewMailer(conf.Username, conf.Password, conf.Host, conf.Port)
-	mailerService := mailer.NewMailerService(m, conf.EmailTemplatesDir)
+	m := mailer.NewMailer(envs["USERNAME"], envs["PASSWORD"], envs["HOST"], smtpPORT)
+	mailerService := mailer.NewMailerService(m, envs["EMAIL_TEMPLATES"])
 	srv := mailer.NewGrpcServer(mailerService)
 
 	grpcServer := grpc.NewServer()
