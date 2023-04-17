@@ -3,7 +3,7 @@
 # the auto-complete feature for this script isn't going to work.
 
 # give access to functions in post_req
-source ./dev_scripts/post_req.sh
+alias call_user="./dev_scripts/post_req.sh"
 
 # Used to import private go packages for this project (make sure to set up .netrc or .gitconfig)
 export GOPRIVATE=github.com/ricxi/flat-list
