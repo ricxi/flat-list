@@ -1,4 +1,5 @@
 #!/bin/bash
+# This is a development script that I use to quickly spin up the app locally for some quick tests.
 
 # called to load all the environment variables from
 # a specific .env file for a go service before running it
