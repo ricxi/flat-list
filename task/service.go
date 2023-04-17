@@ -14,12 +14,12 @@ type Service interface {
 }
 
 type service struct {
-	r Repository
+	repository Repository
 }
 
-func NewService(r Repository) *service {
+func NewService(repository Repository) *service {
 	return &service{
-		r: r,
+		repository: repository,
 	}
 }
 
@@ -39,7 +39,7 @@ func (s *service) CreateTask(ctx context.Context, task *NewTask) (string, error)
 	task.UpdatedAt = &createdAt
 
 	// include a logger
-	return s.r.CreateTask(ctx, task)
+	return s.repository.CreateTask(ctx, task)
 }
 
 func (s *service) GetTaskByID(ctx context.Context, id string) (*Task, error) {
@@ -47,7 +47,7 @@ func (s *service) GetTaskByID(ctx context.Context, id string) (*Task, error) {
 		return nil, fmt.Errorf("%w: taskId", ErrMissingField)
 	}
 
-	return s.r.GetTaskByID(ctx, id)
+	return s.repository.GetTaskByID(ctx, id)
 }
 
 func (s *service) UpdateTask(ctx context.Context, task *Task) (*Task, error) {
@@ -66,7 +66,7 @@ func (s *service) UpdateTask(ctx context.Context, task *Task) (*Task, error) {
 	updatedAt := time.Now().UTC()
 	task.UpdatedAt = &updatedAt
 
-	return s.r.UpdateTask(ctx, task)
+	return s.repository.UpdateTask(ctx, task)
 }
 
 func (s *service) DeleteTask(ctx context.Context, id string) error {
@@ -74,5 +74,5 @@ func (s *service) DeleteTask(ctx context.Context, id string) error {
 		return fmt.Errorf("%w: taskId", ErrMissingField)
 	}
 
-	return s.r.DeleteTaskByID(ctx, id)
+	return s.repository.DeleteTaskByID(ctx, id)
 }

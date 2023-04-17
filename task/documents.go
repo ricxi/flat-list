@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// NewTaskDocument is an intermediary that is
+// NewTaskDocument is an intermediary data type that is
 // used by a repository layer that impements mongo
 // to communicate with the mongodb driver API.
 type NewTaskDocument struct {
@@ -23,7 +23,7 @@ type NewTaskDocument struct {
 // a repository layer that implements mongo
 // to communicate with the mongo API.
 // The 'omitempty' tag is used to prevent an empty
-// field value from wiping a document during an update.
+// field value from whiping a document during an update.
 type TaskDocument struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
 	UserID    primitive.ObjectID `bson:"userId,omitempty"`

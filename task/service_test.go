@@ -16,7 +16,7 @@ func TestServiceCreateTask(t *testing.T) {
 		assert := assert.New(t)
 
 		s := &service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				taskID: primitive.NewObjectID().Hex(),
 				err:    nil,
 			},
@@ -42,7 +42,7 @@ func TestServiceCreateTask(t *testing.T) {
 	t.Run("FailCreateTaskMissingNameField", func(t *testing.T) {
 		assert := assert.New(t)
 		s := &service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				taskID: "",
 				err:    ErrMissingField,
 			},
@@ -65,7 +65,7 @@ func TestServiceCreateTask(t *testing.T) {
 	t.Run("FailCreateTaskMissingUserIDField", func(t *testing.T) {
 		assert := assert.New(t)
 		s := &service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				taskID: "",
 				err:    ErrMissingField,
 			},
@@ -103,7 +103,7 @@ func TestServiceGetTaskByID(t *testing.T) {
 		}
 
 		s := &service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				err:  nil,
 				task: &task,
 			},
@@ -127,7 +127,7 @@ func TestServiceGetTaskByID(t *testing.T) {
 		// Do not create a task
 		assert := assert.New(t)
 		s := &service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				err:  ErrTaskNotFound,
 				task: nil,
 			},
@@ -161,7 +161,7 @@ func TestServiceUpdateTask(t *testing.T) {
 		}
 
 		s := &service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				err:  nil,
 				task: &expectedTask,
 			},
@@ -191,7 +191,7 @@ func TestServiceUpdateTask(t *testing.T) {
 	t.Run("FailMissingID", func(t *testing.T) {
 		assert := assert.New(t)
 		s := &service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				err:  nil,
 				task: nil,
 			},
@@ -212,7 +212,7 @@ func TestServiceUpdateTask(t *testing.T) {
 	t.Run("FailMissingUserID", func(t *testing.T) {
 		assert := assert.New(t)
 		s := &service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				err:  nil,
 				task: nil,
 			},
@@ -233,7 +233,7 @@ func TestServiceUpdateTask(t *testing.T) {
 	t.Run("FailMissingTaskName", func(t *testing.T) {
 		assert := assert.New(t)
 		s := &service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				err:  nil,
 				task: nil,
 			},
@@ -255,7 +255,7 @@ func TestServiceUpdateTask(t *testing.T) {
 func TestServiceDeleteTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		s := service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				err: nil,
 			},
 		}
@@ -268,7 +268,7 @@ func TestServiceDeleteTask(t *testing.T) {
 	t.Run("FailMissingFieldTaskID", func(t *testing.T) {
 		// I didn't include an id because it never gets that far
 		s := service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				err: nil,
 			},
 		}
@@ -284,7 +284,7 @@ func TestServiceDeleteTask(t *testing.T) {
 	t.Run("FailTaskNotFound", func(t *testing.T) {
 		assert := assert.New(t)
 		s := service{
-			r: &mockRepository{
+			repository: &mockRepository{
 				err: ErrTaskNotFound,
 			},
 		}

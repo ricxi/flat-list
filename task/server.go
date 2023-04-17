@@ -16,7 +16,7 @@ func (s Server) Run() error {
 		Handler: s.Handler,
 	}
 
-	log.Println("starting server on port " + srv.Addr)
+	log.Println("starting http task server on port " + srv.Addr)
 
 	return srv.ListenAndServe()
 }
