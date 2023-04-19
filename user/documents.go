@@ -19,3 +19,13 @@ type UserDocument struct {
 	CreatedAt      *time.Time         `bson:"createdAt"`
 	UpdatedAt      *time.Time         `bson:"updatedAt"`
 }
+
+type UserRegistrationDocument struct {
+	FirstName      string     `bson:"firstName"`
+	LastName       string     `bson:"lastName"`
+	Email          string     `bson:"email"`
+	HashedPassword string     `bson:"hashedPassword"`
+	Activated      bool       `bson:"activated"`
+	CreatedAt      *time.Time `bson:"createdAt"`
+	UpdatedAt      *time.Time `bson:"updatedAt"`
+}

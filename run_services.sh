@@ -35,7 +35,7 @@ trap cleanup SIGINT
 ) &
 (
     # start react mailer client
-	cd frontend-client && npm run dev > /dev/null
+	cd frontend-client && npm run dev 
 ) &
 (
     # start the user service

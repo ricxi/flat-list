@@ -63,16 +63,16 @@ func NewRepository(client *mongo.Client, database string, timeout int) Repositor
 
 // CreateOne inserts a new user with a unique email into the database.
 func (m *mongoRepository) CreateUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
-	userInfo := bson.M{
-		"firstName":      u.FirstName,
-		"lastName":       u.LastName,
-		"email":          u.Email,
-		"hashedPassword": u.HashedPassword,
-		"activated":      u.Activated,
-		"createdAt":      u.CreatedAt,
-		"updatedAt":      u.UpdatedAt,
+	userDocument := UserRegistrationDocument{
+		FirstName:      u.FirstName,
+		LastName:       u.LastName,
+		Email:          u.Email,
+		HashedPassword: u.HashedPassword,
+		Activated:      u.Activated,
+		CreatedAt:      u.CreatedAt,
+		UpdatedAt:      u.UpdatedAt,
 	}
-	result, err := m.coll.InsertOne(ctx, &userInfo)
+	result, err := m.coll.InsertOne(ctx, &userDocument)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return "", ErrDuplicateUser
@@ -85,20 +85,9 @@ func (m *mongoRepository) CreateUser(ctx context.Context, u UserRegistrationInfo
 
 // GetUserByEmail Queries a user with their email
 func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*UserInfo, error) {
-	type UserDoc struct {
-		OID            primitive.ObjectID `bson:"_id,omitempty"`
-		FirstName      string             `bson:"firstName"`
-		LastName       string             `bson:"lastName"`
-		Email          string             `bson:"email"`
-		HashedPassword string             `bson:"hashedPassword"`
-		Activated      bool               `bson:"activated"`
-		CreatedAt      *time.Time         `bson:"createdAt"`
-		UpdatedAt      *time.Time         `bson:"updatedAt"`
-	}
-
-	var userDoc UserDoc
+	var userDocument UserDocument
 	filter := bson.M{"email": email}
-	if err := m.coll.FindOne(ctx, filter).Decode(&userDoc); err != nil {
+	if err := m.coll.FindOne(ctx, filter).Decode(&userDocument); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, fmt.Errorf("%w by email", ErrUserNotFound)
 		}
@@ -106,14 +95,14 @@ func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*Us
 	}
 
 	return &UserInfo{
-		ID:             userDoc.OID.Hex(),
-		FirstName:      userDoc.FirstName,
-		LastName:       userDoc.LastName,
-		Email:          userDoc.Email,
-		HashedPassword: userDoc.HashedPassword,
-		Activated:      userDoc.Activated,
-		CreatedAt:      userDoc.CreatedAt,
-		UpdatedAt:      userDoc.UpdatedAt,
+		ID:             userDocument.OID.Hex(),
+		FirstName:      userDocument.FirstName,
+		LastName:       userDocument.LastName,
+		Email:          userDocument.Email,
+		HashedPassword: userDocument.HashedPassword,
+		Activated:      userDocument.Activated,
+		CreatedAt:      userDocument.CreatedAt,
+		UpdatedAt:      userDocument.UpdatedAt,
 	}, nil
 }
 
