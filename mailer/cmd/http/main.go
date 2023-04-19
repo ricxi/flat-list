@@ -3,19 +3,25 @@ package main
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/ricxi/flat-list/mailer"
+	"github.com/ricxi/flat-list/shared/config"
 )
 
+// ! untested
 func main() {
-	conf, err := mailer.SetupConfig()
+	envs, err := config.LoadEnvs("HOST", "PORT", "USERNAME", "PASSWORD", "EMAIL_TEMPLATES", "HTTP_PORT")
+	if err != nil {
+		log.Fatal(err)
+	}
+	smtpPORT, err := strconv.Atoi(envs["PORT"])
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	m := mailer.NewMailer(conf.Username, conf.Password, conf.Host, conf.Port)
-
-	mailerService := mailer.NewMailerService(m)
+	m := mailer.NewMailer(envs["USERNAME"], envs["PASSWORD"], envs["HOST"], smtpPORT)
+	mailerService := mailer.NewMailerService(m, envs["EMAIL_TEMPLATES"])
 
 	mux := http.NewServeMux()
 
@@ -23,10 +29,10 @@ func main() {
 
 	srv := &http.Server{
 		Handler: mux,
-		Addr:    ":" + conf.HttpPort,
+		Addr:    ":" + envs["HTTP_PORT"],
 	}
 
-	log.Println("starting http server on port", srv.Addr)
+	log.Println("starting http mailer server on port", srv.Addr)
 
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)

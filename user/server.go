@@ -34,7 +34,7 @@ func (s *server) Run() {
 		signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 
 		receiver := <-sigs
-		log.Println("received signal to start shutdown: ", receiver)
+		log.Println("received signal to start shutdown:", receiver)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
@@ -42,12 +42,12 @@ func (s *server) Run() {
 		shutdownErr <- s.srv.Shutdown(ctx)
 	}()
 
-	log.Printf("starting service on port %s...\n", s.srv.Addr)
+	log.Printf("starting user service on port %s...\n", s.srv.Addr)
 
 	err := s.srv.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
 		// TODO: check for other errors
-		log.Fatalln("expecting http.ErrServerClosed to indicate successful graceful shutdown")
+		log.Fatalln("expecting http.ErrServerClosed to indicate successful graceful shutdown", err)
 	}
 
 	if err := <-shutdownErr; err != nil {

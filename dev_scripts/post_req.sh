@@ -1,16 +1,15 @@
 #!/bin/bash
-
-# curl -X POST -H "Content-Type: application/json" -d @register.json http://localhost:8080/v1/user/register
-# curl -X POST -H "Content-Type: application/json" -d @login.json http://localhost:8080/v1/user/login
+# Make requests to test user service
+cd "$(dirname "$0")"
 
 REGISTER_ENDPOINT="http://localhost:9000/v1/user/register"
 LOGIN_ENDPOINT="http://localhost:9000/v1/user/login"
-REGISTER_JSON="register.json"
-LOGIN_JSON="login.json"
+REGISTER_JSON="./json_req_data/register.json"
+LOGIN_JSON="./json_req_data/login.json"
 
 post_request() {
-   data="$(cat "$1")"
-   endpoint="$2"
+   local data="$(cat "$1")"
+   local endpoint="$2"
 
    curl -X POST \
      -v \
@@ -30,9 +29,12 @@ while getopts 'rl' flag; do
         post_request "$LOGIN_JSON" "$LOGIN_ENDPOINT"
         ;;
      ?)
-       echo "script usage: $(basename \$0) [-l] [-h] [-a somevalue]" >&2
+       echo "script usage: $(basename \$0) [-l] [-r] [-a somevalue]" >&2
        exit 1
        ;;       
     esac
 done
 shift $((OPTIND-1))
+
+# curl -X POST -H "Content-Type: application/json" -d @register.json http://localhost:8080/v1/user/register
+# curl -X POST -H "Content-Type: application/json" -d @login.json http://localhost:8080/v1/user/login

@@ -6,16 +6,17 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/ricxi/flat-list/shared/config"
 	"github.com/ricxi/flat-list/token"
 )
 
 func main() {
-	envs, err := token.LoadEnvs()
+	envs, err := config.LoadEnvs("DATABASE_URL", "HTTP_PORT")
 	if err != nil {
 		log.Fatalln("problem loading configuation: ", err)
 	}
 
-	db, err := token.Connect(envs.DatabaseURL)
+	db, err := token.Connect(envs["DATABASE_URL"])
 	if err != nil {
 		log.Fatalln("problem connecting to postgres: ", err)
 	}
@@ -26,7 +27,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      h,
-		Addr:         ":" + envs.HttpPort,
+		Addr:         ":" + envs["HTTP_PORT"],
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}

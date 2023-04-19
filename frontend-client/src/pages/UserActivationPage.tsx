@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-const USER_ACTIVATION_ENDPOINT = 'http://localhost:9000/v1/user/activate';
+const USER_ACTIVATION_ENDPOINT = 'http://127.0.0.1:5004/v1/user/activate';
 
 function UserActivationPage() {
   const [searchParams] = useSearchParams();

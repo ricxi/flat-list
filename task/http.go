@@ -20,7 +20,7 @@ func NewHTTPHandler(s Service) http.Handler {
 	r.Route("/v1/task", func(r chi.Router) {
 		r.Post("/", h.handleCreateTask)
 		r.Get("/{id}", h.handleGetTask)
-		r.Get("/", h.handleGetTask)
+		r.Get("/", h.handleGetTask) // I should delete this and remove the tests that validate it
 		r.Put("/", h.handleUpdateTask)
 		r.Delete("/{id}", h.handleDeleteTask)
 	})

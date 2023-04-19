@@ -8,7 +8,7 @@ PSQL_DSN="postgresql://postgres:password@127.0.0.1:5433/tokens?sslmode=disable"
 tries=0
 until [ "$(docker exec postgres-instance pg_isready | grep "accepting connections")" ]; do
     [ "$tries" -ge 3 ] && exit 1
-    echo "waiting for postgres to accept connections"
+    echo "waiting for postgres to accept connections..."
     tries=$((tries+1))
     sleep "$((tries+2))"
 done

@@ -1,5 +1,5 @@
 # rest client script
-post http://localhost:9000/v1/user/register
+post http://localhost:5004/v1/user/register
 Content-Type: application/json
 
 {

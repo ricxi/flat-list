@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "$0")"
+
 # spin up a postgres container 
 # make sure that the postgres.env file is in the same directory
 # this script must always return the docker container's id

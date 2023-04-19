@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/aws/aws-lambda-go v1.38.0
+	github.com/ricxi/flat-list/shared v0.0.0-20230413052403-cae6a394988e
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.29.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
