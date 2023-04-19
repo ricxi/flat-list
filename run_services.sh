@@ -40,16 +40,24 @@ trap cleanup SIGINT
 (
     # start the user service
     load_env_file user.env &&
-    ./dev_scripts/db/run_userdb.sh userdb-instance 2>>errors.txt
+    ./dev_scripts/db/run_flatlistdb.sh flatlistdb-instance 2>>errors.txt
     cd user &&
+    go run ./cmd/http
+) &
+(
+    # start the task service
+    load_env_file task.env &&
+    # this depends on the same database as the user service, which should already be running
+    sleep 5 # I'll write a more sustainable solution later than sleeping
+    cd task &&
     go run ./cmd/http
 ) &
 (
     # list running services
     # update this so I can input the ports dynamically
     # while true; do
-    lsof -i :5000-5003 -i :9000 | awk '{print $1, $2, $5, $8, $9}'
     sleep 10
+    lsof -i :5000-5009 -i :9000 | awk '{print $1, $2, $5, $8, $9}'
     # done
 ) &
 pid=$!

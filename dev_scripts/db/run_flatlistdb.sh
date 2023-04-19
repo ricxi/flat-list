@@ -27,6 +27,7 @@ docker run -d \
     --name "$container_name" \
     --publish 127.0.0.1:37017:27017 \
     --env-file usermongodb.env \
+    -v ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro \
     mongo:6.0.4-jammy
 
 # docker exec -it userdb-instance mongosh -u root -p password

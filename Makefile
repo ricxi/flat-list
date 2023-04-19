@@ -9,12 +9,23 @@ test/user/service:
 	@echo "TEST: user service layer"
 	cd ./user && go test -v -run Test_Service
 
-.PHONY: test/user/e2e
-test/user/e2e:
-	@echo "TEST E2E: user microservice"
+.PHONY: test/e2e/user
+test/e2e/user:
+	@echo "TEST E2E: user microservice running..."
 	cd ./user/cmd/http && go test -v
 
 .PHONY: build/user
 build/user:
 	@echo "building binary..."
 	cd ./user && go build -o bin/${USER_BINARY} ./cmd/http/
+
+# test for task service
+.PHONY: test/task
+test/task:
+	@echo "TEST: task microservice running..."
+	cd ./task && go test -cover
+
+.PHONY: test/e2e/task
+test/e2e/task:
+	@echo "TEST E2E: task microservice running..."
+	cd ./task && go test -v ./cmd/http

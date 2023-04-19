@@ -31,9 +31,12 @@ tidy() {
 
 # autocomplete setup for 'tidy' function
 _tidy_completions() {
-    for go_dir in */; do
-        [ -f "${go_dir}go.mod" ] && COMPREPLY+=("${go_dir%/}")
-    done
-}
+    local go_dirs=()
 
+    for go_dir in */; do
+        [ -f "${go_dir}go.mod" ] && go_dirs+=("${go_dir%/}")
+    done
+
+    COMPREPLY=("$(compgen -W "${go_dirs[*]}" "${COMP_WORDS[1]}")")
+}
 complete -F _tidy_completions tidy

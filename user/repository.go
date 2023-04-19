@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -59,27 +58,7 @@ func NewRepository(client *mongo.Client, database string, timeout int) Repositor
 		coll:     usersCollection,
 	}
 
-	m.setupIndexes()
-
 	return &m
-}
-
-func (m *mongoRepository) setupIndexes() {
-	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
-	defer cancel()
-
-	indexModel := mongo.IndexModel{
-		Keys: bson.D{{
-			Key:   "email",
-			Value: 1,
-		}},
-		Options: options.Index().SetUnique(true),
-	}
-
-	_, err := m.coll.Indexes().CreateOne(ctx, indexModel)
-	if err != nil {
-		log.Println("setupIdexes:", err)
-	}
 }
 
 // CreateOne inserts a new user with a unique email into the database.
