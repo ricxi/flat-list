@@ -23,11 +23,11 @@ if_exists "$container_name" ||
 is_running "$container_name" &&
 exit 1 # docker start "$container_name"
 
-# -v ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro \
 docker run -d \
     --name "$container_name" \
     --publish 127.0.0.1:37017:27017 \
     --env-file mongodb.env \
+    -v ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro \
     mongo:6.0.4-jammy
 
 # docker exec -it userdb-instance mongosh -u root -p password
