@@ -90,14 +90,11 @@ func (h *httpHandler) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := map[string]any{
+	body := map[string]any{
 		"success": true,
 		"task":    ut,
 	}
-	if err := writeToResponse(w, res, http.StatusOK); err != nil {
-		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	res.SendJSON(w, &body, http.StatusOK, nil)
 }
 
 func (h *httpHandler) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
@@ -112,22 +109,10 @@ func (h *httpHandler) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := map[string]any{
+	body := map[string]any{
 		"success": true,
 	}
-	if err := writeToResponse(w, res, http.StatusOK); err != nil {
-		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-}
-
-func writeToResponse(w http.ResponseWriter, res map[string]any, statusCode int) error {
-	w.WriteHeader(statusCode)
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		return err
-	}
-
-	return nil
+	res.SendJSON(w, &body, http.StatusOK, nil)
 }
 
 func writeErrorToResponse(w http.ResponseWriter, message string, statusCode int) {
