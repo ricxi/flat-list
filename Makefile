@@ -20,6 +20,7 @@ build/user:
 	cd ./user && go build -o bin/${USER_BINARY} ./cmd/http/
 
 # test for task service
+# ! requires a database connection
 .PHONY: test/task
 test/task:
 	@echo "TEST: task microservice running..."

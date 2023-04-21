@@ -43,6 +43,8 @@ func TestHandleCreateTask(t *testing.T) {
 		r, err := http.NewRequest(http.MethodPost, "/v1/task", reqBody)
 		require.NoError(err)
 
+		r.Header.Set("Content-Type", "application/json")
+
 		h.ServeHTTP(rr, r)
 
 		require.Equal(http.StatusCreated, rr.Code)
@@ -176,6 +178,8 @@ func TestHandleUpdateTask(t *testing.T) {
 		r, err := http.NewRequest(http.MethodPut, "/v1/task", reqBody)
 		require.NoError(err)
 
+		r.Header.Set("Content-Type", "application/json")
+
 		h.ServeHTTP(rr, r)
 
 		res := rr.Result()
@@ -218,6 +222,7 @@ func TestHandleUpdateTask(t *testing.T) {
 		r, err := http.NewRequest(http.MethodPut, "/v1/task", body)
 		require.NoError(err)
 
+		r.Header.Set("Content-Type", "application/json")
 		h.ServeHTTP(rr, r)
 
 		require.Equal(http.StatusBadRequest, rr.Code)
@@ -245,6 +250,7 @@ func TestHandleUpdateTask(t *testing.T) {
 		r, err := http.NewRequest(http.MethodPut, "/v1/task", placeholderBody)
 		require.NoError(err)
 
+		r.Header.Set("Content-Type", "application/json")
 		h.ServeHTTP(rr, r)
 
 		require.Equal(http.StatusBadRequest, rr.Code)
@@ -271,6 +277,8 @@ func TestHandleUpdateTask(t *testing.T) {
 		placeholderBody := toJSON(t, struct{}{})
 		r, err := http.NewRequest(http.MethodPut, "/v1/task", placeholderBody)
 		require.NoError(err)
+
+		r.Header.Set("Content-Type", "application/json")
 
 		h.ServeHTTP(rr, r)
 
