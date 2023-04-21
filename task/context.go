@@ -12,7 +12,7 @@ var UserIDCtxKey ContextKey = ContextKey("userId")
 func getUserIDFromCtx(ctx context.Context) (string, error) {
 	userID, ok := ctx.Value(UserIDCtxKey).(string)
 	if !ok {
-		return "", errors.New("userId not found in context")
+		return "", errors.New("user id not found in context")
 	}
 
 	return userID, nil

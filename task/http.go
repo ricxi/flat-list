@@ -9,20 +9,17 @@ import (
 	res "github.com/ricxi/flat-list/shared/response"
 )
 
-type httpHandler struct {
-	s Service
-}
-
-func NewHTTPHandler(s Service) http.Handler {
+func NewHTTPHandler(service Service, middlewares ...func(http.Handler) http.Handler) http.Handler {
 	h := &httpHandler{
-		s: s,
+		s: service,
 	}
 
 	r := chi.NewMux()
+	r.Use(middlewares...)
+
 	r.Route("/v1/task", func(r chi.Router) {
 		r.Post("/", h.handleCreateTask)
 		r.Get("/{id}", h.handleGetTask)
-		r.Get("/", h.handleGetTask) // I should delete this and remove the tests that validate it
 		r.Put("/", h.handleUpdateTask)
 		r.Delete("/{id}", h.handleDeleteTask)
 	})
@@ -35,14 +32,25 @@ func NewHTTPHandler(s Service) http.Handler {
 	return r
 }
 
+type httpHandler struct {
+	s Service
+}
+
 func (h *httpHandler) handleCreateTask(w http.ResponseWriter, r *http.Request) {
-	var nt NewTask
-	if err := req.ParseJSON(r, &nt); err != nil {
+	var newTask NewTask
+	userID, err := getUserIDFromCtx(r.Context())
+	if err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	taskID, err := h.s.CreateTask(r.Context(), &nt)
+	newTask.UserID = userID
+	if err := req.ParseJSON(r, &newTask); err != nil {
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	taskID, err := h.s.CreateTask(r.Context(), &newTask)
 	if err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
@@ -63,7 +71,7 @@ func (h *httpHandler) handleGetTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, err := h.s.GetTaskByID(r.Context(), taskID)
+	task, err := h.s.GetTaskByID(r.Context(), taskID)
 	if err != nil {
 		// check for ErrTaskNotFound and return a status not found
 		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
@@ -72,19 +80,27 @@ func (h *httpHandler) handleGetTask(w http.ResponseWriter, r *http.Request) {
 
 	body := map[string]any{
 		"success": true,
-		"task":    t,
+		"task":    task,
 	}
 	res.SendJSON(w, &body, http.StatusOK, nil)
 }
 
 func (h *httpHandler) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
-	var t Task
-	if err := req.ParseJSON(r, &t); err != nil {
+	var task Task
+
+	userID, err := getUserIDFromCtx(r.Context())
+	if err != nil {
+		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	task.UserID = userID
+
+	if err := req.ParseJSON(r, &task); err != nil {
 		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	ut, err := h.s.UpdateTask(r.Context(), &t)
+	updatedTask, err := h.s.UpdateTask(r.Context(), &task)
 	if err != nil {
 		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
 		return
@@ -92,7 +108,7 @@ func (h *httpHandler) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	body := map[string]any{
 		"success": true,
-		"task":    ut,
+		"task":    updatedTask,
 	}
 	res.SendJSON(w, &body, http.StatusOK, nil)
 }
