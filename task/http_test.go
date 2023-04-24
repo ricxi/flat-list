@@ -295,27 +295,33 @@ func TestHandleUpdateTask(t *testing.T) {
 func TestHandleDeleteTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
-		require := require.New(t)
 
-		expResBody := `{"success":true}`
+		expected := `{"success":true}`
+
+    ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+    }))
+    defer ts.Close()
+
 		h := NewHTTPHandler(
 			&mockService{
 				err: nil,
 			},
+      (&middleware{authEndpoint: ts.URL}).authenticate,
 		)
 
 		rr := httptest.NewRecorder()
 
-		r, err := http.NewRequest(http.MethodDelete, "/v1/task/"+primitive.NewObjectID().Hex(), nil)
-		require.NoError(err)
+		r := httptest.NewRequest(http.MethodDelete, "/v1/task/"+primitive.NewObjectID().Hex(), nil)
+    r.Header.Set("Content-Type", "application/json")
+    r.Header.Set("Authorization", "Bearer jsonwebtokengoeshere")
 
 		h.ServeHTTP(rr, r)
 
 		assert.Equal(http.StatusOK, rr.Code)
 
-		actResBody := rr.Body.String()
-		if assert.NotEmpty(actResBody) {
-			assert.JSONEq(expResBody, actResBody)
+		if assert.NotEmpty(rr.Body) {
+			assert.JSONEq(expected, rr.Body.String())
 		}
 	})
 }
