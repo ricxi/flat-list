@@ -84,11 +84,11 @@ func TestMiddlewareAuthenticate(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		m := &middleware{
-			authEndpoint: ts.URL,
+		m := &Middleware{
+			AuthEndpoint: ts.URL,
 		}
 
-		auth := m.authenticate(mockAuthHandler)
+		auth := m.Authenticate(mockAuthHandler)
 
 		r := httptest.NewRequest(http.MethodPost, "/", nil)
 		r.Header.Set("Authorization", "Bearer jwttoken")
@@ -110,7 +110,7 @@ func TestMiddlewareAuthenticate(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		auth := (&middleware{}).authenticate(mockAuthHandler)
+		auth := (&Middleware{}).Authenticate(mockAuthHandler)
 
 		r := httptest.NewRequest(http.MethodPost, "/", nil)
 
@@ -135,11 +135,11 @@ func TestMiddlewareAuthenticate(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		m := &middleware{
-			authEndpoint: ts.URL,
+		m := &Middleware{
+			AuthEndpoint: ts.URL,
 		}
 
-		auth := m.authenticate(mockAuthHandler)
+		auth := m.Authenticate(mockAuthHandler)
 
 		r := httptest.NewRequest(http.MethodPost, "/", nil)
 		r.Header.Set("Authorization", "Bearer jwttoken")

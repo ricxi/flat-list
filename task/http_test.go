@@ -30,7 +30,7 @@ func TestHandleCreateTask(t *testing.T) {
 				taskID: taskID,
 				err:    nil,
 			},
-			(&middleware{authEndpoint: ts.URL}).authenticate,
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
@@ -77,7 +77,7 @@ func TestHandleGetTask(t *testing.T) {
 				task: &expTask,
 				err:  nil,
 			},
-			(&middleware{authEndpoint: ts.URL}).authenticate,
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
@@ -123,7 +123,7 @@ func TestHandleGetTask(t *testing.T) {
 			&mockService{
 				err: ErrTaskNotFound,
 			},
-			(&middleware{authEndpoint: ts.URL}).authenticate,
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
@@ -157,7 +157,7 @@ func TestHandleUpdateTask(t *testing.T) {
 				task: &newTask,
 				err:  nil,
 			},
-			(&middleware{authEndpoint: ts.URL}).authenticate,
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
@@ -207,7 +207,7 @@ func TestHandleUpdateTask(t *testing.T) {
 			&mockService{
 				err: fmt.Errorf("%w: taskId", ErrMissingField),
 			},
-			(&middleware{authEndpoint: ts.URL}).authenticate,
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
@@ -240,7 +240,7 @@ func TestHandleUpdateTask(t *testing.T) {
 			&mockService{
 				err: fmt.Errorf("%w: userId", ErrMissingField),
 			},
-			(&middleware{authEndpoint: ts.URL}).authenticate,
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
@@ -272,7 +272,7 @@ func TestHandleUpdateTask(t *testing.T) {
 			&mockService{
 				err: fmt.Errorf("%w: name", ErrMissingField),
 			},
-			(&middleware{authEndpoint: ts.URL}).authenticate,
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
@@ -298,23 +298,23 @@ func TestHandleDeleteTask(t *testing.T) {
 
 		expected := `{"success":true}`
 
-    ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
-    }))
-    defer ts.Close()
+		}))
+		defer ts.Close()
 
 		h := NewHTTPHandler(
 			&mockService{
 				err: nil,
 			},
-      (&middleware{authEndpoint: ts.URL}).authenticate,
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
 
 		r := httptest.NewRequest(http.MethodDelete, "/v1/task/"+primitive.NewObjectID().Hex(), nil)
-    r.Header.Set("Content-Type", "application/json")
-    r.Header.Set("Authorization", "Bearer jsonwebtokengoeshere")
+		r.Header.Set("Content-Type", "application/json")
+		r.Header.Set("Authorization", "Bearer jsonwebtokengoeshere")
 
 		h.ServeHTTP(rr, r)
 

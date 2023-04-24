@@ -37,18 +37,19 @@ type httpHandler struct {
 }
 
 func (h *httpHandler) handleCreateTask(w http.ResponseWriter, r *http.Request) {
-	var newTask NewTask
+	var newTask NewTask // it doesn't need its date fields yet, but should I really create an entirely new data type for this?
+
+	if err := req.ParseJSON(r, &newTask); err != nil {
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	userID, err := getUserIDFromCtx(r.Context())
 	if err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	newTask.UserID = userID
-	if err := req.ParseJSON(r, &newTask); err != nil {
-		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 
 	taskID, err := h.s.CreateTask(r.Context(), &newTask)
 	if err != nil {

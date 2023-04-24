@@ -12,11 +12,11 @@ import (
 	res "github.com/ricxi/flat-list/shared/response"
 )
 
-type middleware struct {
-	authEndpoint string
+type Middleware struct {
+	AuthEndpoint string
 }
 
-func (m *middleware) authenticate(next http.Handler) http.Handler {
+func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := getAuthToken(r)
 		if err != nil {
@@ -30,7 +30,7 @@ func (m *middleware) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		req, err := http.NewRequest(http.MethodPost, m.authEndpoint, reqBody)
+		req, err := http.NewRequest(http.MethodPost, m.AuthEndpoint, reqBody)
 		if err != nil {
 			res.SendErrorJSON(w, err.Error(), http.StatusInternalServerError)
 			return
