@@ -35,6 +35,7 @@ func NewHandler(service Service) http.Handler {
 		r.Post("/login", h.handleLogin)
 		r.Put("/activate/{token}", h.handleActivate)
 		r.Post("/reactivate", h.handleReactivate)
+		r.Post("/authenticate", h.handleAuthenticate)
 	})
 
 	return r
@@ -110,4 +111,25 @@ func (h httpHandler) handleReactivate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res.SendJSON(w, Response{"status": "success"}, http.StatusOK, nil)
+}
+
+func (h httpHandler) handleAuthenticate(w http.ResponseWriter, r *http.Request) {
+	token := make(map[string]string)
+	if err := req.ParseJSON(r, &token); err != nil {
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if token["token"] == "" {
+		res.SendErrorJSON(w, "no token provided", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := h.service.Authenticate(r.Context(), token["token"])
+	if err != nil {
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	res.SendJSON(w, map[string]string{"userId": userID}, http.StatusOK, nil)
 }

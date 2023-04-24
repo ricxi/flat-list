@@ -1,1 +1,2 @@
-get http://localhost:5006/v1/task/643d23f3c3fd7833969ac277
+get http://localhost:5006/v1/task/6446e365ca40d96471788c23
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNjgyNDUzMTA1fSwiVXNlcklEIjoiNjQ0NmQ5OGNiODk3ODQwYjg1Y2VlYzE3In0.2XRGOo0v9VbA8mAFKRIidWotnMRfct2k_QcusdwJC7A

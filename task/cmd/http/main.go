@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	envs, err := config.LoadEnvs("PORT", "MONGODB_URI", "MONGODB_NAME")
+	envs, err := config.LoadEnvs("PORT", "MONGODB_URI", "MONGODB_NAME", "AUTH_ENDPOINT")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,7 +22,8 @@ func main() {
 
 	r := task.NewRepository(client, envs["MONGODB_NAME"])
 	s := task.NewService(r)
-	h := task.NewHTTPHandler(s)
+	authMiddleware := (&task.Middleware{AuthEndpoint: envs["AUTH_ENDPOINT"]}).Authenticate
+	h := task.NewHTTPHandler(s, authMiddleware)
 
 	srv := task.Server{
 		Port:    envs["PORT"],

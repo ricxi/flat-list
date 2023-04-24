@@ -11,7 +11,7 @@ load_env_file() {
 cleanup() {
     echo -e "\ncleaning up..."
     sleep 5
-    kill -9 "$pid"
+    # kill -9 "$pid"
     exit 0
 }
 
@@ -51,6 +51,9 @@ trap cleanup SIGINT
     sleep 5 # I'll write a more sustainable solution later than sleeping
     cd task &&
     go run ./cmd/http
+    # debug:
+    # ./taskservice
+    # go build -gcflags=all="-N -l" -o taskservice ./cmd/http
 ) &
 (
     # list running services
@@ -60,7 +63,7 @@ trap cleanup SIGINT
     lsof -i :5000-5009 -i :9000 | awk '{print $1, $2, $5, $8, $9}'
     # done
 ) &
-pid=$!
+# pid=$!
 
 # do not remove wait because:
 # it allows time for our go services to clean up and gracefully shutdown

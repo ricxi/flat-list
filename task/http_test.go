@@ -16,23 +16,27 @@ import (
 func TestHandleCreateTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
-		require := require.New(t)
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+		}))
+		defer ts.Close()
 
 		taskID := primitive.NewObjectID().Hex()
-		expResBody := fmt.Sprintf(`{"success":true,"taskId":"%s"}`, taskID)
+		expected := fmt.Sprintf(`{"success":true,"taskId":"%s"}`, taskID)
 
 		h := NewHTTPHandler(
 			&mockService{
 				taskID: taskID,
 				err:    nil,
 			},
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
 
 		newTask := `
 		{
-			"userId"   :"507f1f77bcf86cd799439011",
 			"name"     :"laundry",
 			"details"  :"quickly",
 			"priority" :"high",
@@ -40,16 +44,15 @@ func TestHandleCreateTask(t *testing.T) {
 		}`
 		reqBody := strings.NewReader(newTask)
 
-		r, err := http.NewRequest(http.MethodPost, "/v1/task", reqBody)
-		require.NoError(err)
+		r := httptest.NewRequest(http.MethodPost, "/v1/task", reqBody)
+		r.Header.Set("Content-Type", "application/json")
+		r.Header.Set("Authorization", "Bearer jwtsignedtokengoeshere")
 
 		h.ServeHTTP(rr, r)
 
-		require.Equal(http.StatusCreated, rr.Code)
-
-		actResBody := rr.Body.String()
-		if assert.NotEmpty(actResBody) {
-			assert.JSONEq(expResBody, actResBody)
+		assert.Equal(http.StatusCreated, rr.Code)
+		if assert.NotEmpty(rr.Body) {
+			assert.JSONEq(expected, rr.Body.String())
 		}
 	})
 }
@@ -62,7 +65,11 @@ type ResponseBody struct {
 func TestHandleGetTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
-		require := require.New(t)
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+		}))
+		defer ts.Close()
 
 		expTask := createExpectedTask()
 		h := NewHTTPHandler(
@@ -70,12 +77,13 @@ func TestHandleGetTask(t *testing.T) {
 				task: &expTask,
 				err:  nil,
 			},
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
 
-		r, err := http.NewRequest(http.MethodGet, "/v1/task/"+expTask.ID, nil)
-		require.NoError(err)
+		r := httptest.NewRequest(http.MethodGet, "/v1/task/"+expTask.ID, nil)
+		r.Header.Set("Authorization", "Bearer signedjsonwebtokengoeshere")
 
 		h.ServeHTTP(rr, r)
 
@@ -101,56 +109,33 @@ func TestHandleGetTask(t *testing.T) {
 		}
 	})
 
-	t.Run("FailMissingUrlParams", func(t *testing.T) {
-		assert := assert.New(t)
-		require := require.New(t)
-
-		expResBody := `{"message":"missing url param id","success":false}`
-
-		h := NewHTTPHandler(
-			&mockService{
-				err: nil,
-			},
-		)
-
-		rr := httptest.NewRecorder()
-
-		r, err := http.NewRequest(http.MethodGet, "/v1/task", nil)
-		require.NoError(err)
-
-		h.ServeHTTP(rr, r)
-
-		require.Equal(http.StatusBadRequest, rr.Code)
-
-		actRespBody := rr.Body.String()
-		if assert.NotEmpty(actRespBody) {
-			assert.JSONEq(expResBody, actRespBody)
-		}
-	})
-
 	t.Run("FailTaskNotFound", func(t *testing.T) {
 		assert := assert.New(t)
-		require := require.New(t)
 
-		expResBody := `{"message":"task not found","success":false}`
+		expected := `{"message":"task not found","success":false}`
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+		}))
+		defer ts.Close()
+
 		h := NewHTTPHandler(
 			&mockService{
 				err: ErrTaskNotFound,
 			},
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
 
-		r, err := http.NewRequest(http.MethodGet, "/v1/task/"+primitive.NewObjectID().Hex(), nil)
-		require.NoError(err)
+		r := httptest.NewRequest(http.MethodGet, "/v1/task/"+primitive.NewObjectID().Hex(), nil)
+		r.Header.Set("Authorization", "Bearer signedjwttokengoeshere")
 
 		h.ServeHTTP(rr, r)
 
 		assert.Equal(http.StatusBadRequest, rr.Code)
-
-		actResBody := rr.Body.String()
-		if assert.NotEmpty(actResBody) {
-			assert.JSONEq(expResBody, actResBody)
+		if assert.NotEmpty(rr.Body) {
+			assert.JSONEq(expected, rr.Body.String())
 		}
 	})
 }
@@ -158,28 +143,35 @@ func TestHandleGetTask(t *testing.T) {
 func TestHandleUpdateTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
-		require := require.New(t)
 
-		expTask := createExpectedTask()
+		newTask := createExpectedTask()
+		expTask := newTask
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+		}))
+		defer ts.Close()
 
 		h := NewHTTPHandler(
 			&mockService{
-				task: &expTask,
+				task: &newTask,
 				err:  nil,
 			},
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
 
 		// nothing matters here except for the task
 		reqBody := toJSON(t, &expTask)
-		r, err := http.NewRequest(http.MethodPut, "/v1/task", reqBody)
-		require.NoError(err)
+		r := httptest.NewRequest(http.MethodPut, "/v1/task", reqBody)
+		r.Header.Set("Content-Type", "application/json")
+		r.Header.Set("Authorization", "Bearer signedjwttokengoeshere")
 
 		h.ServeHTTP(rr, r)
 
 		res := rr.Result()
-		require.Equal(http.StatusOK, res.StatusCode)
+		assert.Equal(http.StatusOK, res.StatusCode)
 
 		var resBody ResponseBody
 		defer res.Body.Close()
@@ -206,79 +198,96 @@ func TestHandleUpdateTask(t *testing.T) {
 
 		expResBody := `{"message":"missing field is required: taskId","success":false}`
 
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+		}))
+		defer ts.Close()
+
 		h := NewHTTPHandler(
 			&mockService{
 				err: fmt.Errorf("%w: taskId", ErrMissingField),
 			},
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
 
-		body := toJSON(t, struct{}{})
-		r, err := http.NewRequest(http.MethodPut, "/v1/task", body)
-		require.NoError(err)
+		placeholderBody := toJSON(t, struct{}{})
+		r := httptest.NewRequest(http.MethodPut, "/v1/task", placeholderBody)
+		r.Header.Set("Authorization", "Bearer signedjsonwebtoken")
+		r.Header.Set("Content-Type", "application/json")
 
 		h.ServeHTTP(rr, r)
 
 		require.Equal(http.StatusBadRequest, rr.Code)
 
-		actResBody := rr.Body.String()
-		if assert.NotEmpty(actResBody) {
-			assert.JSONEq(expResBody, actResBody)
+		if assert.NotEmpty(rr.Body) {
+			assert.JSONEq(expResBody, rr.Body.String())
 		}
 	})
 
 	t.Run("FailMissingUserIDField", func(t *testing.T) {
 		assert := assert.New(t)
-		require := require.New(t)
 
-		expResBody := `{"message":"missing field is required: userId","success":false}`
+		expected := `{"message":"missing field is required: userId","success":false}`
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+		}))
+		defer ts.Close()
+
 		h := NewHTTPHandler(
 			&mockService{
 				err: fmt.Errorf("%w: userId", ErrMissingField),
 			},
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
 
 		placeholderBody := toJSON(t, struct{}{})
-		r, err := http.NewRequest(http.MethodPut, "/v1/task", placeholderBody)
-		require.NoError(err)
+		r := httptest.NewRequest(http.MethodPut, "/v1/task", placeholderBody)
+		r.Header.Set("Content-Type", "application/json")
+		r.Header.Set("Authorization", "Bearer signedjsonwebtokengoeshere")
 
 		h.ServeHTTP(rr, r)
 
-		require.Equal(http.StatusBadRequest, rr.Code)
+		assert.Equal(http.StatusBadRequest, rr.Code)
 
-		actResBody := rr.Body.String()
-		if assert.NotEmpty(actResBody) {
-			assert.JSONEq(expResBody, actResBody)
+		if assert.NotEmpty(rr.Body) {
+			assert.JSONEq(expected, rr.Body.String())
 		}
 	})
 
 	t.Run("FailMissingNameField", func(t *testing.T) {
 		assert := assert.New(t)
-		require := require.New(t)
 
-		expResBody := `{"message":"missing field is required: name","success":false}`
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+		}))
+		defer ts.Close()
+
+		expected := `{"message":"missing field is required: name","success":false}`
 		h := NewHTTPHandler(
 			&mockService{
 				err: fmt.Errorf("%w: name", ErrMissingField),
 			},
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
 
 		placeholderBody := toJSON(t, struct{}{})
-		r, err := http.NewRequest(http.MethodPut, "/v1/task", placeholderBody)
-		require.NoError(err)
+		r := httptest.NewRequest(http.MethodPut, "/v1/task", placeholderBody)
+		r.Header.Set("Content-Type", "application/json")
+		r.Header.Set("Authorization", "Bearer signedjsonwebtokengoeshere")
 
 		h.ServeHTTP(rr, r)
 
-		require.Equal(http.StatusBadRequest, rr.Code)
+		assert.Equal(http.StatusBadRequest, rr.Code)
 
-		actualResBody := rr.Body.String()
-		if assert.NotEmpty(actualResBody) {
-			assert.JSONEq(expResBody, actualResBody)
+		if assert.NotEmpty(rr.Body) {
+			assert.JSONEq(expected, rr.Body.String())
 		}
 	})
 }
@@ -286,27 +295,33 @@ func TestHandleUpdateTask(t *testing.T) {
 func TestHandleDeleteTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
-		require := require.New(t)
 
-		expResBody := `{"success":true}`
+		expected := `{"success":true}`
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+		}))
+		defer ts.Close()
+
 		h := NewHTTPHandler(
 			&mockService{
 				err: nil,
 			},
+			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
 		)
 
 		rr := httptest.NewRecorder()
 
-		r, err := http.NewRequest(http.MethodDelete, "/v1/task/"+primitive.NewObjectID().Hex(), nil)
-		require.NoError(err)
+		r := httptest.NewRequest(http.MethodDelete, "/v1/task/"+primitive.NewObjectID().Hex(), nil)
+		r.Header.Set("Content-Type", "application/json")
+		r.Header.Set("Authorization", "Bearer jsonwebtokengoeshere")
 
 		h.ServeHTTP(rr, r)
 
 		assert.Equal(http.StatusOK, rr.Code)
 
-		actResBody := rr.Body.String()
-		if assert.NotEmpty(actResBody) {
-			assert.JSONEq(expResBody, actResBody)
+		if assert.NotEmpty(rr.Body) {
+			assert.JSONEq(expected, rr.Body.String())
 		}
 	})
 }

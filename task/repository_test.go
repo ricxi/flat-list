@@ -14,10 +14,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// teardownFunc is returned by setupRepo
+// to cleanup after the tests are finished running
 type teardownFunc func(t testing.TB)
 
 // setupRepo connects to mongo and creates and returns a
-// repository for testing, and returns a teardown function
+// repository for testing, and returns a teardown function.
+// It requires a mongodb server to be running and the uri to access
+// this server must be set with the environment variable 'MONGODB_URI'
 func setupRepo(t testing.TB) (Repository, teardownFunc) {
 	var (
 		uri     string

@@ -1,10 +1,12 @@
 put http://localhost:5006/v1/task
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNjgyNDUzMTA1fSwiVXNlcklEIjoiNjQ0NmQ5OGNiODk3ODQwYjg1Y2VlYzE3In0.2XRGOo0v9VbA8mAFKRIidWotnMRfct2k_QcusdwJC7A
 
 {
-	"taskId": "643d23f3c3fd7833969ac277",
+	"taskId": "6446e365ca40d96471788c23",
 	"userId"   : "507f1f77bcf86cd799439011",
-	"name"     : "laundry",
+	"name"     : "dishes",
 	"details"  : "quickly",
-	"priority" : "medium",
+	"priority" : "low",
 	"category" : "chores"
 }
