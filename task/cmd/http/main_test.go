@@ -1,6 +1,9 @@
+// Package main_test contains some e2e tests.
+// ! I don't think I'm doing this right.
 package main_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -16,7 +19,6 @@ import (
 	"github.com/ricxi/flat-list/shared/config"
 	"github.com/ricxi/flat-list/task"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -96,6 +98,22 @@ func mockUserServer() *httptest.Server {
 	}))
 }
 
+// newRequestWithAuthHeaders creates a new
+// http.Request and sets all the headers
+// needed in order to make an api call that
+// gets through the authentication middleware
+func newRequestWithAuthHeaders(t testing.TB, method, url string, body io.Reader) *http.Request {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer jsonwebtokengoeshere")
+
+	return req
+}
+
 func TestCreateTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		assert := assert.New(t)
@@ -112,12 +130,7 @@ func TestCreateTask(t *testing.T) {
 		defer ts.Close()
 
 		body := strings.NewReader(createTaskPayloadStr)
-		req, err := http.NewRequest(http.MethodPost, ts.URL+"/v1/task", body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Authorization", "Bearer jsonwebtokengoeshere")
+		req := newRequestWithAuthHeaders(t, http.MethodPost, ts.URL+"/v1/task", body)
 
 		resp, err := ts.Client().Do(req)
 		if err != nil {
@@ -182,44 +195,54 @@ func TestCreateTask(t *testing.T) {
 }
 
 func TestCreateThenGetTask(t *testing.T) {
-	t.Skip()
-	require := require.New(t)
 	assert := assert.New(t)
-	h := task.NewHTTPHandler(service)
-	ts := httptest.NewTLSServer(h)
+
+	mockUserService := mockUserServer()
+	defer mockUserService.Close()
+
+	h := task.NewHTTPHandler(
+		service,
+		(&task.Middleware{AuthEndpoint: mockUserService.URL}).Authenticate,
+	)
+
+	ts := httptest.NewServer(h)
 	defer ts.Close()
 
 	// create a new task
-	createEndpoint := ts.URL + "/v1/task"
 	body := strings.NewReader(createTaskPayloadStr)
-	response, err := ts.Client().Post(createEndpoint, "application/json", body)
+	req := newRequestWithAuthHeaders(t, http.MethodPost, ts.URL+"/v1/task", body)
+
+	resp, err := ts.Client().Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// if the task was successfully created, get its id
-	// and use it to make a call and retreive it
-	require.Equal(http.StatusCreated, response.StatusCode)
+	// and use it to make a call to get the newly created task
+	assert.Equal(http.StatusCreated, resp.StatusCode)
 
 	var respBody createTaskResponse
-	defer response.Body.Close()
-	fromJSON(t, response.Body, &respBody)
-	require.True(primitive.IsValidObjectID(respBody.TaskID))
+	defer resp.Body.Close()
+	fromJSON(t, resp.Body, &respBody)
+	assert.True(primitive.IsValidObjectID(respBody.TaskID))
 
 	getEndpoint := ts.URL + "/v1/task/" + respBody.TaskID
-	response, err = ts.Client().Get(getEndpoint)
+	req = newRequestWithAuthHeaders(t, http.MethodGet, getEndpoint, nil)
+
+	resp, err = ts.Client().Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(http.StatusOK, response.StatusCode)
+
+	assert.Equal(http.StatusOK, resp.StatusCode)
 
 	var getTaskResp getTaskResponse
-	defer response.Body.Close()
-	fromJSON(t, response.Body, &getTaskResp)
+	defer resp.Body.Close()
+	fromJSON(t, resp.Body, &getTaskResp)
 
 	expectedTask := Task{
 		ID:       respBody.TaskID,
-		UserID:   "507f1f77bcf86cd799439011",
+		UserID:   "507f191e810c19729de860ea",
 		Name:     "laundry",
 		Details:  "quickly",
 		Priority: "high",
@@ -236,12 +259,106 @@ func TestCreateThenGetTask(t *testing.T) {
 		assert.Equal(expectedTask.Category, actualTask.Category)
 	}
 }
+func TestCreateGetUpdateTask(t *testing.T) {
+	assert := assert.New(t)
+
+	mockUserService := mockUserServer()
+	defer mockUserService.Close()
+
+	h := task.NewHTTPHandler(
+		service,
+		(&task.Middleware{AuthEndpoint: mockUserService.URL}).Authenticate,
+	)
+
+	ts := httptest.NewServer(h)
+	defer ts.Close()
+
+	// create a new task
+	body := strings.NewReader(createTaskPayloadStr)
+	req := newRequestWithAuthHeaders(t, http.MethodPost, ts.URL+"/v1/task", body)
+
+	resp, err := ts.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// if the task was successfully created, get its id
+	// and use it to make a call and retreive it
+	assert.Equal(http.StatusCreated, resp.StatusCode)
+
+	var respBody createTaskResponse
+	defer resp.Body.Close()
+	fromJSON(t, resp.Body, &respBody)
+	newTaskID := respBody.TaskID
+
+	assert.True(primitive.IsValidObjectID(newTaskID))
+
+	getEndpoint := ts.URL + "/v1/task/" + newTaskID
+	req = newRequestWithAuthHeaders(t, http.MethodGet, getEndpoint, nil)
+
+	resp, err = ts.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(http.StatusOK, resp.StatusCode)
+
+	var getTaskResp getTaskResponse
+	defer resp.Body.Close()
+	fromJSON(t, resp.Body, &getTaskResp)
+
+	expectedTask := Task{
+		ID:       newTaskID,
+		UserID:   "507f191e810c19729de860ea",
+		Name:     "laundry",
+		Details:  "quickly",
+		Priority: "high",
+		Category: "chores",
+	}
+
+	actualTask := getTaskResp.Task
+	if assert.NotEmpty(getTaskResp) {
+		assert.Equal(expectedTask.ID, actualTask.ID)
+		assert.Equal(expectedTask.UserID, actualTask.UserID)
+		assert.Equal(expectedTask.Name, actualTask.Name)
+		assert.Equal(expectedTask.Details, actualTask.Details)
+		assert.Equal(expectedTask.Priority, actualTask.Priority)
+		assert.Equal(expectedTask.Category, actualTask.Category)
+	}
+
+	expectedTask.Name = "dishes"
+	expectedTask.Details = "slowly"
+	expectedTask.Priority = "low"
+
+	updatePayload := expectedTask
+
+	var buffer bytes.Buffer
+	toJSON(t, &buffer, &updatePayload)
+	bodyReader := bytes.NewReader(buffer.Bytes())
+
+	req = newRequestWithAuthHeaders(t, http.MethodPut, ts.URL+"/v1/task/", bodyReader)
+	resp, err = ts.Client().Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	assert.Equal(http.StatusOK, resp.StatusCode)
+	// ! Not finished: I still have to assert the actual update response body returned
+}
 
 // fromJSON is a helper function that decodes a response body
 // into a native go type (which must be a pointer)
 func fromJSON(t testing.TB, r io.Reader, out any) {
 	t.Helper()
 	if err := json.NewDecoder(r).Decode(&out); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// toJSON is a helper function
+func toJSON(t testing.TB, w io.Writer, in any) {
+	t.Helper()
+	if err := json.NewEncoder(w).Encode(&in); err != nil {
 		t.Fatal(err)
 	}
 }

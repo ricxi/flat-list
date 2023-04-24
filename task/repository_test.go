@@ -14,6 +14,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// teardownFunc is returned by setupRepo
+// to cleanup after the tests are finished running
 type teardownFunc func(t testing.TB)
 
 // setupRepo connects to mongo and creates and returns a
