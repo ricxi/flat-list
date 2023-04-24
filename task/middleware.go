@@ -31,6 +31,7 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 		}
 
 		req, err := http.NewRequest(http.MethodPost, m.AuthEndpoint, reqBody)
+		req.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			res.SendErrorJSON(w, err.Error(), http.StatusInternalServerError)
 			return

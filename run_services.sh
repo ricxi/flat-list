@@ -51,6 +51,9 @@ trap cleanup SIGINT
     sleep 5 # I'll write a more sustainable solution later than sleeping
     cd task &&
     go run ./cmd/http
+    # debug:
+    # ./taskservice
+    # go build -gcflags=all="-N -l" -o taskservice ./cmd/http
 ) &
 (
     # list running services

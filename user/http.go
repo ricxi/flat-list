@@ -115,7 +115,7 @@ func (h httpHandler) handleReactivate(w http.ResponseWriter, r *http.Request) {
 
 func (h httpHandler) handleAuthenticate(w http.ResponseWriter, r *http.Request) {
 	token := make(map[string]string)
-	if err := req.ParseJSON(r, token); err != nil {
+	if err := req.ParseJSON(r, &token); err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
