@@ -11,11 +11,11 @@ import (
 )
 
 type Service interface {
-	RegisterUser(ctx context.Context, user UserRegistrationInfo) (string, error)
-	LoginUser(ctx context.Context, user UserLoginInfo) (*UserInfo, error)
-	ActivateUser(ctx context.Context, activationToken string) error
-	RestartActivation(ctx context.Context, u UserLoginInfo) error
-	Authenticate(ctx context.Context, signedJWT string) (string, error)
+	registerUser(ctx context.Context, user UserRegistrationInfo) (string, error)
+	loginUser(ctx context.Context, user UserLoginInfo) (*UserInfo, error)
+	activateUser(ctx context.Context, activationToken string) error
+	restartActivation(ctx context.Context, u UserLoginInfo) error
+	authenticate(ctx context.Context, signedJWT string) (string, error)
 }
 
 // service is instantiated using a builder (see builder.go file)
@@ -27,7 +27,7 @@ type service struct {
 	token      TokenClient
 }
 
-func (s *service) RegisterUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
+func (s *service) registerUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
 	if err := s.validate.Registration(u); err != nil {
 		return "", err
 	}
@@ -46,7 +46,7 @@ func (s *service) RegisterUser(ctx context.Context, u UserRegistrationInfo) (str
 
 	u.Activated = false
 
-	userID, err := s.repository.CreateUser(ctx, u)
+	userID, err := s.repository.createUser(ctx, u)
 	if err != nil {
 		log.Println(err)
 		return "", err
@@ -95,12 +95,12 @@ func (s *service) RegisterUser(ctx context.Context, u UserRegistrationInfo) (str
 	}
 }
 
-func (s *service) LoginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, error) {
+func (s *service) loginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, error) {
 	if err := s.validate.Login(u); err != nil {
 		return nil, err
 	}
 
-	uInfo, err := s.repository.GetUserByEmail(ctx, u.Email)
+	uInfo, err := s.repository.getUserByEmail(ctx, u.Email)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
 			return nil, ErrInvalidEmail
@@ -131,7 +131,7 @@ func (s *service) LoginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, er
 	return uInfo, nil
 }
 
-func (s *service) ActivateUser(ctx context.Context, activationToken string) error {
+func (s *service) activateUser(ctx context.Context, activationToken string) error {
 	userID, err := s.token.ValidateActivationToken(context.Background(), activationToken)
 	if err != nil {
 		log.Println(err)
@@ -145,7 +145,7 @@ func (s *service) ActivateUser(ctx context.Context, activationToken string) erro
 	userUpdate.Activated = true
 	userUpdate.UpdatedAt = &updateTime
 
-	if err := s.repository.UpdateUserByID(ctx, userUpdate); err != nil {
+	if err := s.repository.updateUserByID(ctx, userUpdate); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -153,17 +153,17 @@ func (s *service) ActivateUser(ctx context.Context, activationToken string) erro
 	return nil
 }
 
-// RestartActivation generates a new activation token and sends a new activation email to a user
+// restartActivation generates a new activation token and sends a new activation email to a user
 // so long as they provide their email and a valid password (basically their login info).
 // It is a route that is accessed by users who did receive a valid activation token or email due
 // to unforseen or other cirumstances.
 // ?Should I rename this to ResendActivation?
-func (s *service) RestartActivation(ctx context.Context, u UserLoginInfo) error {
+func (s *service) restartActivation(ctx context.Context, u UserLoginInfo) error {
 	if err := s.validate.Login(u); err != nil {
 		return err
 	}
 
-	uInfo, err := s.repository.GetUserByEmail(ctx, u.Email)
+	uInfo, err := s.repository.getUserByEmail(ctx, u.Email)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
 			return ErrInvalidEmail
@@ -196,10 +196,10 @@ func (s *service) RestartActivation(ctx context.Context, u UserLoginInfo) error 
 	return nil
 }
 
-// Authenticate receives a signed jwt, extracts user data from it, verifies the
+// authenticate receives a signed jwt, extracts user data from it, verifies the
 // jwt, then checks that the user exists in the database and if their account
 // has been activated. It returns the user's ID if everything is successful.
-func (s *service) Authenticate(ctx context.Context, signedJWT string) (string, error) {
+func (s *service) authenticate(ctx context.Context, signedJWT string) (string, error) {
 	if err := s.validate.NonEmptyString("jwt", signedJWT); err != nil {
 		return "", err
 	}
@@ -210,7 +210,7 @@ func (s *service) Authenticate(ctx context.Context, signedJWT string) (string, e
 		return "", err
 	}
 
-	uInfo, err := s.repository.GetUserByID(ctx, userClaims.UserID)
+	uInfo, err := s.repository.getUserByID(ctx, userClaims.UserID)
 	if err != nil {
 		return "", err
 	}

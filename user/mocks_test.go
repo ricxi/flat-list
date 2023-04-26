@@ -13,19 +13,19 @@ type mockRepository struct {
 	err    error
 }
 
-func (m *mockRepository) CreateUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
+func (m *mockRepository) createUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
 	return m.userID, m.err
 }
 
-func (m *mockRepository) GetUserByEmail(ctx context.Context, email string) (*UserInfo, error) {
+func (m *mockRepository) getUserByEmail(ctx context.Context, email string) (*UserInfo, error) {
 	return m.user, m.err
 }
 
-func (m *mockRepository) GetUserByID(ctx context.Context, id string) (*UserInfo, error) {
+func (m *mockRepository) getUserByID(ctx context.Context, id string) (*UserInfo, error) {
 	return m.user, m.err
 }
 
-func (m *mockRepository) UpdateUserByID(ctx context.Context, u UserInfo) error {
+func (m *mockRepository) updateUserByID(ctx context.Context, u UserInfo) error {
 	return m.err
 }
 

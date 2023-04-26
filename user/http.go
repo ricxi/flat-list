@@ -14,7 +14,7 @@ type httpHandler struct {
 	service Service
 }
 
-func NewHandler(service Service) http.Handler {
+func NewHTTPHandler(service Service) http.Handler {
 	h := httpHandler{service: service}
 
 	r := chi.NewRouter()
@@ -55,7 +55,7 @@ func (h httpHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.service.RegisterUser(r.Context(), u)
+	id, err := h.service.registerUser(r.Context(), u)
 	if err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
@@ -71,7 +71,7 @@ func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uInfo, err := h.service.LoginUser(r.Context(), u)
+	uInfo, err := h.service.loginUser(r.Context(), u)
 	if err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
@@ -88,7 +88,7 @@ func (h httpHandler) handleActivate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.ActivateUser(r.Context(), activationToken); err != nil {
+	if err := h.service.activateUser(r.Context(), activationToken); err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -105,7 +105,7 @@ func (h httpHandler) handleReactivate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.RestartActivation(r.Context(), u); err != nil {
+	if err := h.service.restartActivation(r.Context(), u); err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -125,7 +125,7 @@ func (h httpHandler) handleAuthenticate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	userID, err := h.service.Authenticate(r.Context(), token["token"])
+	userID, err := h.service.authenticate(r.Context(), token["token"])
 	if err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return

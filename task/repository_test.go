@@ -1,5 +1,3 @@
-// ! There is a memory/resource leak somewhere in this where the
-// ! database is not cleaned up after the tests are finished running
 package task
 
 import (

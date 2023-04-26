@@ -9,6 +9,11 @@ test/user/service:
 	@echo "TEST: user service layer"
 	cd ./user && go test -v -run Test_Service
 
+.PHONY: test/user
+test/user:
+	@echo "TEST: user service"
+	cd ./user && go test
+
 .PHONY: test/e2e/user
 test/e2e/user:
 	@echo "TEST E2E: user microservice running..."
