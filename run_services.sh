@@ -19,6 +19,7 @@ trap cleanup SIGINT
 
 (
     # start the token service
+    # perform down migrations when I shut down this service?
     load_env_file token.env &&
     ./dev_scripts/db/run_tokendb.sh tokendb-instance 2>>errors.txt &&
     ./dev_scripts/db/run_tokendb_migrations.sh tokendb-instance 2>>errors.txt
