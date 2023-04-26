@@ -13,7 +13,7 @@ func HandleSendActivationEmail(mailerService *MailerService) http.HandlerFunc {
 			return
 		}
 
-		if err := mailerService.SendActivationEmail(data); err != nil {
+		if err := mailerService.sendActivationEmail(data); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

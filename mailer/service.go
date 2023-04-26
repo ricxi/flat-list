@@ -34,7 +34,7 @@ func NewMailerService(mailer *Mailer, emailTemplatesDir string) *MailerService {
 // necessary templates and inputs necessary, before sending an
 // activation email to a user.
 // TODO: Add validation
-func (s *MailerService) SendActivationEmail(data EmailActivationData) error {
+func (s *MailerService) sendActivationEmail(data EmailActivationData) error {
 	if data.From == "" {
 		return fmt.Errorf("field cannot be empty: from ")
 	}
@@ -70,5 +70,5 @@ func (s *MailerService) SendActivationEmail(data EmailActivationData) error {
 		return err
 	}
 
-	return s.mailer.Send(data.From, data.To, ACTIVATION_EMAIL_SUBJECT, htmlBody.String())
+	return s.mailer.send(data.From, data.To, ACTIVATION_EMAIL_SUBJECT, htmlBody.String())
 }

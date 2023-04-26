@@ -27,7 +27,7 @@ func (gs GrpcServer) SendActivationEmail(ctx context.Context, r *pb.Request) (*p
 		ActivationHyperlink: r.ActivationHyperlink,
 	}
 
-	if err := gs.mailerService.SendActivationEmail(data); err != nil {
+	if err := gs.mailerService.sendActivationEmail(data); err != nil {
 		return nil, err
 	}
 

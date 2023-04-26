@@ -18,7 +18,7 @@ func SendActivationEmail(mailerService *MailerService) lambdaHandler {
 			return events.APIGatewayProxyResponse{}, err
 		}
 
-		if err := mailerService.SendActivationEmail(data); err != nil {
+		if err := mailerService.sendActivationEmail(data); err != nil {
 			return events.APIGatewayProxyResponse{}, err
 		}
 
