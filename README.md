@@ -8,7 +8,6 @@ A to-do list application written as a Go microservice. I've reading a lot lately
 ├── frontend-client
 ├── mailer
 ├── migrations
-├── runner
 ├── shared
 ├── task
 ├── token
