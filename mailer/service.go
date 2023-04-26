@@ -9,9 +9,7 @@ import (
 
 const (
 	// Subject line for the user activation email
-	ACTIVATION_EMAIL_SUBJECT string = "Please activate your account"
-	// Path to the HTML template used to generate the body of the user activation email
-	// activationHtmlTmpl string = "./templates/useractivation.html"
+	activationEmailSubject string = "Please activate your account"
 )
 
 // MailerService defines methods that receive email data inputs,
@@ -70,5 +68,5 @@ func (s *MailerService) sendActivationEmail(data EmailActivationData) error {
 		return err
 	}
 
-	return s.mailer.send(data.From, data.To, ACTIVATION_EMAIL_SUBJECT, htmlBody.String())
+	return s.mailer.send(data.From, data.To, activationEmailSubject, htmlBody.String())
 }
