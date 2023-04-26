@@ -43,7 +43,7 @@ func (h *httpHandler) handleCreateToken(w http.ResponseWriter, r *http.Request, 
 		UserID: userID,
 	}
 
-	if err := h.repository.InsertActivationToken(r.Context(), &info); err != nil {
+	if err := h.repository.insertActivationToken(r.Context(), &info); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -63,7 +63,7 @@ func (h *httpHandler) handleValidateToken(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	userID, err := h.repository.GetUserID(r.Context(), activationToken)
+	userID, err := h.repository.getUserID(r.Context(), activationToken)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
