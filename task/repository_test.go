@@ -1,3 +1,5 @@
+// ! There is a memory/resource leak somewhere in this where the
+// ! database is not cleaned up after the tests are finished running
 package task
 
 import (
@@ -63,7 +65,7 @@ func TestRepositoryCreateTask(t *testing.T) {
 		assert := assert.New(t)
 
 		nt := createNewTaskForRepo()
-		gotTaskID, err := r.CreateTask(context.Background(), &nt)
+		gotTaskID, err := r.createTask(context.Background(), &nt)
 
 		assert.NoError(err)
 		if assert.NotEmpty(gotTaskID) {
@@ -83,13 +85,13 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 		require := require.New(t)
 
 		newTask := createNewTaskForRepo()
-		taskID, err := r.CreateTask(context.Background(), &newTask)
+		taskID, err := r.createTask(context.Background(), &newTask)
 		require.NoError(err)
 		require.NotEmpty(taskID)
 		require.True(primitive.IsValidObjectID(taskID))
 
 		expectedTask := createExpectedTaskFromNew(taskID, newTask)
-		actualTask, err := r.GetTaskByID(context.Background(), taskID)
+		actualTask, err := r.getTaskByID(context.Background(), taskID)
 		assert.NoError(err)
 
 		if assert.NotNil(actualTask) && assert.NotEmpty(*actualTask) {
@@ -108,7 +110,7 @@ func TestRepositoryGetTaskByID(t *testing.T) {
 		assert := assert.New(t)
 		taskID := primitive.NewObjectID().Hex()
 
-		task, err := r.GetTaskByID(context.Background(), taskID)
+		task, err := r.getTaskByID(context.Background(), taskID)
 		assert.Nil(task)
 		if assert.Error(err) {
 			assert.EqualError(err, ErrTaskNotFound.Error())
@@ -125,7 +127,7 @@ func TestRepositoryUpdateTask(t *testing.T) {
 		require := require.New(t)
 
 		newTask := createNewTaskForRepo()
-		taskID, err := r.CreateTask(context.Background(), &newTask)
+		taskID, err := r.createTask(context.Background(), &newTask)
 		require.NoError(err)
 		if assert.NotEmpty(taskID) {
 			assert.True(primitive.IsValidObjectID(taskID))
@@ -136,7 +138,7 @@ func TestRepositoryUpdateTask(t *testing.T) {
 			Priority: "medium",
 		}
 
-		updatedTask, err := r.UpdateTask(context.Background(), &updatePayload)
+		updatedTask, err := r.updateTask(context.Background(), &updatePayload)
 		assert.NoError(err)
 
 		expectedTask := newTask
@@ -161,7 +163,7 @@ func TestRepositoryUpdateTask(t *testing.T) {
 			Priority: "medium",
 		}
 
-		updatedTask, err := r.UpdateTask(context.Background(), &updatePayload)
+		updatedTask, err := r.updateTask(context.Background(), &updatePayload)
 		require.Nil(t, updatedTask)
 		if assert.Error(err) {
 			assert.EqualError(err, ErrTaskNotFound.Error())
@@ -178,13 +180,13 @@ func TestDeleteTaskByID(t *testing.T) {
 		require := require.New(t)
 
 		newTask := createNewTaskForRepo()
-		taskID, err := r.CreateTask(context.Background(), &newTask)
+		taskID, err := r.createTask(context.Background(), &newTask)
 		require.NoError(err)
 		if assert.NotEmpty(taskID) {
 			require.True(primitive.IsValidObjectID(taskID))
 		}
 
-		err = r.DeleteTaskByID(context.Background(), taskID)
+		err = r.deleteTaskByID(context.Background(), taskID)
 		assert.NoError(err)
 	})
 
@@ -192,7 +194,7 @@ func TestDeleteTaskByID(t *testing.T) {
 		assert := assert.New(t)
 
 		taskID := primitive.NewObjectID().Hex()
-		err := r.DeleteTaskByID(context.Background(), taskID)
+		err := r.deleteTaskByID(context.Background(), taskID)
 		if assert.Error(err) {
 			assert.EqualError(err, ErrTaskNotFound.Error())
 		}

@@ -13,10 +13,10 @@ import (
 )
 
 type Repository interface {
-	CreateTask(ctx context.Context, task *NewTask) (string, error)
-	GetTaskByID(ctx context.Context, id string) (*Task, error)
-	UpdateTask(ctx context.Context, task *Task) (*Task, error)
-	DeleteTaskByID(ctx context.Context, id string) error
+	createTask(ctx context.Context, task *NewTask) (string, error)
+	getTaskByID(ctx context.Context, id string) (*Task, error)
+	updateTask(ctx context.Context, task *Task) (*Task, error)
+	deleteTaskByID(ctx context.Context, id string) error
 }
 
 type repository struct {
@@ -52,7 +52,7 @@ func NewMongoClient(uri string, timeout int64) (*mongo.Client, error) {
 	return client, nil
 }
 
-func (r *repository) CreateTask(ctx context.Context, newTask *NewTask) (string, error) {
+func (r *repository) createTask(ctx context.Context, newTask *NewTask) (string, error) {
 	uOID, err := primitive.ObjectIDFromHex(newTask.UserID)
 	if err != nil {
 		return "", err
@@ -75,7 +75,7 @@ func (r *repository) CreateTask(ctx context.Context, newTask *NewTask) (string, 
 	return result.InsertedID.(primitive.ObjectID).Hex(), nil
 }
 
-func (r *repository) GetTaskByID(ctx context.Context, id string) (*Task, error) {
+func (r *repository) getTaskByID(ctx context.Context, id string) (*Task, error) {
 	oID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (r *repository) GetTaskByID(ctx context.Context, id string) (*Task, error) 
 	}, nil
 }
 
-func (r *repository) UpdateTask(ctx context.Context, task *Task) (*Task, error) {
+func (r *repository) updateTask(ctx context.Context, task *Task) (*Task, error) {
 	oID, err := primitive.ObjectIDFromHex(task.ID)
 	if err != nil {
 		return nil, err
@@ -144,7 +144,7 @@ func (r *repository) UpdateTask(ctx context.Context, task *Task) (*Task, error) 
 	}, nil
 }
 
-func (r *repository) DeleteTaskByID(ctx context.Context, id string) error {
+func (r *repository) deleteTaskByID(ctx context.Context, id string) error {
 	oID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
@@ -155,7 +155,7 @@ func (r *repository) DeleteTaskByID(ctx context.Context, id string) error {
 		return err
 	}
 
-	// This will be 0 if the document is not found (a 'mongo.ErrNoDocuments' error will not be returned)
+	// This will be 0 if the document is not found (the mongo driver does not return a 'mongo.ErrNoDocuments' error)
 	deletedCount := result.DeletedCount
 	if deletedCount == 0 {
 		return ErrTaskNotFound

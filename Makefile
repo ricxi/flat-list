@@ -30,4 +30,4 @@ test/task:
 .PHONY: test/e2e/task
 test/e2e/task:
 	@echo "TEST E2E: task microservice running..."
-	cd ./task && go test -v ./cmd/http
+	cd ./task && go test ./cmd/http
