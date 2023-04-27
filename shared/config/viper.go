@@ -22,22 +22,23 @@ func LoadFile(configPath, filename string, envStruct any) error {
 		return ErrMissingFilename
 	}
 
-	file := strings.Split(filename, ".")
-	if len(file) != 2 {
+	sep := strings.LastIndex(filename, ".")
+	if sep == -1 {
 		return fmt.Errorf("%w: a filename of this format 'name.ext' is required", ErrInvalidFilename)
 	}
 
-	name, ext := file[0], file[1]
-	if name == "" {
+	base := filename[:sep]
+	ext := filename[sep+1:]
+
+	if base == "" {
 		return fmt.Errorf("%w: %s", ErrInvalidFilename, filename)
 	}
 	if ext == "" {
-		// Should I write validation for extension types: .json, .toml, .yaml, etc. ?
 		return fmt.Errorf("%w: a valid file extension is required", ErrInvalidFilename)
 	}
 
 	viper.AddConfigPath(configPath)
-	viper.SetConfigName(name)
+	viper.SetConfigName(base)
 	viper.SetConfigType(ext)
 
 	if err := viper.ReadInConfig(); err != nil {
