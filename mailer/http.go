@@ -7,7 +7,8 @@ import (
 
 func HandleSendActivationEmail(mailerService *MailerService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var data EmailActivationData
+		var data ActivationEmailData
+
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
