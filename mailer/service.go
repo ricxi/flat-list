@@ -21,7 +21,7 @@ const (
 // It can be implemented by any infrastructure to send emails.
 type MailerService struct {
 	mailer            Mailer
-	emailTemplatesDir string
+	emailTemplatesDir string // this cannot be empty
 }
 
 func NewMailerService(mailer Mailer, emailTemplatesDir string) *MailerService {
@@ -49,12 +49,12 @@ func (s *MailerService) sendActivationEmail(data ActivationEmailData) error {
 	}
 
 	if data.Name == "" {
-		// a placeholder is used if no name field is provided
+		// this placeholder is used if no name field is provided
 		data.Name = "user"
 	}
 
 	if data.ActivationHyperlink == "" {
-		return fmt.Errorf("%w: hyperlink", ErrMissingField)
+		return fmt.Errorf("%w: activationHyperlink", ErrMissingField)
 	}
 
 	activationEmailTmpl := filepath.Join(s.emailTemplatesDir, "useractivation.html")
@@ -62,14 +62,6 @@ func (s *MailerService) sendActivationEmail(data ActivationEmailData) error {
 	if err != nil {
 		return err
 	}
-
-	// tmplData := struct {
-	// 	Name                string
-	// 	ActivationHyperlink string
-	// }{
-	// 	Name:                data.Name,
-	// 	ActivationHyperlink: data.ActivationHyperlink,
-	// }
 
 	htmlBody := new(bytes.Buffer)
 	if err := t.Execute(htmlBody, data.ActivationData); err != nil {
