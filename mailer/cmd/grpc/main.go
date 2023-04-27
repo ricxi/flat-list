@@ -27,14 +27,14 @@ func main() {
 	}
 
 	m := mailer.NewMailer(envs["USERNAME"], envs["PASSWORD"], envs["HOST"], smtpPORT)
-	mailerService := mailer.NewMailerService(m, envs["EMAIL_TEMPLATES"])
-	srv := mailer.NewGrpcServer(mailerService)
+	s := mailer.NewService(m, envs["EMAIL_TEMPLATES"])
+	srv := mailer.NewGrpcServer(s)
 
 	grpcServer := grpc.NewServer()
 
 	pb.RegisterMailerServer(grpcServer, srv)
 
-	log.Println("starting grpc mailer server for on port", lis.Addr())
+	log.Println("starting grpc mailer server on port", lis.Addr())
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal(err)

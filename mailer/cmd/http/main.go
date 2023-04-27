@@ -21,7 +21,7 @@ func main() {
 	}
 
 	m := mailer.NewMailer(envs["USERNAME"], envs["PASSWORD"], envs["HOST"], smtpPORT)
-	mailerService := mailer.NewMailerService(m, envs["EMAIL_TEMPLATES"])
+	mailerService := mailer.NewService(m, envs["EMAIL_TEMPLATES"])
 
 	mux := http.NewServeMux()
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func HandleSendActivationEmail(mailerService *MailerService) http.HandlerFunc {
+func HandleSendActivationEmail(mailerService *Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var data ActivationEmailData
 

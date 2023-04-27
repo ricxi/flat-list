@@ -15,17 +15,17 @@ const (
 	activationEmailSubject string = "Please activate your account"
 )
 
-// MailerService defines methods that receive email data inputs,
+// Service defines methods that receive email data inputs,
 // and prepares and validates those inputs before calling
 // methods from the Mailer type to send that data out in an email.
 // It can be implemented by any infrastructure to send emails.
-type MailerService struct {
+type Service struct {
 	mailer            Mailer
 	emailTemplatesDir string // this cannot be empty
 }
 
-func NewMailerService(mailer Mailer, emailTemplatesDir string) *MailerService {
-	return &MailerService{
+func NewService(mailer Mailer, emailTemplatesDir string) *Service {
+	return &Service{
 		mailer:            mailer,
 		emailTemplatesDir: emailTemplatesDir,
 	}
@@ -35,7 +35,7 @@ func NewMailerService(mailer Mailer, emailTemplatesDir string) *MailerService {
 // necessary templates and inputs necessary, before sending an
 // activation email to a user.
 // TODO: Pull validation into its own function/struct?
-func (s *MailerService) sendActivationEmail(data ActivationEmailData) error {
+func (s *Service) sendActivationEmail(data ActivationEmailData) error {
 	if data.From == "" {
 		return fmt.Errorf("%w: from", ErrMissingField)
 	}

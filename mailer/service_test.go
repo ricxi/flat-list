@@ -32,13 +32,13 @@ func TestServiceSendActivationEmail(t *testing.T) {
 
 	testCases := []struct {
 		name     string
-		service  MailerService
+		service  Service
 		args     args
 		expected expected
 	}{
 		{
 			name: "Success",
-			service: MailerService{
+			service: Service{
 				mailer: &mockMailer{
 					err: nil,
 				},
@@ -61,7 +61,7 @@ func TestServiceSendActivationEmail(t *testing.T) {
 		},
 		{
 			name:    "MissingToField",
-			service: MailerService{mailer: nil, emailTemplatesDir: ""},
+			service: Service{mailer: nil, emailTemplatesDir: ""},
 			args: args{
 				data: ActivationEmailData{
 					From:    "theteam@flatlist.com",
@@ -78,7 +78,7 @@ func TestServiceSendActivationEmail(t *testing.T) {
 		},
 		{
 			name:    "MissingFromField",
-			service: MailerService{mailer: nil, emailTemplatesDir: ""},
+			service: Service{mailer: nil, emailTemplatesDir: ""},
 			args: args{
 				data: ActivationEmailData{
 					To:      "michaelscott@dundermifflin.com",
@@ -95,7 +95,7 @@ func TestServiceSendActivationEmail(t *testing.T) {
 		},
 		{
 			name:    "MissingSubjectField",
-			service: MailerService{mailer: nil, emailTemplatesDir: ""},
+			service: Service{mailer: nil, emailTemplatesDir: ""},
 			args: args{
 				data: ActivationEmailData{
 					From: "theteam@flatlist.com",
@@ -112,7 +112,7 @@ func TestServiceSendActivationEmail(t *testing.T) {
 		},
 		{
 			name:    "MissingActivationHyperLinkField",
-			service: MailerService{mailer: nil, emailTemplatesDir: ""},
+			service: Service{mailer: nil, emailTemplatesDir: ""},
 			args: args{
 				data: ActivationEmailData{
 					From:    "theteam@flatlist.com",
@@ -153,7 +153,7 @@ func TestServiceSendActivationEmailContents(t *testing.T) {
 
 		// mockMailerDest is used to get the email body
 		mockMailerDst := mockMailer{}
-		service := &MailerService{
+		service := &Service{
 			emailTemplatesDir: inputEmailTmpl,
 			mailer:            &mockMailerDst,
 		}
@@ -187,7 +187,7 @@ func TestServiceSendActivationEmailContents(t *testing.T) {
 		)
 
 		mockMailerDst := mockMailer{}
-		service := &MailerService{
+		service := &Service{
 			emailTemplatesDir: inputEmailTmpl,
 			mailer:            &mockMailerDst,
 		}
