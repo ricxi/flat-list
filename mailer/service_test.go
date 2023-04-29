@@ -50,8 +50,8 @@ func TestServiceSendActivationEmail(t *testing.T) {
 					From:    "theteam@flatlist.com",
 					Subject: "How to activate your new account",
 					ActivationData: ActivationData{
-						Name:                "Michael",
-						ActivationHyperlink: "http://localhost:5000/clickme",
+						Name:      "Michael",
+						Hyperlink: "http://localhost:5000/clickme",
 					},
 				},
 			},
@@ -67,8 +67,8 @@ func TestServiceSendActivationEmail(t *testing.T) {
 					From:    "theteam@flatlist.com",
 					Subject: "How to activate your new account",
 					ActivationData: ActivationData{
-						Name:                "Michael",
-						ActivationHyperlink: "http://localhost:5000/clickme",
+						Name:      "Michael",
+						Hyperlink: "http://localhost:5000/clickme",
 					},
 				},
 			},
@@ -84,8 +84,8 @@ func TestServiceSendActivationEmail(t *testing.T) {
 					To:      "michaelscott@dundermifflin.com",
 					Subject: "How to activate your new account",
 					ActivationData: ActivationData{
-						Name:                "Michael",
-						ActivationHyperlink: "http://localhost:5000/clickme",
+						Name:      "Michael",
+						Hyperlink: "http://localhost:5000/clickme",
 					},
 				},
 			},
@@ -101,8 +101,8 @@ func TestServiceSendActivationEmail(t *testing.T) {
 					From: "theteam@flatlist.com",
 					To:   "michaelscott@dundermifflin.com",
 					ActivationData: ActivationData{
-						Name:                "Michael",
-						ActivationHyperlink: "http://localhost:5000/clickme",
+						Name:      "Michael",
+						Hyperlink: "http://localhost:5000/clickme",
 					},
 				},
 			},
@@ -163,8 +163,8 @@ func TestServiceSendActivationEmailContents(t *testing.T) {
 			From:    "theteam@flatlist.com",
 			Subject: "How to activate your new account",
 			ActivationData: ActivationData{
-				Name:                "Michael",
-				ActivationHyperlink: "http://localhost:5000/clickme",
+				Name:      "Michael",
+				Hyperlink: "http://localhost:5000/clickme",
 			},
 		}
 
@@ -197,8 +197,8 @@ func TestServiceSendActivationEmailContents(t *testing.T) {
 			From:    "theteam@flatlist.com",
 			Subject: "How to activate your new account",
 			ActivationData: ActivationData{
-				Name:                "", // the Name field is left intentionally blank
-				ActivationHyperlink: "http://localhost:5000/clickme",
+				Name:      "", // the Name field is left intentionally blank
+				Hyperlink: "http://localhost:5000/clickme",
 			},
 		}
 

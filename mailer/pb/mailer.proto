@@ -4,11 +4,16 @@ option go_package = "github.com/ricxi/flat-list/mailer/pb";
 
 package pb;
 
-message Request {
+message ActivationData {
+    string name = 1;
+    string hyperlink = 2;
+}
+
+message EmailRequest {
     string from  = 1;
     string to = 2;
-    string name = 3;
-    string activation_hyperlink = 4;
+    string subject = 3;
+    ActivationData activationData = 4;
 }
 
 message Response {
@@ -16,5 +21,5 @@ message Response {
 }
 
 service Mailer {
-    rpc SendActivationEmail(Request) returns (Response);
+    rpc SendActivationEmail(EmailRequest) returns (Response);
 }

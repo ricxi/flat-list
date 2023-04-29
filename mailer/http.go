@@ -3,6 +3,8 @@ package mailer
 import (
 	"encoding/json"
 	"net/http"
+
+	res "github.com/ricxi/flat-list/shared/response"
 )
 
 func HandleSendActivationEmail(mailerService *Service) http.HandlerFunc {
@@ -10,15 +12,15 @@ func HandleSendActivationEmail(mailerService *Service) http.HandlerFunc {
 		var data ActivationEmailData
 
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			res.SendInternalServerErrorAsJSON(w, err.Error())
 			return
 		}
 
 		if err := mailerService.sendActivationEmail(data); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		w.Write([]byte("success!"))
+		res.SendJSON(w, map[string]any{"success": true}, http.StatusOK, nil)
 	}
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/ricxi/flat-list/shared/config"
 )
 
-// ! untested
 func main() {
 	envs, err := config.LoadEnvs("HOST", "PORT", "USERNAME", "PASSWORD", "EMAIL_TEMPLATES", "HTTP_PORT")
 	if err != nil {

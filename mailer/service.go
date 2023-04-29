@@ -31,7 +31,7 @@ func NewService(mailer Mailer, emailTemplatesDir string) *Service {
 	}
 }
 
-// SendActivationEmail validates email data, then generates all the
+// sendActivationEmail validates email data, then generates all the
 // necessary templates and inputs necessary, before sending an
 // activation email to a user.
 // TODO: Pull validation into its own function/struct?
@@ -53,7 +53,7 @@ func (s *Service) sendActivationEmail(data ActivationEmailData) error {
 		data.Name = "user"
 	}
 
-	if data.ActivationHyperlink == "" {
+	if data.Hyperlink == "" {
 		return fmt.Errorf("%w: activationHyperlink", ErrMissingField)
 	}
 

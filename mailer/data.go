@@ -12,13 +12,13 @@ type EmailActivationData struct {
 }
 
 type ActivationEmailData struct {
-	From    string `json:"from"`
-	To      string `json:"to"`
-	Subject string `json:"subject"`
-	ActivationData
+	From           string `json:"from"`
+	To             string `json:"to"`
+	Subject        string `json:"subject"`
+	ActivationData `json:"activationData"`
 }
 
 type ActivationData struct {
-	Name                string `json:"name"`
-	ActivationHyperlink string `json:"activationHyperLink"`
+	Name      string `json:"name"`
+	Hyperlink string `json:"HyperLink"`
 }
