@@ -19,9 +19,10 @@ trap cleanup SIGINT
 
 (
     # start the token service
+    # perform down migrations when I shut down this service?
     load_env_file token.env &&
-    ./dev_scripts/db/run_tokendb.sh tokendb-instance 2>>errors.txt &&
-    ./dev_scripts/db/run_tokendb_migrations.sh tokendb-instance 2>>errors.txt
+    ./dev_scripts/db/run_tokendb.sh tokendb-instance 2>>errors.log &&
+    ./dev_scripts/db/run_tokendb_migrations.sh tokendb-instance 2>>errors.log
     cd token &&
     go run ./cmd/grpc
 	# go run ./cmd/http
@@ -35,12 +36,15 @@ trap cleanup SIGINT
 ) &
 (
     # start react mailer client
-	cd frontend-client && npm run dev 
+	cd frontend-client && {
+        [ ! -d node_modules ] && npm i 
+        npm run dev 
+    } 
 ) &
 (
     # start the user service
     load_env_file user.env &&
-    ./dev_scripts/db/run_flatlistdb.sh flatlistdb-instance 2>>errors.txt
+    ./dev_scripts/db/run_flatlistdb.sh flatlistdb-instance 2>>errors.log
     cd user &&
     go run ./cmd/http
 ) &

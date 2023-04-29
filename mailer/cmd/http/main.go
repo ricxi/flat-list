@@ -9,19 +9,18 @@ import (
 	"github.com/ricxi/flat-list/shared/config"
 )
 
-// ! untested
 func main() {
 	envs, err := config.LoadEnvs("HOST", "PORT", "USERNAME", "PASSWORD", "EMAIL_TEMPLATES", "HTTP_PORT")
 	if err != nil {
 		log.Fatal(err)
 	}
-	smtpPORT, err := strconv.Atoi(envs["PORT"])
+	smtpPort, err := strconv.Atoi(envs["PORT"])
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	m := mailer.NewMailer(envs["USERNAME"], envs["PASSWORD"], envs["HOST"], smtpPORT)
-	mailerService := mailer.NewMailerService(m, envs["EMAIL_TEMPLATES"])
+	m := mailer.NewMailer(envs["USERNAME"], envs["PASSWORD"], envs["HOST"], smtpPort)
+	mailerService := mailer.NewService(m, envs["EMAIL_TEMPLATES"])
 
 	mux := http.NewServeMux()
 

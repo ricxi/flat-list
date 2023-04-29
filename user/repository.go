@@ -16,18 +16,17 @@ import (
 // ! I'm not sure where to convert a UserInfo type to a UserDocument type
 // ! in the repository or service layer
 type Repository interface {
-	CreateUser(ctx context.Context, user UserRegistrationInfo) (string, error)
-	GetUserByEmail(ctx context.Context, email string) (*UserInfo, error)
-	UpdateUserByID(ctx context.Context, u UserInfo) error
-	GetUserByID(ctx context.Context, id string) (*UserInfo, error)
+	createUser(ctx context.Context, user UserRegistrationInfo) (string, error)
+	getUserByEmail(ctx context.Context, email string) (*UserInfo, error)
+	updateUserByID(ctx context.Context, u UserInfo) error
+	getUserByID(ctx context.Context, id string) (*UserInfo, error)
 }
 
-// mongoRepository implements Repository interface
-type mongoRepository struct {
+// repository implements Repository interface
+type repository struct {
 	client   *mongo.Client
 	database string
 	coll     *mongo.Collection
-	timeout  time.Duration
 }
 
 func NewMongoClient(uri string, timeout int) (*mongo.Client, error) {
@@ -48,21 +47,20 @@ func NewMongoClient(uri string, timeout int) (*mongo.Client, error) {
 }
 
 // Create a new user repository with the mongo client and database name
-func NewRepository(client *mongo.Client, database string, timeout int) Repository {
+func NewRepository(client *mongo.Client, database string) Repository {
 	usersCollection := client.Database(database).Collection("users")
 
-	m := mongoRepository{
+	m := repository{
 		client:   client,
 		database: database,
-		timeout:  time.Duration(timeout) * time.Second,
 		coll:     usersCollection,
 	}
 
 	return &m
 }
 
-// CreateOne inserts a new user with a unique email into the database.
-func (m *mongoRepository) CreateUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
+// CreateUser inserts a new user with a unique email into the database.
+func (r *repository) createUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
 	userDocument := UserRegistrationDocument{
 		FirstName:      u.FirstName,
 		LastName:       u.LastName,
@@ -72,7 +70,7 @@ func (m *mongoRepository) CreateUser(ctx context.Context, u UserRegistrationInfo
 		CreatedAt:      u.CreatedAt,
 		UpdatedAt:      u.UpdatedAt,
 	}
-	result, err := m.coll.InsertOne(ctx, &userDocument)
+	result, err := r.coll.InsertOne(ctx, &userDocument)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return "", ErrDuplicateUser
@@ -83,11 +81,11 @@ func (m *mongoRepository) CreateUser(ctx context.Context, u UserRegistrationInfo
 	return result.InsertedID.(primitive.ObjectID).Hex(), nil
 }
 
-// GetUserByEmail Queries a user with their email
-func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*UserInfo, error) {
+// getUserByEmail Queries a user with their email
+func (r *repository) getUserByEmail(ctx context.Context, email string) (*UserInfo, error) {
 	var userDocument UserDocument
 	filter := bson.M{"email": email}
-	if err := m.coll.FindOne(ctx, filter).Decode(&userDocument); err != nil {
+	if err := r.coll.FindOne(ctx, filter).Decode(&userDocument); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, fmt.Errorf("%w by email", ErrUserNotFound)
 		}
@@ -106,14 +104,14 @@ func (m *mongoRepository) GetUserByEmail(ctx context.Context, email string) (*Us
 	}, nil
 }
 
-func (m *mongoRepository) GetUserByID(ctx context.Context, id string) (*UserInfo, error) {
+func (r *repository) getUserByID(ctx context.Context, id string) (*UserInfo, error) {
 	userOID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
 
 	var userDocument UserDocument
-	if err := m.coll.FindOne(ctx, bson.M{"_id": userOID}).Decode(&userDocument); err != nil {
+	if err := r.coll.FindOne(ctx, bson.M{"_id": userOID}).Decode(&userDocument); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, fmt.Errorf("%w by email", ErrUserNotFound)
 		}
@@ -132,9 +130,9 @@ func (m *mongoRepository) GetUserByID(ctx context.Context, id string) (*UserInfo
 	}, nil
 }
 
-// UpdateUserByID updates a user's info based on their id
+// updateUserByID updates a user's info based on their id
 // ! It's currently only set up to update a user's activation status, but this will change
-func (m *mongoRepository) UpdateUserByID(ctx context.Context, u UserInfo) error {
+func (r *repository) updateUserByID(ctx context.Context, u UserInfo) error {
 	userOID, err := primitive.ObjectIDFromHex(u.ID)
 	if err != nil {
 		return err
@@ -147,7 +145,7 @@ func (m *mongoRepository) UpdateUserByID(ctx context.Context, u UserInfo) error 
 			"updatedAt": u.UpdatedAt,
 		},
 	}
-	result := m.coll.FindOneAndUpdate(ctx, filter, update)
+	result := r.coll.FindOneAndUpdate(ctx, filter, update)
 	if err := result.Err(); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return fmt.Errorf("unable to update by id: %w", ErrUserNotFound)

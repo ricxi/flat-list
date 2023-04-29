@@ -30,7 +30,7 @@ func TestServiceCreateTask(t *testing.T) {
 			Category: "chores",
 		}
 
-		gotTaskID, err := s.CreateTask(context.Background(), &task)
+		gotTaskID, err := s.createTask(context.Background(), &task)
 		assert.NoError(err)
 		if assert.NotEmpty(gotTaskID) {
 			if !primitive.IsValidObjectID(gotTaskID) {
@@ -55,7 +55,7 @@ func TestServiceCreateTask(t *testing.T) {
 			Category: "chores",
 		}
 
-		gotTaskID, err := s.CreateTask(context.Background(), &task)
+		gotTaskID, err := s.createTask(context.Background(), &task)
 		assert.Empty(gotTaskID)
 		if assert.Error(err) {
 			assert.EqualError(err, fmt.Errorf("%w: name", ErrMissingField).Error())
@@ -78,7 +78,7 @@ func TestServiceCreateTask(t *testing.T) {
 			Category: "chores",
 		}
 
-		gotTaskID, err := s.CreateTask(context.Background(), &task)
+		gotTaskID, err := s.createTask(context.Background(), &task)
 		assert.Empty(gotTaskID)
 		if assert.Error(err) {
 			assert.EqualError(err, fmt.Errorf("%w: userId", ErrMissingField).Error())
@@ -109,7 +109,7 @@ func TestServiceGetTaskByID(t *testing.T) {
 			},
 		}
 
-		actualTask, err := s.GetTaskByID(context.Background(), task.ID)
+		actualTask, err := s.getTaskByID(context.Background(), task.ID)
 		assert.NoError(err)
 		if assert.NotNil(actualTask) && assert.NotEmpty(*actualTask) {
 			assert.Equal(task.ID, actualTask.ID)
@@ -134,7 +134,7 @@ func TestServiceGetTaskByID(t *testing.T) {
 		}
 		taskID := primitive.NewObjectID().Hex()
 
-		actualTask, err := s.GetTaskByID(context.Background(), taskID)
+		actualTask, err := s.getTaskByID(context.Background(), taskID)
 		require.Nil(t, actualTask)
 		if assert.Error(err) {
 			assert.EqualError(err, ErrTaskNotFound.Error())
@@ -173,7 +173,7 @@ func TestServiceUpdateTask(t *testing.T) {
 			Name:   "Repair the laundry machine",
 		}
 
-		actualTask, err := s.UpdateTask(context.Background(), &updatePayload)
+		actualTask, err := s.updateTask(context.Background(), &updatePayload)
 		assert.NoError(err)
 		if assert.NotNil(actualTask) && assert.NotEmpty(*actualTask) {
 			assert.Equal(expectedTask.ID, actualTask.ID)
@@ -202,7 +202,7 @@ func TestServiceUpdateTask(t *testing.T) {
 			Name:   "Repair the laundry machine",
 		}
 
-		actualTask, err := s.UpdateTask(context.Background(), &updatePayload)
+		actualTask, err := s.updateTask(context.Background(), &updatePayload)
 		assert.Nil(actualTask)
 		if assert.Error(err) {
 			assert.EqualError(err, ErrMissingField.Error()+": taskId")
@@ -223,7 +223,7 @@ func TestServiceUpdateTask(t *testing.T) {
 			Name: "Repair the laundry machine",
 		}
 
-		actualTask, err := s.UpdateTask(context.Background(), &updatePayload)
+		actualTask, err := s.updateTask(context.Background(), &updatePayload)
 		assert.Nil(actualTask)
 		if assert.Error(err) {
 			assert.EqualError(err, ErrMissingField.Error()+": userId")
@@ -244,7 +244,7 @@ func TestServiceUpdateTask(t *testing.T) {
 			UserID: primitive.NewObjectID().Hex(),
 		}
 
-		actualTask, err := s.UpdateTask(context.Background(), &updatePayload)
+		actualTask, err := s.updateTask(context.Background(), &updatePayload)
 		assert.Nil(actualTask)
 		if assert.Error(err) {
 			assert.EqualError(err, ErrMissingField.Error()+": name")
@@ -261,7 +261,7 @@ func TestServiceDeleteTask(t *testing.T) {
 		}
 
 		taskID := primitive.NewObjectID().Hex()
-		err := s.DeleteTask(context.Background(), taskID)
+		err := s.deleteTask(context.Background(), taskID)
 		assert.NoError(t, err)
 	})
 
@@ -274,7 +274,7 @@ func TestServiceDeleteTask(t *testing.T) {
 		}
 
 		taskID := ""
-		err := s.DeleteTask(context.Background(), taskID)
+		err := s.deleteTask(context.Background(), taskID)
 		foundErr := assert.Error(t, err)
 		if foundErr {
 			assert.EqualError(t, err, ErrMissingField.Error()+": taskId")
@@ -290,7 +290,7 @@ func TestServiceDeleteTask(t *testing.T) {
 		}
 
 		taskID := primitive.NewObjectID().Hex()
-		err := s.DeleteTask(context.Background(), taskID)
+		err := s.deleteTask(context.Background(), taskID)
 		foundErr := assert.Error(err)
 		if foundErr {
 			assert.EqualError(err, ErrTaskNotFound.Error())

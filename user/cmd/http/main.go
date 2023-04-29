@@ -26,13 +26,13 @@ func main() {
 	}
 	defer client.Disconnect(context.Background())
 
-	mongoRepository := user.NewRepository(client, envs["MONGODB_NAME"], mongoTimeout)
+	mongoRepository := user.NewRepository(client, envs["MONGODB_NAME"])
 	service, err := buildService(mongoRepository)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	handler := user.NewHandler(service)
+	handler := user.NewHTTPHandler(service)
 	server := user.NewServer(handler, envs["PORT"])
 	server.Run()
 }

@@ -212,7 +212,7 @@ func Test_Service_RegisterUser(t *testing.T) {
 				token:      tt.fields.token,
 			}
 
-			actualID, err := s.RegisterUser(tt.args.ctx, tt.args.u)
+			actualID, err := s.registerUser(tt.args.ctx, tt.args.u)
 			if err != nil {
 				assert.Error(err, "expected an error")
 				assert.Empty(actualID, "got a ID but did not expect one")
@@ -440,7 +440,7 @@ func Test_Service_LoginUser(t *testing.T) {
 				// token:      tt.fields.token,
 			}
 
-			actualUser, err := s.LoginUser(tt.args.ctx, tt.args.u)
+			actualUser, err := s.loginUser(tt.args.ctx, tt.args.u)
 			if err != nil {
 				assert.Error(err)
 				assert.Nil(actualUser)
@@ -581,7 +581,7 @@ func Test_Service_Authenticate(t *testing.T) {
 			signedJWT, err := tt.generateUserJWT(tt.args.userID)
 			require.NoError(err)
 
-			actualUserID, err := s.Authenticate(tt.args.ctx, signedJWT)
+			actualUserID, err := s.authenticate(tt.args.ctx, signedJWT)
 			if err != nil {
 				require.Error(err)
 				assert.EqualError(err, tt.expErr)

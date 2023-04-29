@@ -1,3 +1,4 @@
+// Package response provides functions for sending JSON-formatted HTTP responses.
 package response
 
 import (
@@ -5,6 +6,10 @@ import (
 	"encoding/json"
 	"net/http"
 )
+
+// Payload is a map alias type, which is used to represent JSON response data.
+// Its keys must be a string type, but its values can be an any type.
+type Payload map[string]any
 
 // MustSendJSON is generally called as a last resort to send a well-formatted JSON response.
 // If an error occurs while encoding the JSON payload or writing to the http.ResponseWriter,
@@ -16,6 +21,7 @@ func MustSendJSON(w http.ResponseWriter, payload any, statusCode int, headers ma
 			w.Header().Set(k, v)
 		}
 	}
+	w.Header().Set("Content-Type", "application/json")
 
 	w.WriteHeader(statusCode)
 
@@ -39,6 +45,7 @@ func SendJSON(w http.ResponseWriter, payload any, statusCode int, headers map[st
 			w.Header().Set(k, v)
 		}
 	}
+	w.Header().Set("Content-Type", "application/json")
 
 	var bb bytes.Buffer
 	if err := json.NewEncoder(&bb).Encode(payload); err != nil {
@@ -67,9 +74,18 @@ func SendInternalServerErrorAsJSON(w http.ResponseWriter, message string) {
 	MustSendJSON(w, msg, http.StatusInternalServerError, nil)
 }
 
+// SendSuccessJSON is a wrapper for SendJSON, which adds a true success flag to the JSON response body.
+// If a caller attempts to add a key named "success" to the payload, it will be overwitten (not sure if I want this behaviour).
+func SendSuccessJSON(w http.ResponseWriter, payload Payload, statusCode int, headers map[string]string) {
+	payload["success"] = true
+	SendJSON(w, payload, statusCode, nil)
+}
+
+// SendErrorJSON is a wrapper for SendJSON, which adds a false success flag to the JSON response body.
 func SendErrorJSON(w http.ResponseWriter, message string, statusCode int) {
-	payload := map[string]string{
-		"error": message,
+	payload := Payload{
+		"success": false,
+		"error":   message,
 	}
 
 	SendJSON(w, payload, statusCode, nil)

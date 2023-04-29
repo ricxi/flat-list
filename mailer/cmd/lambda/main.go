@@ -19,13 +19,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	smtpPORT, err := strconv.Atoi(envs["PORT"])
+	smtpPort, err := strconv.Atoi(envs["PORT"])
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	m := mailer.NewMailer(envs["USERNAME"], envs["PASSWORD"], envs["HOST"], smtpPORT)
-	mailerService := mailer.NewMailerService(m, envs["EMAIL_TEMPLATES"])
+	m := mailer.NewMailer(envs["USERNAME"], envs["PASSWORD"], envs["HOST"], smtpPort)
+	mailerService := mailer.NewService(m, envs["EMAIL_TEMPLATES"])
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

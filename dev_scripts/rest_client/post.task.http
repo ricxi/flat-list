@@ -1,7 +1,7 @@
 
 post http://localhost:5006/v1/task
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNjgyNDUzMTA1fSwiVXNlcklEIjoiNjQ0NmQ5OGNiODk3ODQwYjg1Y2VlYzE3In0.2XRGOo0v9VbA8mAFKRIidWotnMRfct2k_QcusdwJC7A
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNjgyNTY0ODI2fSwiVXNlcklEIjoiNjQ0ODk0ZTA2NzAzY2ZiNDM0OWIzZDk4In0.cI4znexFvs9UOMCn3qMA2Wq8A1Vb5l5wTt3jDPXCCMY
 
 {
 	"name"     :"laundry",

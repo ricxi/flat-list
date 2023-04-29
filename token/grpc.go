@@ -16,7 +16,7 @@ func (s Server) CreateActivationToken(ctx context.Context, req *pb.CreateTokenRe
 	if err != nil {
 		return nil, err
 	}
-	if err := s.InsertActivationToken(ctx, &ActivationTokenInfo{
+	if err := s.insertActivationToken(ctx, &ActivationTokenInfo{
 		Token:  activationToken,
 		UserID: req.UserId,
 	}); err != nil {
@@ -29,7 +29,7 @@ func (s Server) CreateActivationToken(ctx context.Context, req *pb.CreateTokenRe
 }
 
 func (s Server) ValidateActivationToken(ctx context.Context, req *pb.ValidateTokenRequest) (*pb.ValidateTokenResponse, error) {
-	userID, err := s.GetUserID(ctx, req.ActivationToken)
+	userID, err := s.getUserID(ctx, req.ActivationToken)
 	if err != nil {
 		return nil, err
 	}

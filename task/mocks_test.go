@@ -14,22 +14,22 @@ type mockRepository struct {
 	err    error
 }
 
-func (m *mockRepository) CreateTask(ctx context.Context, task *NewTask) (string, error) {
+func (m *mockRepository) createTask(ctx context.Context, task *NewTask) (string, error) {
 	return m.taskID, m.err
 }
 
-func (m *mockRepository) GetTaskByID(ctx context.Context, id string) (*Task, error) {
+func (m *mockRepository) getTaskByID(ctx context.Context, id string) (*Task, error) {
 	if _, err := primitive.ObjectIDFromHex(id); err != nil {
 		return nil, err
 	}
 	return m.task, m.err
 }
 
-func (m *mockRepository) UpdateTask(ctx context.Context, task *Task) (*Task, error) {
+func (m *mockRepository) updateTask(ctx context.Context, task *Task) (*Task, error) {
 	return m.task, m.err
 }
 
-func (m *mockRepository) DeleteTaskByID(ctx context.Context, id string) error {
+func (m *mockRepository) deleteTaskByID(ctx context.Context, id string) error {
 	return m.err
 }
 
@@ -42,19 +42,19 @@ type mockService struct {
 	err    error
 }
 
-func (m *mockService) CreateTask(ctx context.Context, task *NewTask) (string, error) {
+func (m *mockService) createTask(ctx context.Context, task *NewTask) (string, error) {
 	return m.taskID, m.err
 }
 
-func (m *mockService) GetTaskByID(ctx context.Context, id string) (*Task, error) {
+func (m *mockService) getTaskByID(ctx context.Context, id string) (*Task, error) {
 	return m.task, m.err
 }
 
-func (m *mockService) UpdateTask(ctx context.Context, task *Task) (*Task, error) {
+func (m *mockService) updateTask(ctx context.Context, task *Task) (*Task, error) {
 	// m.task will be a mock of the updated task
 	return m.task, m.err
 }
 
-func (m *mockService) DeleteTask(ctx context.Context, id string) error {
+func (m *mockService) deleteTask(ctx context.Context, id string) error {
 	return m.err
 }

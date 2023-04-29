@@ -51,7 +51,7 @@ func (h *httpHandler) handleCreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 	newTask.UserID = userID
 
-	taskID, err := h.s.CreateTask(r.Context(), &newTask)
+	taskID, err := h.s.createTask(r.Context(), &newTask)
 	if err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
@@ -72,7 +72,7 @@ func (h *httpHandler) handleGetTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := h.s.GetTaskByID(r.Context(), taskID)
+	task, err := h.s.getTaskByID(r.Context(), taskID)
 	if err != nil {
 		// check for ErrTaskNotFound and return a status not found
 		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
@@ -101,7 +101,7 @@ func (h *httpHandler) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedTask, err := h.s.UpdateTask(r.Context(), &task)
+	updatedTask, err := h.s.updateTask(r.Context(), &task)
 	if err != nil {
 		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
 		return
@@ -121,7 +121,7 @@ func (h *httpHandler) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.s.DeleteTask(r.Context(), taskID); err != nil {
+	if err := h.s.deleteTask(r.Context(), taskID); err != nil {
 		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}

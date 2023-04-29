@@ -31,8 +31,8 @@ func Connect(connStr string) (*sql.DB, error) {
 	return db, nil
 }
 
-// InsertActivationToken inserts a new activation token for a given user based on their id
-func (r *Repository) InsertActivationToken(ctx context.Context, info *ActivationTokenInfo) error {
+// insertActivationToken inserts a new activation token for a given user based on their id
+func (r *Repository) insertActivationToken(ctx context.Context, info *ActivationTokenInfo) error {
 	query := "INSERT INTO activation_tokens (token, user_id) VALUES ($1, $2)"
 
 	_, err := r.db.ExecContext(ctx, query, info.Token, info.UserID)
@@ -40,8 +40,8 @@ func (r *Repository) InsertActivationToken(ctx context.Context, info *Activation
 	return err
 }
 
-// GetUserID receives an activation token and searches for the user id associated with it
-func (r *Repository) GetUserID(ctx context.Context, activationToken string) (string, error) {
+// getUserID receives an activation token and searches for the user id associated with it
+func (r *Repository) getUserID(ctx context.Context, activationToken string) (string, error) {
 	query := "SELECT user_id FROM activation_tokens WHERE activation_tokens.token = $1"
 
 	row := r.db.QueryRowContext(ctx, query, activationToken)

@@ -254,3 +254,40 @@ func BenchmarkMustSendJSON(b *testing.B) {
 		response.MustSendJSON(rr, payload, http.StatusOK, nil)
 	}
 }
+func TestSendSuccessJSON(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		assert := assert.New(t)
+		rr := httptest.NewRecorder()
+
+		expected := `{"id":"abcdefghijkl","success":true}`
+		payload := response.Payload{
+			"id": "abcdefghijkl",
+		}
+
+		response.SendSuccessJSON(rr, payload, http.StatusOK, nil)
+
+		assert.Equal(http.StatusOK, rr.Code)
+
+		if assert.NotEmpty(rr.Body) {
+			assert.JSONEq(expected, rr.Body.String())
+		}
+	})
+}
+
+func TestSendErrorJSON(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		assert := assert.New(t)
+		rr := httptest.NewRecorder()
+
+		expected := `{"error":"a problem has occurred", "success":false}`
+		message := "a problem has occurred"
+
+		response.SendErrorJSON(rr, message, http.StatusOK)
+
+		assert.Equal(http.StatusOK, rr.Code)
+
+		if assert.NotEmpty(rr.Body) {
+			assert.JSONEq(expected, rr.Body.String())
+		}
+	})
+}
