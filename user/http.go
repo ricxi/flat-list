@@ -57,11 +57,12 @@ func (h httpHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.service.registerUser(r.Context(), u)
 	if err != nil {
+		// Should I return a 409 status code for a duplicate user?
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	res.SendJSON(w, Response{"id": id}, http.StatusCreated, nil)
+	res.SendSuccessJSON(w, res.Payload{"id": id}, http.StatusCreated, nil)
 }
 
 func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {

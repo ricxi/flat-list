@@ -30,26 +30,30 @@ func (m *mockRepository) updateUserByID(ctx context.Context, u UserInfo) error {
 }
 
 // Service mock
-type MockService struct {
+type mockService struct {
 	userID   string
 	userInfo *UserInfo
 	err      error
 }
 
-func (m *MockService) RegisterUser(ctx context.Context, user UserRegistrationInfo) (string, error) {
+func (m mockService) registerUser(ctx context.Context, user UserRegistrationInfo) (string, error) {
 	return m.userID, m.err
 }
 
-func (m *MockService) LoginUser(ctx context.Context, user *UserLoginInfo) (*UserInfo, error) {
+func (m mockService) loginUser(ctx context.Context, user UserLoginInfo) (*UserInfo, error) {
 	return m.userInfo, m.err
 }
 
-func (m *MockService) ActivateUser(ctx context.Context, activationToken string) error {
+func (m mockService) activateUser(ctx context.Context, activationToken string) error {
 	return m.err
 }
 
-func (m *MockService) RestartActivation(ctx context.Context, u *UserLoginInfo) error {
+func (m mockService) restartActivation(ctx context.Context, u UserLoginInfo) error {
 	return m.err
+}
+
+func (m mockService) authenticate(ctx context.Context, signedJWT string) (string, error) {
+	return m.userID, m.err
 }
 
 // PasswordManager mock
