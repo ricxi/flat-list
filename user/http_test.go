@@ -11,7 +11,7 @@ import (
 
 // These are technically integration tests because I'm going through the chi router...
 // I could write tests for cases where the validation fails, and look through the registerUser method in service for more error cases
-func TestRegisterUser(t *testing.T) {
+func TestHandleRegister(t *testing.T) {
 	type req struct {
 		method  string
 		target  string
@@ -113,6 +113,112 @@ func TestRegisterUser(t *testing.T) {
 			}
 
 			h.ServeHTTP(rr, r)
+			assert.Equal(t, tt.expected.statusCode, rr.Code)
+			assert.JSONEq(t, tt.expected.body, rr.Body.String())
+		})
+	}
+}
+
+// newRequestWithHeaders creates a *http.Request from the httptest package, and adds some headers to it.
+func newRequestWithHeaders(method, target string, body string, headers map[string]string) *http.Request {
+	r := httptest.NewRequest(method, target, strings.NewReader(body))
+	for key, value := range headers {
+		r.Header.Set(key, value)
+	}
+	return r
+}
+
+// I wrote this differently than the TestHandleRegister
+// function just to see which one would be more 'clear'
+func TestHandleLogin(t *testing.T) {
+	type expected struct {
+		statusCode int
+		body       string
+	}
+	tests := []struct {
+		name     string
+		service  Service
+		request  *http.Request
+		expected expected
+	}{
+		{
+			name: "Success",
+			service: mockService{
+				userInfo: &UserInfo{
+					ID:        "60af7bf76c21d03b7c174f88",
+					FirstName: "Michael",
+					LastName:  "Scott",
+					Email:     "michaelscott@dundermifflin.com",
+					Password:  "1234",
+					Activated: true,
+					Token:     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjBhZjdiZjc2YzIxZDAzYjdjMTc0Zjg4IiwiaWF0IjoxNjIwNzgyMTQ2LCJleHAiOjE2MjA4NjkzNDZ9.P8IFC7zT_75fT4l4-uHsm8nVyLsDnsYbZwH3Pqkn8xU",
+				},
+				err: nil,
+			},
+			request: newRequestWithHeaders(
+				http.MethodPost,
+				"/v1/user/login",
+				`
+				{
+					"email": "michaelscott@dundermifflin.com",
+					"password": "1234"
+				}
+				`,
+				map[string]string{
+					"Content-Type": "application/json",
+				},
+			),
+			expected: expected{
+				statusCode: 200,
+				body: `
+				{
+					"user": {
+						"id": "60af7bf76c21d03b7c174f88",
+						"firstName": "Michael",
+						"lastName": "Scott",
+						"email": "michaelscott@dundermifflin.com",
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjBhZjdiZjc2YzIxZDAzYjdjMTc0Zjg4IiwiaWF0IjoxNjIwNzgyMTQ2LCJleHAiOjE2MjA4NjkzNDZ9.P8IFC7zT_75fT4l4-uHsm8nVyLsDnsYbZwH3Pqkn8xU"
+					},
+					"success": true
+				}`,
+			},
+		},
+		{
+			// This returns ErrInvalidEmail, but why did I do this??
+			name: "FailUserNotFound",
+			service: mockService{
+				userInfo: nil,
+				err:      ErrInvalidEmail,
+			},
+			request: newRequestWithHeaders(
+				http.MethodPost,
+				"/v1/user/login",
+				`
+				{
+					"email": "invalidemail@dundermifflin.com",
+					"password": "1234"
+				}
+				`,
+				map[string]string{
+					"Content-Type": "application/json",
+				},
+			),
+			expected: expected{
+				statusCode: 400,
+				body: `
+				{
+					"error": "user with this email was not found",
+					"success": false
+				}`,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := NewHTTPHandler(tt.service)
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, tt.request)
+
 			assert.Equal(t, tt.expected.statusCode, rr.Code)
 			assert.JSONEq(t, tt.expected.body, rr.Body.String())
 		})

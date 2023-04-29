@@ -102,6 +102,7 @@ func (s *service) loginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, er
 
 	uInfo, err := s.repository.getUserByEmail(ctx, u.Email)
 	if err != nil {
+		// Why did I do this?
 		if errors.Is(err, ErrUserNotFound) {
 			return nil, ErrInvalidEmail
 		}

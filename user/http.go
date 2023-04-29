@@ -78,7 +78,7 @@ func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res.SendJSON(w, Response{"user": uInfo}, http.StatusOK, nil)
+	res.SendSuccessJSON(w, res.Payload{"user": uInfo}, http.StatusOK, nil)
 }
 
 // handleActivate is called to activate a newly registered user's account
