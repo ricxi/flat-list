@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/ricxi/flat-list/mailer/pb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type GrpcServer struct {
@@ -30,7 +32,7 @@ func (gs GrpcServer) SendActivationEmail(ctx context.Context, r *pb.EmailRequest
 		},
 	}
 	if err := gs.mailerService.sendActivationEmail(data); err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	return &pb.Response{
