@@ -16,7 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	smtpPORT, err := strconv.Atoi(envs["PORT"])
+	smtpPort, err := strconv.Atoi(envs["PORT"])
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	m := mailer.NewMailer(envs["USERNAME"], envs["PASSWORD"], envs["HOST"], smtpPORT)
+	m := mailer.NewMailer(envs["USERNAME"], envs["PASSWORD"], envs["HOST"], smtpPort)
 	s := mailer.NewService(m, envs["EMAIL_TEMPLATES"])
 	srv := mailer.NewGrpcServer(s)
 

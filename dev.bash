@@ -13,13 +13,14 @@ export GOPRIVATE=github.com/ricxi/flat-list
 # pass it the path to a go module directory.
 tidy() {
     local go_module_dir="$1"
+    # I should check if this is empty
 
     if [ "$#" -eq 0 ]; then
         [ -f 'go.mod' ] && {
             go mod tidy -v &&
             return 0 || return 1
         } ||
-        echo 'Error: call inside a go module or pass a path to go module as an argument: tidy <path_to_go_module>' &&
+        echo 'Error: call this inside a go module or pass a path to a go module as an argument: tidy <path_to_go_module>' &&
         return 1
     fi
 
