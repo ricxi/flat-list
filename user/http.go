@@ -46,9 +46,6 @@ func NewHTTPHandler(service Service) http.Handler {
 	return r
 }
 
-// Response is used to wrap user responses
-type Response map[string]any
-
 func (h httpHandler) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	res.SendSuccessJSON(w, res.Payload{"message": "user service is running"}, http.StatusOK, nil)
 }
@@ -103,7 +100,6 @@ func (h httpHandler) handleActivate(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleRestartActivation is called to generate a new activation token and resend a new activation email to a user
-// TODO: Test this method
 func (h httpHandler) handleRestartActivation(w http.ResponseWriter, r *http.Request) {
 	var u UserLoginInfo
 	if err := req.ParseJSON(r, &u); err != nil {
@@ -137,5 +133,5 @@ func (h httpHandler) handleAuthenticate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	res.SendJSON(w, map[string]string{"userId": userID}, http.StatusOK, nil)
+	res.SendSuccessJSON(w, res.Payload{"userId": userID}, http.StatusOK, nil)
 }

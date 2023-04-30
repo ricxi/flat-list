@@ -255,6 +255,7 @@ func TestHandleLogin(t *testing.T) {
 func TestHandleActivate(t *testing.T) {
 	type expected struct {
 		statusCode int
+		hasBody    bool
 		body       string
 	}
 
@@ -276,6 +277,7 @@ func TestHandleActivate(t *testing.T) {
 			),
 			expected: expected{
 				statusCode: 204,
+				hasBody:    false,
 				body:       "",
 			},
 		},
@@ -291,6 +293,7 @@ func TestHandleActivate(t *testing.T) {
 			),
 			expected: expected{
 				statusCode: 400,
+				hasBody:    true,
 				body:       `{"error":"user not found", "success":false}`,
 			},
 		},
@@ -317,8 +320,7 @@ func TestHandleActivate(t *testing.T) {
 			h.ServeHTTP(rr, tt.request)
 
 			assert.Equal(t, tt.expected.statusCode, rr.Code)
-			// This is kind of hacky, but I'll change it later
-			if rr.Code >= 400 {
+			if tt.expected.hasBody {
 				assert.JSONEq(t, tt.expected.body, rr.Body.String())
 			}
 		})
@@ -393,5 +395,50 @@ func TestHandleRestartActivation(t *testing.T) {
 		if tt.expected.hasBody {
 			assert.JSONEq(t, tt.expected.body, rr.Body.String())
 		}
+	}
+}
+
+func TestHandleAuthenticate(t *testing.T) {
+	type expected struct {
+		statusCode int
+		body       string
+	}
+
+	testCases := []struct {
+		name     string
+		service  Service
+		request  *http.Request
+		expected expected
+	}{
+		{
+			name: "success",
+			service: mockService{
+				userID: "507f191e810c19729de860ea",
+				err:    nil,
+			},
+			request: newRequestWithJSONHeader(
+				http.MethodPost,
+				"/v1/user/authenticate",
+				strings.NewReader(`
+				{
+					"token": "token_goes_here"
+				}
+				`),
+			),
+			expected: expected{
+				statusCode: 200,
+				body:       `{"success":true,"userId":"507f191e810c19729de860ea"}`,
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		h := NewHTTPHandler(tt.service)
+		rr := httptest.NewRecorder()
+
+		h.ServeHTTP(rr, tt.request)
+
+		assert.Equal(t, tt.expected.statusCode, rr.Code)
+		assert.JSONEq(t, tt.expected.body, rr.Body.String())
 	}
 }
