@@ -187,13 +187,15 @@ func (s *service) restartActivation(ctx context.Context, u UserLoginInfo) error 
 		return err
 	}
 
+	errChan := make(chan error)
 	go func() {
 		if err := s.mailer.SendActivationEmail(uInfo.Email, uInfo.FirstName, activationToken); err != nil {
 			log.Println(err)
+			errChan <- err
 		}
 	}()
 
-	return nil
+	return <-errChan
 }
 
 // authenticate receives a signed jwt, extracts user data from it, verifies the
