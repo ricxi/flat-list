@@ -17,7 +17,7 @@ import (
 
 const ActivationPageLink string = "http://localhost:5173/activate?token="
 
-// Client is used by Service to make
+// MailerClient is used by Service to make
 // http or grpc calls to other services
 type MailerClient interface {
 	SendActivationEmail(email, name, activationToken string) error
