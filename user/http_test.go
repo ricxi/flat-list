@@ -1,6 +1,7 @@
 package user
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -119,13 +120,24 @@ func TestHandleRegister(t *testing.T) {
 	}
 }
 
-// newRequestWithHeaders creates a *http.Request from the httptest package, and adds some headers to it.
-func newRequestWithHeaders(method, target string, body string, headers map[string]string) *http.Request {
-	r := httptest.NewRequest(method, target, strings.NewReader(body))
+// newRequestWithHeaders creates an *http.Request from the httptest package, and adds some headers to it.
+func newRequestWithHeaders(method, target string, body io.Reader, headers map[string]string) *http.Request {
+	r := httptest.NewRequest(method, target, body)
 	for key, value := range headers {
 		r.Header.Set(key, value)
 	}
 	return r
+}
+
+// newRequestWithJSONHeader creates an *http.Request from the httptest package,
+// and adds a 'Content-Type: application/json' header to it.
+func newRequestWithJSONHeader(method, target string, body io.Reader) *http.Request {
+	return newRequestWithHeaders(
+		method,
+		target,
+		body,
+		map[string]string{"Content-Type": "application/json"},
+	)
 }
 
 // I wrote this differently than the TestHandleRegister
@@ -155,18 +167,14 @@ func TestHandleLogin(t *testing.T) {
 				},
 				err: nil,
 			},
-			request: newRequestWithHeaders(
+			request: newRequestWithJSONHeader(
 				http.MethodPost,
 				"/v1/user/login",
-				`
+				strings.NewReader(`
 				{
 					"email": "michaelscott@dundermifflin.com",
 					"password": "1234"
-				}
-				`,
-				map[string]string{
-					"Content-Type": "application/json",
-				},
+				}`),
 			),
 			expected: expected{
 				statusCode: 200,
@@ -190,18 +198,15 @@ func TestHandleLogin(t *testing.T) {
 				userInfo: nil,
 				err:      ErrInvalidEmail,
 			},
-			request: newRequestWithHeaders(
+			request: newRequestWithJSONHeader(
 				http.MethodPost,
 				"/v1/user/login",
-				`
+				strings.NewReader(`
 				{
 					"email": "invalidemail@dundermifflin.com",
 					"password": "1234"
 				}
-				`,
-				map[string]string{
-					"Content-Type": "application/json",
-				},
+				`),
 			),
 			expected: expected{
 				statusCode: 400,
@@ -222,5 +227,149 @@ func TestHandleLogin(t *testing.T) {
 			assert.Equal(t, tt.expected.statusCode, rr.Code)
 			assert.JSONEq(t, tt.expected.body, rr.Body.String())
 		})
+	}
+}
+
+func TestHandleActivate(t *testing.T) {
+	type expected struct {
+		statusCode int
+		body       string
+	}
+
+	tests := []struct {
+		name     string
+		service  Service
+		request  *http.Request
+		expected expected
+	}{
+		{
+			name: "Success",
+			service: mockService{
+				err: nil,
+			},
+			request: httptest.NewRequest(
+				http.MethodPut,
+				"/v1/user/activate/tokengoeshere",
+				nil,
+			),
+			expected: expected{
+				statusCode: 204,
+				body:       "",
+			},
+		},
+		{
+			name: "UserNotFound",
+			service: mockService{
+				err: ErrUserNotFound,
+			},
+			request: httptest.NewRequest(
+				http.MethodPut,
+				"/v1/user/activate/tokengoeshere",
+				nil,
+			),
+			expected: expected{
+				statusCode: 400,
+				body:       `{"error":"user not found", "success":false}`,
+			},
+		},
+		{
+			name: "NoTokenProvidedAsParameter",
+			service: mockService{
+				err: ErrUserNotFound,
+			},
+			request: httptest.NewRequest(
+				http.MethodPut,
+				"/v1/user/activate/", // trailing slash doesn't matter for chi
+				nil,
+			),
+			expected: expected{
+				statusCode: 404,
+				body:       `{"error":"resource not found", "success":false}`,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := NewHTTPHandler(tt.service)
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, tt.request)
+
+			assert.Equal(t, tt.expected.statusCode, rr.Code)
+			// This is kind of hacky, but I'll change it later
+			if rr.Code >= 400 {
+				assert.JSONEq(t, tt.expected.body, rr.Body.String())
+			}
+		})
+	}
+}
+
+func TestHandleRestartActivation(t *testing.T) {
+	type expected struct {
+		statusCode int
+		hasBody    bool
+		body       string
+	}
+
+	testCases := []struct {
+		name     string
+		service  Service
+		request  *http.Request
+		expected expected
+	}{
+		{
+			name: "Success",
+			service: mockService{
+				err: nil,
+			},
+			request: newRequestWithJSONHeader(
+				http.MethodPost,
+				"/v1/user/restart/activation",
+				strings.NewReader(`
+				{
+					"email": "michaelscott@dundermifflin.com",
+					"password": "1234"
+				}
+				`),
+			),
+			expected: expected{
+				statusCode: 204,
+				hasBody:    false,
+				body:       "",
+			},
+		},
+		{
+			name: "InvalidPassword",
+			service: mockService{
+				err: ErrInvalidPassword,
+			},
+			request: newRequestWithJSONHeader(
+				http.MethodPost,
+				"/v1/user/restart/activation",
+				strings.NewReader(`
+				{
+					"email": "michaelscott@dundermifflin.com",
+					"password": ""
+				}
+				`),
+			),
+			expected: expected{
+				statusCode: 400,
+				hasBody:    true,
+				body:       `{"error":"invalid password provided", "success":false}`,
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		h := NewHTTPHandler(tt.service)
+		rr := httptest.NewRecorder()
+
+		h.ServeHTTP(rr, tt.request)
+
+		assert.Equal(t, tt.expected.statusCode, rr.Code)
+
+		if tt.expected.hasBody {
+			assert.JSONEq(t, tt.expected.body, rr.Body.String())
+		}
 	}
 }

@@ -155,10 +155,9 @@ func (s *service) activateUser(ctx context.Context, activationToken string) erro
 }
 
 // restartActivation generates a new activation token and sends a new activation email to a user
-// so long as they provide their email and a valid password (basically their login info).
+// as they provide their email and a valid password (basically their login info).
 // It is a route that is accessed by users who did receive a valid activation token or email due
 // to unforseen or other cirumstances.
-// ?Should I rename this to ResendActivation?
 func (s *service) restartActivation(ctx context.Context, u UserLoginInfo) error {
 	if err := s.validate.Login(u); err != nil {
 		return err
