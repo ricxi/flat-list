@@ -10,6 +10,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// newRequestWithHeaders creates an *http.Request from the httptest package, and adds some headers to it.
+func newRequestWithHeaders(method, target string, body io.Reader, headers map[string]string) *http.Request {
+	r := httptest.NewRequest(method, target, body)
+	for key, value := range headers {
+		r.Header.Set(key, value)
+	}
+	return r
+}
+
+// newRequestWithJSONHeader creates an *http.Request from the httptest package,
+// and adds a 'Content-Type: application/json' header to it.
+func newRequestWithJSONHeader(method, target string, body io.Reader) *http.Request {
+	return newRequestWithHeaders(
+		method,
+		target,
+		body,
+		map[string]string{"Content-Type": "application/json"},
+	)
+}
+
 // These are technically integration tests because I'm going through the chi router...
 // I could write tests for cases where the validation fails, and look through the registerUser method in service for more error cases
 func TestHandleRegister(t *testing.T) {
@@ -83,7 +103,7 @@ func TestHandleRegister(t *testing.T) {
 			name: "WrongContentTypeNoHeaders",
 			service: mockService{
 				userID: "",
-				err:    ErrDuplicateUser,
+				err:    nil,
 			},
 			r: req{
 				method: http.MethodPost,
@@ -108,36 +128,13 @@ func TestHandleRegister(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := NewHTTPHandler(tt.service)
 			rr := httptest.NewRecorder() // I don't have to close the body for this or worry about a nil pointer dereference
-			r := httptest.NewRequest(tt.r.method, tt.r.target, strings.NewReader(tt.r.body))
-			for key, value := range tt.r.headers {
-				r.Header.Set(key, value)
-			}
+			r := newRequestWithHeaders(tt.r.method, tt.r.target, strings.NewReader(tt.r.body), tt.r.headers)
 
 			h.ServeHTTP(rr, r)
 			assert.Equal(t, tt.expected.statusCode, rr.Code)
 			assert.JSONEq(t, tt.expected.body, rr.Body.String())
 		})
 	}
-}
-
-// newRequestWithHeaders creates an *http.Request from the httptest package, and adds some headers to it.
-func newRequestWithHeaders(method, target string, body io.Reader, headers map[string]string) *http.Request {
-	r := httptest.NewRequest(method, target, body)
-	for key, value := range headers {
-		r.Header.Set(key, value)
-	}
-	return r
-}
-
-// newRequestWithJSONHeader creates an *http.Request from the httptest package,
-// and adds a 'Content-Type: application/json' header to it.
-func newRequestWithJSONHeader(method, target string, body io.Reader) *http.Request {
-	return newRequestWithHeaders(
-		method,
-		target,
-		body,
-		map[string]string{"Content-Type": "application/json"},
-	)
 }
 
 // I wrote this differently than the TestHandleRegister
@@ -213,6 +210,31 @@ func TestHandleLogin(t *testing.T) {
 				body: `
 				{
 					"error": "user with this email was not found",
+					"success": false
+				}`,
+			},
+		},
+		{
+			name: "UserNotActivated",
+			service: mockService{
+				userInfo: nil,
+				err:      ErrUserNotActivated,
+			},
+			request: newRequestWithJSONHeader(
+				http.MethodPost,
+				"/v1/user/login",
+				strings.NewReader(`
+				{
+					"email": "michaelscott@dundermifflin.com",
+					"password": "1234"
+				}
+				`),
+			),
+			expected: expected{
+				statusCode: 400,
+				body: `
+				{
+					"error": "user has not activated their account",
 					"success": false
 				}`,
 			},
