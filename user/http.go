@@ -50,7 +50,7 @@ func NewHTTPHandler(service Service) http.Handler {
 type Response map[string]any
 
 func (h httpHandler) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
-	res.SendJSON(w, Response{"success": true, "message": "user service is running"}, http.StatusOK, nil)
+	res.SendSuccessJSON(w, res.Payload{"message": "user service is running"}, http.StatusOK, nil)
 }
 
 func (h httpHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
