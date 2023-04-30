@@ -75,7 +75,7 @@ type mockMailerClient struct {
 	err error
 }
 
-func (m *mockMailerClient) SendActivationEmail(email, name, activationToken string) error {
+func (m *mockMailerClient) sendActivationEmail(ctx context.Context, email, name, activationToken string) error {
 	return m.err
 }
 

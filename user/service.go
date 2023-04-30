@@ -76,7 +76,7 @@ func (s *service) registerUser(ctx context.Context, u UserRegistrationInfo) (str
 		// send an activation email if a token is successfully generated
 		activationToken := <-activationTokenChan
 
-		if err := s.mailer.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
+		if err := s.mailer.sendActivationEmail(ctx, u.Email, u.FirstName, activationToken); err != nil {
 			log.Println(err)
 			errChan <- err
 			return
@@ -189,7 +189,7 @@ func (s *service) restartActivation(ctx context.Context, u UserLoginInfo) error 
 
 	errChan := make(chan error)
 	go func() {
-		if err := s.mailer.SendActivationEmail(uInfo.Email, uInfo.FirstName, activationToken); err != nil {
+		if err := s.mailer.sendActivationEmail(ctx, uInfo.Email, uInfo.FirstName, activationToken); err != nil {
 			log.Println(err)
 			errChan <- err
 		}

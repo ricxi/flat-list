@@ -11,7 +11,12 @@ import (
 )
 
 func main() {
-	envs, err := config.LoadEnvs("PORT", "MONGODB_URI", "MONGODB_NAME", "MONGODB_TIMEOUT")
+	envs, err := config.LoadEnvs(
+		"PORT",
+		"MONGODB_URI",
+		"MONGODB_NAME",
+		"MONGODB_TIMEOUT",
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,7 +46,8 @@ func main() {
 func buildService(repository user.Repository) (user.Service, error) {
 	passwordManager := user.NewPasswordManager(bcrypt.MinCost)
 	validator := user.NewValidator()
-	grpcClient, err := user.NewMailerClient("grpc", "5001")
+	// mailerClient, err := user.NewHTTPMailerClient("http://localhost:5000/v1/mailer/activate")
+	mailerClient, err := user.NewGRPCMailerClient("5001")
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +61,7 @@ func buildService(repository user.Repository) (user.Service, error) {
 		NewServiceBuilder().
 		Repository(repository).
 		PasswordManager(passwordManager).
-		MailerClient(grpcClient).
+		MailerClient(mailerClient).
 		TokenClient(tokenClient).
 		Validator(validator).
 		Build()

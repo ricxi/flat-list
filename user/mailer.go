@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/ricxi/flat-list/mailer"
@@ -20,27 +20,14 @@ const ActivationPageLink string = "http://localhost:5173/activate?token="
 // MailerClient is used by Service to make
 // http or grpc calls to other services
 type MailerClient interface {
-	SendActivationEmail(email, name, activationToken string) error
+	sendActivationEmail(ctx context.Context, email, name, activationToken string) error
 }
 
-// NewMailerClient can be called to create a grpc or http mailer client
-func NewMailerClient(clientType, port string) (MailerClient, error) {
-	if clientType == "http" {
-		return &httpClient{}, nil
-	}
-
-	if clientType == "grpc" {
-		return newGrpcClient(port)
-	}
-
-	return nil, errors.New("unknown client type")
-}
-
-type grpcClient struct {
+type grpcMailerClient struct {
 	c pb.MailerClient
 }
 
-func newGrpcClient(port string) (*grpcClient, error) {
+func NewGRPCMailerClient(port string) (*grpcMailerClient, error) {
 	cc, err := grpc.Dial(":"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
@@ -48,41 +35,57 @@ func newGrpcClient(port string) (*grpcClient, error) {
 
 	c := pb.NewMailerClient(cc)
 
-	return &grpcClient{
+	return &grpcMailerClient{
 		c: c,
 	}, nil
 }
 
 // SendActivationEmail makes a remote procedure call to the mailer service,
 // which sends an account activation email to a newly registered user
-func (g *grpcClient) SendActivationEmail(email, name, activationToken string) error {
+func (g *grpcMailerClient) sendActivationEmail(ctx context.Context, email, name, activationToken string) error {
 	activationHyperlink := ActivationPageLink + activationToken
-	in := pb.Request{
-		From:                "the.team@flat-list.com",
-		To:                  email,
-		Name:                name,
-		ActivationHyperlink: activationHyperlink,
+	in := pb.EmailRequest{
+		From:    "the.team@flat-list.com",
+		To:      email,
+		Subject: "Please activate your account",
+		ActivationData: &pb.ActivationData{
+			Name:      name,
+			Hyperlink: activationHyperlink,
+		},
 	}
-	if _, err := g.c.SendActivationEmail(context.Background(), &in); err != nil {
+	if _, err := g.c.SendActivationEmail(ctx, &in); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-type httpClient struct {
-	// I know how this works now
-	port string
+type httpMailerClient struct {
+	mailerEndpointURL url.URL
 }
 
-func (h *httpClient) SendActivationEmail(email, name, activationToken string) error {
+func NewHTTPMailerClient(mailerEndpoint string) (*httpMailerClient, error) {
+	mailerEndpointURL, err := url.Parse(mailerEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	return &httpMailerClient{
+		mailerEndpointURL: *mailerEndpointURL,
+	}, nil
+}
+
+func (h *httpMailerClient) sendActivationEmail(ctx context.Context, email, name, activationToken string) error {
 	activationHyperlink := ActivationPageLink + activationToken
 
-	data := mailer.EmailActivationData{
-		From:                "the.team@flat-list.com",
-		To:                  email,
-		Name:                name,
-		ActivationHyperlink: activationHyperlink,
+	data := mailer.ActivationEmailData{
+		From:    "the.team@flat-list.com",
+		To:      email,
+		Subject: "Follow the instructions to activate your account",
+		ActivationData: mailer.ActivationData{
+			Name:      name,
+			Hyperlink: activationHyperlink,
+		},
 	}
 
 	reqBody := new(bytes.Buffer)
@@ -90,18 +93,35 @@ func (h *httpClient) SendActivationEmail(email, name, activationToken string) er
 		return err
 	}
 
-	// this is kind of sketchy right now, but I'll fix it later
-	req, err := http.NewRequest(http.MethodPost, "http://localhost:"+h.port+"/v1/mailer/activate", reqBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, h.mailerEndpointURL.String(), reqBody)
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return err
 	}
 
 	c := http.Client{Timeout: 5 * time.Second}
 
-	_, err = c.Do(req)
+	resp, err := c.Do(req)
 	if err != nil {
-		log.Println(err)
 		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		// Custom utility to extract errors?
+		errs := struct {
+			ErrStr string `json:"error"`
+		}{}
+
+		defer resp.Body.Close()
+		if err := json.NewDecoder(resp.Body).Decode(&errs); err != nil {
+			return err
+		}
+
+		if errs.ErrStr != "" {
+			return errors.New(errs.ErrStr)
+		}
+
+		return errors.New("unknown error occurred when accessing the mailer service")
 	}
 
 	return nil
