@@ -2,6 +2,7 @@ package task
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,46 +14,133 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// newRequestWithHeaders creates an *http.Request from the httptest package, and adds some headers to it.
+func newRequestWithHeaders(method, target string, body io.Reader, headers map[string]string) *http.Request {
+	r := httptest.NewRequest(method, target, body)
+	for key, value := range headers {
+		r.Header.Set(key, value)
+	}
+	return r
+}
+
+// newRequestWithJSONHeader creates an *http.Request from the httptest package,
+// and adds a 'Content-Type: application/json' header to it.
+func newRequestWithJSONHeader(method, target string, body io.Reader) *http.Request {
+	return newRequestWithHeaders(
+		method,
+		target,
+		body,
+		map[string]string{"Content-Type": "application/json"},
+	)
+}
+
 func TestHandleCreateTask(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		assert := assert.New(t)
+		type expected struct {
+			statusCode int
+			hasBody    bool
+			bodyStr    string
+		}
+		testCases := []struct {
+			name           string
+			mockService    Service
+			testServer     *httptest.Server
+			initMiddleware func() ([]func(http.Handler) http.Handler, func())
+			request        *http.Request
+			expected       expected
+		}{
+			{
+				name: "Success",
+				mockService: &mockService{
+					taskID: "6067f0c53c56d02bf8e8dc74",
+				},
+				testServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+				})),
+				initMiddleware: func() ([]func(http.Handler) http.Handler, func()) {
+					// not sure if this is really awful and complicated, but I'll keep it here just in case
+					ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+					}))
 
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
-		}))
-		defer ts.Close()
+					auth := (&Middleware{AuthEndpoint: ts.URL}).Authenticate
 
-		taskID := primitive.NewObjectID().Hex()
-		expected := fmt.Sprintf(`{"success":true,"taskId":"%s"}`, taskID)
+					return []func(http.Handler) http.Handler{auth}, func() {
+						ts.Close()
+					}
 
-		h := NewHTTPHandler(
-			&mockService{
-				taskID: taskID,
-				err:    nil,
+				},
+				request: newRequestWithHeaders(
+					http.MethodPost,
+					"/v1/task",
+					strings.NewReader(`
+					{
+						"name"     :"laundry",
+						"details"  :"quickly",
+						"priority" :"high",
+						"category" :"chores"
+					}
+					`),
+					map[string]string{
+						"Content-Type":  "application/json",
+						"Authorization": "Bearer jwtsignedtokengoeshere",
+					}),
+				expected: expected{
+					statusCode: 201,
+					bodyStr:    `{"success": true, "taskId": "6067f0c53c56d02bf8e8dc74"}`,
+				},
 			},
-			(&Middleware{AuthEndpoint: ts.URL}).Authenticate,
-		)
+			{
+				name: "MissingFieldName",
+				mockService: &mockService{
+					err: fmt.Errorf("%w: name", ErrMissingField),
+				},
+				testServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+				})),
+				request: newRequestWithHeaders(
+					http.MethodPost,
+					"/v1/task",
+					strings.NewReader(`
+					{
+						"details"  :"quickly",
+						"priority" :"high",
+						"category" :"chores"
+					}
+					`),
+					map[string]string{
+						"Content-Type":  "application/json",
+						"Authorization": "Bearer jwtsignedtokengoeshere",
+					}),
+				expected: expected{
+					statusCode: 400,
+					bodyStr:    `{"success": false, "error": "missing field is required: name"}`,
+				},
+			},
+		}
+		for _, tt := range testCases {
+			t.Run(tt.name, func(t *testing.T) {
+				assert := assert.New(t)
+				defer tt.testServer.Close()
 
-		rr := httptest.NewRecorder()
+				// middlewares, cleanup := tt.initMiddleware()
+				// defer cleanup()
 
-		newTask := `
-		{
-			"name"     :"laundry",
-			"details"  :"quickly",
-			"priority" :"high",
-			"category" :"chores"
-		}`
-		reqBody := strings.NewReader(newTask)
+				h := NewHTTPHandler(
+					tt.mockService,
+					(&Middleware{AuthEndpoint: tt.testServer.URL}).Authenticate,
+					// middlewares...,
+				)
 
-		r := httptest.NewRequest(http.MethodPost, "/v1/task", reqBody)
-		r.Header.Set("Content-Type", "application/json")
-		r.Header.Set("Authorization", "Bearer jwtsignedtokengoeshere")
+				rr := httptest.NewRecorder()
 
-		h.ServeHTTP(rr, r)
+				h.ServeHTTP(rr, tt.request)
 
-		assert.Equal(http.StatusCreated, rr.Code)
-		if assert.NotEmpty(rr.Body) {
-			assert.JSONEq(expected, rr.Body.String())
+				assert.Equal(tt.expected.statusCode, rr.Code)
+				if assert.NotEmpty(rr.Body) {
+					assert.JSONEq(tt.expected.bodyStr, rr.Body.String())
+				}
+			})
 		}
 	})
 }
@@ -112,7 +200,7 @@ func TestHandleGetTask(t *testing.T) {
 	t.Run("FailTaskNotFound", func(t *testing.T) {
 		assert := assert.New(t)
 
-		expected := `{"message":"task not found","success":false}`
+		expected := `{"error":"task not found","success":false}`
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
@@ -196,7 +284,7 @@ func TestHandleUpdateTask(t *testing.T) {
 		assert := assert.New(t)
 		require := require.New(t)
 
-		expResBody := `{"message":"missing field is required: taskId","success":false}`
+		expResBody := `{"error":"missing field is required: taskId","success":false}`
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
@@ -229,7 +317,7 @@ func TestHandleUpdateTask(t *testing.T) {
 	t.Run("FailMissingUserIDField", func(t *testing.T) {
 		assert := assert.New(t)
 
-		expected := `{"message":"missing field is required: userId","success":false}`
+		expected := `{"error":"missing field is required: userId","success":false}`
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
@@ -267,7 +355,7 @@ func TestHandleUpdateTask(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		expected := `{"message":"missing field is required: name","success":false}`
+		expected := `{"error":"missing field is required: name","success":false}`
 		h := NewHTTPHandler(
 			&mockService{
 				err: fmt.Errorf("%w: name", ErrMissingField),
