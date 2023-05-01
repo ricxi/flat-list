@@ -27,6 +27,44 @@ type service struct {
 	token      TokenClient
 }
 
+type ServiceOption func(s *service)
+
+func NewService(repository Repository, opts ...ServiceOption) Service {
+	service := &service{
+		repository: repository,
+	}
+
+	for _, opt := range opts {
+		opt(service)
+	}
+
+	return service
+}
+
+func WithValidator(v Validator) ServiceOption {
+	return func(s *service) {
+		s.validate = v
+	}
+}
+
+func WithMailerClient(m MailerClient) ServiceOption {
+	return ServiceOption(func(s *service) {
+		s.mailer = m
+	})
+}
+
+func WithTokenClient(t TokenClient) ServiceOption {
+	return func(s *service) {
+		s.token = t
+	}
+}
+
+func WithPasswordManager(p PasswordManager) ServiceOption {
+	return func(s *service) {
+		s.password = p
+	}
+}
+
 func (s *service) registerUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
 	if err := s.validate.Registration(u); err != nil {
 		return "", err

@@ -16,10 +16,13 @@ func main() {
 		"MONGODB_URI",
 		"MONGODB_NAME",
 		"MONGODB_TIMEOUT",
+		"MAILER_GRPC_PORT",
+		"TOKEN_GRPC_PORT",
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	mongoTimeout, err := strconv.Atoi(envs["MONGODB_TIMEOUT"])
 	if err != nil {
 		log.Fatal(err)
@@ -31,40 +34,30 @@ func main() {
 	}
 	defer client.Disconnect(context.Background())
 
-	mongoRepository := user.NewRepository(client, envs["MONGODB_NAME"])
-	service, err := buildService(mongoRepository)
+	mr := user.NewRepository(client, envs["MONGODB_NAME"])
+	v := user.NewValidator()
+	pm := user.NewPasswordManager(bcrypt.MinCost)
+
+	mc, err := user.NewGRPCMailerClient(envs["MAILER_GRPC_PORT"])
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	handler := user.NewHTTPHandler(service)
-	server := user.NewServer(handler, envs["PORT"])
-	server.Run()
-}
-
-// build the service with its peripheral dependencies
-func buildService(repository user.Repository) (user.Service, error) {
-	passwordManager := user.NewPasswordManager(bcrypt.MinCost)
-	validator := user.NewValidator()
-	// mailerClient, err := user.NewHTTPMailerClient("http://localhost:5000/v1/mailer/activate")
-	mailerClient, err := user.NewGRPCMailerClient("5001")
-	if err != nil {
-		return nil, err
-	}
-
-	tokenClient, err := user.NewTokenClient("5003")
+	tc, err := user.NewTokenClient(envs["TOKEN_GRPC_PORT"])
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	service := user.
-		NewServiceBuilder().
-		Repository(repository).
-		PasswordManager(passwordManager).
-		MailerClient(mailerClient).
-		TokenClient(tokenClient).
-		Validator(validator).
-		Build()
+	service := user.NewService(
+		mr,
+		user.WithValidator(v),
+		user.WithPasswordManager(pm),
+		user.WithMailerClient(mc),
+		user.WithTokenClient(tc),
+	)
 
-	return service, nil
+	handler := user.NewHTTPHandler(service)
+	server := user.NewServer(handler, envs["PORT"])
+
+	server.Run()
 }

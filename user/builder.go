@@ -1,5 +1,10 @@
 package user
 
+// ! ServiceBuilder may be deprecated in favour of the
+// ! idiomatic functional options pattern. I'm going to
+// ! keep this here until I refactor some of the tests.
+// ! I also want to see how it stacks up to the fo pattern
+// ! when I do more benchmarking and profiling.
 type ServiceBuilder interface {
 	Repository(repository Repository) ServiceBuilder
 	MailerClient(client MailerClient) ServiceBuilder
