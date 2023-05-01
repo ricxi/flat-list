@@ -79,16 +79,22 @@ func getAuthToken(r *http.Request) (string, error) {
 
 // getUserID obtains the user id in the response body
 func getUserID(resp *http.Response) (string, error) {
-	authData := make(map[string]string)
+	// authData := make(map[string]string)
+	authData := struct {
+		UserID string `json:"userId"`
+	}{}
 	defer resp.Body.Close()
 	if err := json.NewDecoder(resp.Body).Decode(&authData); err != nil {
 		return "", err
 	}
 
-	userID, ok := authData["userId"]
-	if !ok || userID == "" {
+	// userID, ok := authData["userId"]
+	// if !ok || userID == "" {
+	// 	return "", errors.New("invalid or missing user id")
+	// }
+	if authData.UserID == "" {
 		return "", errors.New("invalid or missing user id")
 	}
 
-	return userID, nil
+	return authData.UserID, nil
 }

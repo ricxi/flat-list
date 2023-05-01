@@ -76,7 +76,7 @@ func TestMiddlewareAuthenticate(t *testing.T) {
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+			w.Write([]byte(`{"userId":"507f191e810c19729de860ea","success":true}`))
 		}))
 		defer ts.Close()
 

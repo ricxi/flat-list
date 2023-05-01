@@ -1,6 +1,7 @@
 #!/bin/bash
 # This is a development script that I use to quickly spin up the app locally for some quick tests.
 
+# set -x
 # called to load all the environment variables from
 # a specific .env file for a go service before running it
 load_env_file() {
@@ -10,7 +11,7 @@ load_env_file() {
 
 cleanup() {
     echo -e "\ncleaning up..."
-    sleep 5
+    sleep 2
     # kill -9 "$pid"
     exit 0
 }
@@ -63,7 +64,7 @@ trap cleanup SIGINT
     # list running services
     # update this so I can input the ports dynamically
     # while true; do
-    sleep 10
+    sleep 5
     lsof -i :5000-5009 -i :9000 | awk '{print $1, $2, $5, $8, $9}'
     # done
 ) &
