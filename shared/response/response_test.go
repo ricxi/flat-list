@@ -272,6 +272,20 @@ func TestSendSuccessJSON(t *testing.T) {
 			assert.JSONEq(expected, rr.Body.String())
 		}
 	})
+
+	t.Run("NilPayload", func(t *testing.T) {
+		assert := assert.New(t)
+		rr := httptest.NewRecorder()
+
+		expected := `{"success":true}`
+		response.SendSuccessJSON(rr, nil, http.StatusOK, nil)
+
+		assert.Equal(http.StatusOK, rr.Code)
+
+		if assert.NotEmpty(rr.Body) {
+			assert.JSONEq(expected, rr.Body.String())
+		}
+	})
 }
 
 func TestSendErrorJSON(t *testing.T) {

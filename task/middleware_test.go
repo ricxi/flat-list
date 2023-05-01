@@ -76,7 +76,7 @@ func TestMiddlewareAuthenticate(t *testing.T) {
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"userId":"507f191e810c19729de860ea"}`))
+			w.Write([]byte(`{"userId":"507f191e810c19729de860ea","success":true}`))
 		}))
 		defer ts.Close()
 
@@ -106,7 +106,7 @@ func TestMiddlewareAuthenticate(t *testing.T) {
 		assert := assert.New(t)
 		require := require.New(t)
 
-		expected := `{"error":"auth header is empty or missing"}`
+		expected := `{"error":"auth header is empty or missing", "success": false}`
 
 		rr := httptest.NewRecorder()
 
@@ -131,7 +131,7 @@ func TestMiddlewareAuthenticate(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		expected := `{"error":"unable to authorize user"}`
+		expected := `{"error":"unable to authorize user", "success": false}`
 
 		rr := httptest.NewRecorder()
 

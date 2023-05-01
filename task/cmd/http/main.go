@@ -9,7 +9,12 @@ import (
 )
 
 func main() {
-	envs, err := config.LoadEnvs("PORT", "MONGODB_URI", "MONGODB_NAME", "AUTH_ENDPOINT")
+	envs, err := config.LoadEnvs(
+		"PORT",
+		"MONGODB_URI",
+		"MONGODB_NAME",
+		"AUTH_ENDPOINT",
+	)
 	if err != nil {
 		log.Fatal(err)
 	}

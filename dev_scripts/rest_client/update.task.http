@@ -1,13 +1,12 @@
 put http://localhost:5006/v1/task
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNjgyNTY0ODI2fSwiVXNlcklEIjoiNjQ0ODk0ZTA2NzAzY2ZiNDM0OWIzZDk4In0.cI4znexFvs9UOMCn3qMA2Wq8A1Vb5l5wTt3jDPXCCMY
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNjgyOTg2MzQzfSwiVXNlcklEIjoiNjQ0ZjAwMDFjNDJiMTY2NDM1YWI0N2FjIn0.G4HuOyPKR4XKCTCOPoY1tu4fPWr2hf5sCmYA0XJIpTM
 
 
 {
-	"taskId": "6448958b96118a48b722fd15",
-	"userId"   : "507f1f77bcf86cd799439011",
+	"taskId": "644f087a74bf3f585be67505",
 	"name"     : "dishes",
-	"details"  : "quickly",
+	"details"  : "slowly",
 	"priority" : "low",
 	"category" : "chores"
 }

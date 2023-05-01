@@ -22,5 +22,6 @@ func HandleSendActivationEmail(mailerService *Service) http.HandlerFunc {
 		}
 
 		res.SendJSON(w, map[string]any{"success": true}, http.StatusOK, nil)
+		// res.SendSuccessJSON(w, nil, http.StatusOK, nil) // update this after next update for package
 	}
 }

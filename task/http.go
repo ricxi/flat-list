@@ -1,7 +1,6 @@
 package task
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -11,7 +10,7 @@ import (
 
 func NewHTTPHandler(service Service, middlewares ...func(http.Handler) http.Handler) http.Handler {
 	h := &httpHandler{
-		s: service,
+		service: service,
 	}
 
 	r := chi.NewMux()
@@ -33,7 +32,7 @@ func NewHTTPHandler(service Service, middlewares ...func(http.Handler) http.Hand
 }
 
 type httpHandler struct {
-	s Service
+	service Service
 }
 
 func (h *httpHandler) handleCreateTask(w http.ResponseWriter, r *http.Request) {
@@ -51,39 +50,30 @@ func (h *httpHandler) handleCreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 	newTask.UserID = userID
 
-	taskID, err := h.s.createTask(r.Context(), &newTask)
+	taskID, err := h.service.createTask(r.Context(), &newTask)
 	if err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	body := map[string]any{
-		"success": true,
-		"taskId":  taskID,
-	}
-
-	res.SendJSON(w, &body, http.StatusCreated, nil)
+	res.SendSuccessJSON(w, res.Payload{"taskId": taskID}, http.StatusCreated, nil)
 }
 
 func (h *httpHandler) handleGetTask(w http.ResponseWriter, r *http.Request) {
 	taskID := chi.URLParam(r, "id")
 	if taskID == "" {
-		writeErrorToResponse(w, "missing url param id", http.StatusBadRequest)
+		res.SendErrorJSON(w, "missing url param id", http.StatusBadRequest)
 		return
 	}
 
-	task, err := h.s.getTaskByID(r.Context(), taskID)
+	task, err := h.service.getTaskByID(r.Context(), taskID)
 	if err != nil {
 		// check for ErrTaskNotFound and return a status not found
-		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	body := map[string]any{
-		"success": true,
-		"task":    task,
-	}
-	res.SendJSON(w, &body, http.StatusOK, nil)
+	res.SendSuccessJSON(w, res.Payload{"task": task}, http.StatusOK, nil)
 }
 
 func (h *httpHandler) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
@@ -91,55 +81,40 @@ func (h *httpHandler) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := getUserIDFromCtx(r.Context())
 	if err != nil {
-		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	task.UserID = userID
 
 	if err := req.ParseJSON(r, &task); err != nil {
-		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	updatedTask, err := h.s.updateTask(r.Context(), &task)
+	updatedTask, err := h.service.updateTask(r.Context(), &task)
 	if err != nil {
-		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	body := map[string]any{
-		"success": true,
-		"task":    updatedTask,
-	}
-	res.SendJSON(w, &body, http.StatusOK, nil)
+	res.SendSuccessJSON(w, res.Payload{"task": updatedTask}, http.StatusOK, nil)
 }
 
 func (h *httpHandler) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
 	taskID := chi.URLParam(r, "id")
 	if taskID == "" {
-		writeErrorToResponse(w, "missing url param id", http.StatusBadRequest)
+		res.SendErrorJSON(w, "missing url param id", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.s.deleteTask(r.Context(), taskID); err != nil {
-		writeErrorToResponse(w, err.Error(), http.StatusBadRequest)
+	if err := h.service.deleteTask(r.Context(), taskID); err != nil {
+		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	body := map[string]any{
 		"success": true,
 	}
+
 	res.SendJSON(w, &body, http.StatusOK, nil)
-}
-
-func writeErrorToResponse(w http.ResponseWriter, message string, statusCode int) {
-	errRes := map[string]any{
-		"success": false,
-		"message": message,
-	}
-
-	w.WriteHeader(statusCode)
-	if err := json.NewEncoder(w).Encode(&errRes); err != nil {
-		panic(err)
-	}
 }

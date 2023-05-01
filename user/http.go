@@ -20,6 +20,7 @@ func NewHTTPHandler(service Service) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
+
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -29,23 +30,24 @@ func NewHTTPHandler(service Service) http.Handler {
 		MaxAge:           300,
 	}))
 
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		res.SendErrorJSON(w, "resource not found", http.StatusNotFound)
+	})
+
 	r.Route("/v1/user", func(r chi.Router) {
 		r.Get("/healthcheck", h.handleHealthCheck)
 		r.Post("/register", h.handleRegister)
 		r.Post("/login", h.handleLogin)
 		r.Put("/activate/{token}", h.handleActivate)
-		r.Post("/reactivate", h.handleReactivate)
+		r.Post("/restart/activation", h.handleRestartActivation)
 		r.Post("/authenticate", h.handleAuthenticate)
 	})
 
 	return r
 }
 
-// Response is used to wrap user responses
-type Response map[string]any
-
 func (h httpHandler) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
-	res.SendJSON(w, Response{"success": true, "message": "user service is running"}, http.StatusOK, nil)
+	res.SendSuccessJSON(w, res.Payload{"message": "user service is running"}, http.StatusOK, nil)
 }
 
 func (h httpHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -57,11 +59,12 @@ func (h httpHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.service.registerUser(r.Context(), u)
 	if err != nil {
+		// Should I return a 409 status code for a duplicate user?
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	res.SendJSON(w, Response{"id": id}, http.StatusCreated, nil)
+	res.SendSuccessJSON(w, res.Payload{"id": id}, http.StatusCreated, nil)
 }
 
 func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +80,7 @@ func (h httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res.SendJSON(w, Response{"user": uInfo}, http.StatusOK, nil)
+	res.SendSuccessJSON(w, res.Payload{"user": uInfo}, http.StatusOK, nil)
 }
 
 // handleActivate is called to activate a newly registered user's account
@@ -93,12 +96,11 @@ func (h httpHandler) handleActivate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res.SendJSON(w, Response{"status": "success"}, http.StatusOK, nil)
+	w.WriteHeader(http.StatusNoContent)
 }
 
-// handleReactivate is called to generate a new activation token and resend a new activation email to a user
-// TODO: Test this method
-func (h httpHandler) handleReactivate(w http.ResponseWriter, r *http.Request) {
+// handleRestartActivation is called to generate a new activation token and resend a new activation email to a user
+func (h httpHandler) handleRestartActivation(w http.ResponseWriter, r *http.Request) {
 	var u UserLoginInfo
 	if err := req.ParseJSON(r, &u); err != nil {
 		res.SendErrorJSON(w, err.Error(), http.StatusBadRequest)
@@ -110,7 +112,7 @@ func (h httpHandler) handleReactivate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res.SendJSON(w, Response{"status": "success"}, http.StatusOK, nil)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h httpHandler) handleAuthenticate(w http.ResponseWriter, r *http.Request) {
@@ -131,5 +133,5 @@ func (h httpHandler) handleAuthenticate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	res.SendJSON(w, map[string]string{"userId": userID}, http.StatusOK, nil)
+	res.SendSuccessJSON(w, res.Payload{"userId": userID}, http.StatusOK, nil)
 }

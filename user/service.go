@@ -27,6 +27,44 @@ type service struct {
 	token      TokenClient
 }
 
+type ServiceOption func(s *service)
+
+func NewService(repository Repository, opts ...ServiceOption) Service {
+	service := &service{
+		repository: repository,
+	}
+
+	for _, opt := range opts {
+		opt(service)
+	}
+
+	return service
+}
+
+func WithValidator(v Validator) ServiceOption {
+	return func(s *service) {
+		s.validate = v
+	}
+}
+
+func WithMailerClient(m MailerClient) ServiceOption {
+	return ServiceOption(func(s *service) {
+		s.mailer = m
+	})
+}
+
+func WithTokenClient(t TokenClient) ServiceOption {
+	return func(s *service) {
+		s.token = t
+	}
+}
+
+func WithPasswordManager(p PasswordManager) ServiceOption {
+	return func(s *service) {
+		s.password = p
+	}
+}
+
 func (s *service) registerUser(ctx context.Context, u UserRegistrationInfo) (string, error) {
 	if err := s.validate.Registration(u); err != nil {
 		return "", err
@@ -76,7 +114,7 @@ func (s *service) registerUser(ctx context.Context, u UserRegistrationInfo) (str
 		// send an activation email if a token is successfully generated
 		activationToken := <-activationTokenChan
 
-		if err := s.mailer.SendActivationEmail(u.Email, u.FirstName, activationToken); err != nil {
+		if err := s.mailer.sendActivationEmail(ctx, u.Email, u.FirstName, activationToken); err != nil {
 			log.Println(err)
 			errChan <- err
 			return
@@ -102,6 +140,7 @@ func (s *service) loginUser(ctx context.Context, u UserLoginInfo) (*UserInfo, er
 
 	uInfo, err := s.repository.getUserByEmail(ctx, u.Email)
 	if err != nil {
+		// Why did I do this?
 		if errors.Is(err, ErrUserNotFound) {
 			return nil, ErrInvalidEmail
 		}
@@ -154,10 +193,9 @@ func (s *service) activateUser(ctx context.Context, activationToken string) erro
 }
 
 // restartActivation generates a new activation token and sends a new activation email to a user
-// so long as they provide their email and a valid password (basically their login info).
+// as they provide their email and a valid password (basically their login info).
 // It is a route that is accessed by users who did receive a valid activation token or email due
 // to unforseen or other cirumstances.
-// ?Should I rename this to ResendActivation?
 func (s *service) restartActivation(ctx context.Context, u UserLoginInfo) error {
 	if err := s.validate.Login(u); err != nil {
 		return err
@@ -187,13 +225,15 @@ func (s *service) restartActivation(ctx context.Context, u UserLoginInfo) error 
 		return err
 	}
 
+	errChan := make(chan error)
 	go func() {
-		if err := s.mailer.SendActivationEmail(uInfo.Email, uInfo.FirstName, activationToken); err != nil {
+		if err := s.mailer.sendActivationEmail(ctx, uInfo.Email, uInfo.FirstName, activationToken); err != nil {
 			log.Println(err)
+			errChan <- err
 		}
 	}()
 
-	return nil
+	return <-errChan
 }
 
 // authenticate receives a signed jwt, extracts user data from it, verifies the

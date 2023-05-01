@@ -77,6 +77,10 @@ func SendInternalServerErrorAsJSON(w http.ResponseWriter, message string) {
 // SendSuccessJSON is a wrapper for SendJSON, which adds a true success flag to the JSON response body.
 // If a caller attempts to add a key named "success" to the payload, it will be overwitten (not sure if I want this behaviour).
 func SendSuccessJSON(w http.ResponseWriter, payload Payload, statusCode int, headers map[string]string) {
+	if payload == nil {
+		payload = make(Payload)
+	}
+
 	payload["success"] = true
 	SendJSON(w, payload, statusCode, nil)
 }
