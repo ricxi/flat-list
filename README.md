@@ -1,5 +1,6 @@
 # flat-list
-A to-do list application written as a Go microservice. I've reading a lot lately about the different ways you can structure a Go application, so I decided to experiment a bit with the classic *flat* structure.
+*Disclaimer:* This project is still under construction.
+A to-do list application written as a Go microservice. I've been reading a lot lately about the different ways you can structure a Go application, so I decided to experiment a bit with the *flat* structure.
 
 ## organization
 ```
