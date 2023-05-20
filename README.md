@@ -1,5 +1,6 @@
 # flat-list
-*Disclaimer:* This project is still under construction.
+*Disclaimer:* This project is still under construction. I'm currently using `.env` files to develop and I haven't set up the necessary config and docker files so that it can be easily setup to demo by others.
+  
 A to-do list application written as a Go microservice. I've been reading a lot lately about the different ways you can structure a Go application, so I decided to experiment a bit with the *flat* structure.
 
 ## organization
